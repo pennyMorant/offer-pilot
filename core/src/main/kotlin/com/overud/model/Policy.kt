@@ -16,6 +16,7 @@ data class Policy(
     val excludedMerchants: Set<String> = emptySet(),
     val disabledConditions: Set<RuleCondition> = emptySet(),
     val platformOverrides: Map<Platform, AcceptanceRules> = emptyMap(),
+    val hourlyBasis: HourlyBasis = HourlyBasis.GROSS,
 ) {
     fun valid() = enabledPlatforms.isNotEmpty() && sharedRules().valid() &&
         platformOverrides.values.all(AcceptanceRules::valid)
@@ -28,6 +29,7 @@ data class Policy(
         maximumSeconds = maximumSeconds,
         maximumPickupMeters = maximumPickupMeters,
         costCentsPerMile = costCentsPerMile,
+        hourlyBasis = hourlyBasis,
         allowStacked = allowStacked,
         allowAddon = allowAddon,
         excludedDestinations = excludedDestinations,
@@ -48,6 +50,7 @@ data class Policy(
             maximumSeconds = rules.maximumSeconds,
             maximumPickupMeters = rules.maximumPickupMeters,
             costCentsPerMile = rules.costCentsPerMile,
+            hourlyBasis = rules.hourlyBasis,
             allowStacked = rules.allowStacked,
             allowAddon = rules.allowAddon,
             excludedDestinations = rules.excludedDestinations,

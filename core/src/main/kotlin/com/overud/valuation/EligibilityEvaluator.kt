@@ -22,8 +22,12 @@ object EligibilityEvaluator {
                 else if (value.centsPerMile + 1e-8 < rules.minimumCentsPerMile) add("每英里报价不达标")
             }
             if (rules.enabled(RuleCondition.MINIMUM_HOURLY)) {
-                if (value.grossCentsPerHour == null) add("缺少可信总耗时")
-                else if (value.grossCentsPerHour + 1e-8 < rules.minimumCentsPerHour) add("预计时薪不达标")
+                val afterCost = rules.hourlyBasis == HourlyBasis.AFTER_VEHICLE_COST
+                val hourly = if (afterCost) value.contributionCentsPerHour else value.grossCentsPerHour
+                if (hourly == null) add(if (afterCost) "缺少可信总里程或总耗时，无法计算成本后时薪" else "缺少可信总耗时")
+                else if (hourly + 1e-8 < rules.minimumCentsPerHour) {
+                    add(if (afterCost) "扣车辆成本后时薪不达标" else "预计毛时薪不达标")
+                }
             }
             addAll(routeLimits(offer, rules))
             if (offer.isStacked && !rules.allowStacked) add("未允许自动接叠单")

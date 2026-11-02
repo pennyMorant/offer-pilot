@@ -13,6 +13,7 @@ data class AcceptanceRules(
     val excludedDestinations: Set<String> = emptySet(),
     val excludedMerchants: Set<String> = emptySet(),
     val disabledConditions: Set<RuleCondition> = emptySet(),
+    val hourlyBasis: HourlyBasis = HourlyBasis.GROSS,
 ) {
     fun enabled(condition: RuleCondition) = condition !in disabledConditions
 
