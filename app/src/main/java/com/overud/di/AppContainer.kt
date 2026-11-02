@@ -5,7 +5,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import android.content.Context
-import android.location.Location
 import androidx.room.Room
 import com.overud.analytics.RegionRecorder
 import com.overud.acceptance.AutoAcceptController
@@ -40,9 +39,5 @@ class AppContainer(context: Context) {
     fun startWork() { tracker.reset(); regions.clear(); session.startWork() }
     fun stopWork() { session.stopWork(); regions.clear() }
     fun setAutomatic(enabled: Boolean) = session.setAutomatic(enabled)
-    fun savePolicy(policy: Policy) = session.savePolicy(policy)
-    fun resolvePending() = acceptance.resolvePending()
-    fun location(location: Location) = regions.location(location)
-    suspend fun poll() = pipeline.poll()
     fun notification(platform: Platform, text: String) = session.notification(platform, text)
 }

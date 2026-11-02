@@ -42,6 +42,7 @@ class CapturePipeline(
             if ((offer == null || !offer.reliable) && now - lastOcrAt > 4000) {
                 lastOcrAt = now
                 val ocr = recognizer.recognize(platform.packageName)
+                currentCoroutineContext().ensureActive()
                 if (ocr != null) {
                     val parsed = OfferParser.parse(platform, ocr, now)
                     // OCR-only observations inform the driver but do not authorize an action.
@@ -49,6 +50,8 @@ class CapturePipeline(
                 }
             }
             if (offer != null) {
+                currentCoroutineContext().ensureActive()
+                if (!session.state.value.working) return@withLock
                 offer = tracker.observe(offer, now)
                 val decision = EligibilityEvaluator.assess(offer, session.state.value.policy, now)
                 offers.record(offer, decision, regions.usableRegion())
