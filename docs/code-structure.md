@@ -212,3 +212,16 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - app/analytics/QualitySummaryReducer.kt：统计投影分组累计，上限 150 行。
 - ui/components：AnalysisSelection、AnalysisUiState、AnalysisFilters、RegionPicker、QualityCard、QualityCardState、QualityPresentation、QualityStandardNote；模型上限 120 行，组件/格式化上限 150 行。
 - 不恢复逐单历史页面。地区和时段均使用统计快照，页面不直接访问数据库。
+
+## 9. 目的地与配送状态职责
+
+- core/platform/DeliveryLocationParser.kt、DeliveryScreenParser.kt：明确标签的位置与配送界面解析，上限 200 行。
+- core/model/DestinationAssessment.kt、DeliveryPhase.kt：目的地和配送状态模型，上限 120 行。
+- core/analytics/DestinationEvaluator.kt：以预计时段选择历史区域证据，上限 200 行。
+- core/region/DestinationCoordinates.kt：显式坐标解析，上限 120 行。
+- app/geo/AndroidGeocodingProvider.kt、DestinationResolver.kt：异步系统查询与有界内存缓存，各上限 180 行。
+- app/analytics/DestinationController.kt：隔离报价、解析和历史证据状态，上限 180 行。
+- app/acceptance/AcceptanceObserver.kt：配送占用、明确完成及恢复门控，上限 150 行。
+- ui/components/DestinationPresentation.kt、DestinationSummary.kt：参考口径与展示，各上限 150 行。
+
+不因接入地址解析或配送状态而增加逐单明细表。
