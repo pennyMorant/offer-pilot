@@ -25,15 +25,15 @@ abstract class TextOfferParser(
             (it.groupValues[1].toDouble() * factor).toLong()
         }
         val seconds = times.singleOrNull()?.groupValues?.get(1)?.toLongOrNull()?.times(60)
-        val lines = text.lines().map(String::trim).filter(String::isNotEmpty)
+        val locations = DeliveryLocationParser.parse(text)
         val totalExplicit = Regex("total|总计|全程", RegexOption.IGNORE_CASE).containsMatchIn(text)
         return Offer(
             id = fingerprint(platform, listOf(cents, meters, seconds,
-                lines.find { it.startsWith("Merchant:", true) }, lines.find { it.startsWith("Destination:", true) }).joinToString("|")),
+                locations.merchant, locations.destination).joinToString("|")),
             platform = platform, observedAt = now,
             amountCents = cents, distanceMeters = meters, durationSeconds = seconds,
-            merchant = lines.find { it.startsWith("Merchant:", true) }?.substringAfter(':')?.trim(),
-            destination = lines.find { it.startsWith("Destination:", true) }?.substringAfter(':')?.trim(),
+            merchant = locations.merchant,
+            destination = locations.destination,
             isStacked = Regex("[2-9] (orders|deliveries)|叠单", RegexOption.IGNORE_CASE).containsMatchIn(text),
             isAddon = Regex("add.?on|add a delivery|追加", RegexOption.IGNORE_CASE).containsMatchIn(text),
             reliable = cents != null && meters != null && seconds != null && totalExplicit,
