@@ -1,6 +1,7 @@
 package com.overud.geo
 
 import android.location.Address
+import android.os.SystemClock
 import com.overud.model.*
 import com.overud.region.DestinationCoordinates
 import com.overud.region.RegionCell
@@ -21,15 +22,15 @@ class DestinationResolver(private val provider: AndroidGeocodingProvider) {
         val query = text.trim().take(240)
         if (query.length < 4) return@withLock ResolvedDestination(DestinationResolution.TOO_BROAD)
         val key = query.lowercase(Locale.ROOT)
-        val now = System.currentTimeMillis()
+        val now = SystemClock.elapsedRealtime()
         cache[key]?.takeIf { it.expiresAt > now }?.let { return@withLock it.destination }
         val wait = 5000 - (now - lastRequestAt)
         if (wait > 0) delay(wait)
-        lastRequestAt = System.currentTimeMillis()
+        lastRequestAt = SystemClock.elapsedRealtime()
         val result = select(provider.lookup(query))
         val lifetime = if (result.status == DestinationResolution.RESOLVED) 6L * 3600 * 1000 else 30_000L
         cache.remove(key)
-        cache[key] = Cached(result, System.currentTimeMillis() + lifetime)
+        cache[key] = Cached(result, SystemClock.elapsedRealtime() + lifetime)
         while (cache.size > 64) cache.remove(cache.keys.first())
         result
     }

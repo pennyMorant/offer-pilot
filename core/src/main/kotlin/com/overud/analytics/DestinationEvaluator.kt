@@ -39,7 +39,11 @@ object DestinationEvaluator {
             }
             add(Candidate(RegionalEvidenceScope.REGION_BASELINE, exactRegion, 30))
         }
-        val selected = candidates.firstOrNull { it.rows.sumOf(RegionalQualityObservation::classified) >= it.minimum }
+        val selected = candidates.firstOrNull {
+            val classified = it.rows.sumOf(RegionalQualityObservation::classified)
+            val observed = it.rows.sumOf(RegionalQualityObservation::observed)
+            classified >= it.minimum && classified * 2 >= observed
+        }
         if (selected == null) {
             return base.copy(evidenceScope = RegionalEvidenceScope.REGION_BASELINE,
                 observedCount = exactRegion.sumOf { it.observed }, classifiedCount = exactRegion.sumOf { it.classified })

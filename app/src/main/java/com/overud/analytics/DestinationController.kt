@@ -39,7 +39,7 @@ class DestinationController(
                     } catch (_: Exception) {
                         ResolvedDestination(DestinationResolution.UNAVAILABLE)
                     }
-                    ensureActive()
+                    currentCoroutineContext().ensureActive()
                     located.value = Located(request.token, address, result)
                 }
         }
