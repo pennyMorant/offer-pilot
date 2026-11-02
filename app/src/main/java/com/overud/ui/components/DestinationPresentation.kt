@@ -6,7 +6,10 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-data class DestinationUiState(val title: String, val detail: String, val evidence: String?, val timing: String?)
+data class DestinationUiState(
+    val title: String, val detail: String, val evidence: String?, val timing: String?,
+    val waiting: String? = null,
+)
 
 fun destinationPresentation(assessment: DestinationAssessment, locale: Locale): DestinationUiState {
     val resolution = assessment.resolution
@@ -51,5 +54,5 @@ fun destinationPresentation(assessment: DestinationAssessment, locale: Locale): 
         "预计送达 ${format.format(Date(it))} · 按手机时区 $zoneId 分析"
     } ?: "总耗时未知，仅展示地区整体参考"
     val region = assessment.regionKey?.let(::regionLabel) ?: "地区未知"
-    return DestinationUiState(title, "$precision · $region", evidence, timing)
+    return DestinationUiState(title, "$precision · $region", evidence, timing, waitingPresentation(assessment.waiting, locale))
 }

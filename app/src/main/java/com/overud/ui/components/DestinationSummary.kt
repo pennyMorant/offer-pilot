@@ -17,7 +17,9 @@ fun DestinationSummary(assessment: DestinationAssessment) {
             Text(display.detail, style = MaterialTheme.typography.bodySmall)
             display.timing?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             display.evidence?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-            Text("后续接单等待与概率尚无可靠统计；历史质量仅供参考。", style = MaterialTheme.typography.bodySmall)
+            display.waiting?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            Text("历史报价与前台等待观测仅供参考，不代表下一单概率或未来等待。",
+                style = MaterialTheme.typography.bodySmall)
         }
     }
 }

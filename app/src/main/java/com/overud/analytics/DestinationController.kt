@@ -18,6 +18,7 @@ class DestinationController(
     private data class Input(
         val working: Boolean, val token: String?, val address: String?, val platform: Platform?,
         val duration: Long?, val minute: Long, val history: StatisticsSnapshot,
+        val waiting: List<WaitingObservation>,
     )
     private val located = MutableStateFlow(Located(null, null, ResolvedDestination(DestinationResolution.MISSING)))
 
@@ -49,7 +50,7 @@ class DestinationController(
                 val totalsKnown = offer?.reliable == true || offer?.evidence?.totalsVerified == true
                 Input(state.working, offer?.id, offer?.destination, offer?.platform,
                     offer?.durationSeconds?.takeIf { totalsKnown && it in 1..86400 },
-                    (offer?.observedAt ?: 0) / 60000 * 60000, state.statistics)
+                    (offer?.observedAt ?: 0) / 60000 * 60000, state.statistics, state.waitingHistory)
             }.distinctUntilChanged()
             combine(located, inputs) { location, input -> location to input }.collect { (location, input) ->
                 val assessment = evaluate(location, input)
@@ -74,6 +75,6 @@ class DestinationController(
             RegionalQualityObservation(source, row.regionKey, row.zoneId, row.weekday, row.localHour,
                 row.qualityVersion, row.offerCount, row.goodCount, row.normalCount, row.lowCount)
         }
-        return DestinationEvaluator.assess(location.result, platform, arrival, history)
+        return DestinationEvaluator.assess(location.result, platform, arrival, history, waitingHistory = input.waiting)
     }
 }

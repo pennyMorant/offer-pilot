@@ -22,4 +22,5 @@ data class DestinationAssessment(
     val classifiedCount: Long = 0,
     val goodRate: Double? = null,
     val analysisZoneId: String? = null,
+    val waiting: WaitingAssessment? = null,
 )
