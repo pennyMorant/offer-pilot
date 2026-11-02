@@ -19,8 +19,9 @@ internal object QuoteMoneyParser {
             currencies.size == 1 -> currencies.single()
             else -> "UNKNOWN"
         }
+        val negative = Regex("[−-]\\s*(?:US\\$|\\$)|(?:US\\$|\\$)\\s*[−-]").containsMatchIn(text)
         val symbolCount = Regex("(?:US\\$|\\$)").findAll(text).count()
-        val cents = matches.takeIf { it.size == symbolCount }?.singleOrNull()?.groupValues?.get(1)?.replace(",", "")?.let { raw ->
+        val cents = matches.takeIf { it.size == symbolCount && !negative }?.singleOrNull()?.groupValues?.get(1)?.replace(",", "")?.let { raw ->
             runCatching { raw.toBigDecimal().multiply(BigDecimal(100)).longValueExact() }.getOrNull()
         }?.takeIf { it in 1..10_000_000 }
         val incremental = matches.size == 1 && text.lines().any { extra.containsMatchIn(it.trim()) }

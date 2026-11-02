@@ -27,14 +27,16 @@ internal object RouteMetricsParser {
             val previous = lines.getOrNull(index - 1).orEmpty()
             distance.findAll(line).forEach { match ->
                 val factor = if (match.groupValues[2].startsWith("mi", true)) 1609.344 else 1000.0
+                val negative = Regex("[−-]\\s*$").containsMatchIn(line.take(match.range.first))
                 val meters = match.groupValues[1].toDoubleOrNull()?.times(factor)
-                    ?.takeIf { it.isFinite() && it in 0.0..1_000_000.0 }?.toLong()
+                    ?.takeIf { !negative && it.isFinite() && it in 0.0..1_000_000.0 }?.toLong()
                 distances += Metric(meters, scope(line.take(match.range.last + 1), previous, true))
             }
             duration.findAll(line).forEach { match ->
                 val hours = (match.groupValues[1].ifBlank { match.groupValues[3] }).ifBlank { "0" }.toLongOrNull()
                 val minutes = match.groupValues[2].ifBlank { "0" }.toLongOrNull()
-                val seconds = if (hours != null && hours in 0..24 && minutes != null && minutes in 0..1440)
+                val negative = Regex("[−-]\\s*$").containsMatchIn(line.take(match.range.first))
+                val seconds = if (!negative && hours != null && hours in 0..24 && minutes != null && minutes in 0..1440)
                     (hours * 3600 + minutes * 60).takeIf { it in 1..86400 } else null
                 durations += Metric(seconds, scope(line.take(match.range.last + 1), previous, false))
             }

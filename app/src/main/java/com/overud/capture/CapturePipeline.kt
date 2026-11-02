@@ -107,6 +107,6 @@ class CapturePipeline(
 
     private fun clearQuote(page: PlatformPage? = null) {
         session.update { it.copy(latest = null, decision = null, destinationEvidence = null,
-            destinationAssessment = DestinationAssessment(), currentPage = page.takeIf { _ -> it.working }) }
+            destinationAssessment = DestinationAssessment(), currentPage = if (it.working) page else null) }
     }
 }
