@@ -20,7 +20,7 @@ class AndroidGeocodingProvider(context: Context) {
     suspend fun lookup(query: String): List<Address> {
         if (!runCatching { Geocoder.isPresent() }.getOrDefault(false)) return emptyList()
         return withTimeoutOrNull(6000) {
-            suspendCancellableCoroutine { continuation ->
+            suspendCancellableCoroutine<List<Address>> { continuation ->
                 if (Build.VERSION.SDK_INT >= 33) {
                     runCatching {
                         geocoder.getFromLocationName(query, 5, object : Geocoder.GeocodeListener {

@@ -63,8 +63,13 @@ class CapturePipeline(
                 val changed = statistics.record(offer, regions.usableRegion())
                 val aggregate = if (changed) statistics.snapshot() else session.state.value.statistics
                 session.update {
-                    if (it.working) it.copy(latest = offer, decision = decision, statistics = aggregate)
-                    else it.copy(statistics = aggregate)
+                    if (it.working) {
+                        val sameDestination = it.latest?.id == offer.id && it.latest?.destination == offer.destination
+                        val initial = DestinationAssessment(resolution = if (offer.destination.isNullOrBlank())
+                            DestinationResolution.MISSING else DestinationResolution.RESOLVING)
+                        it.copy(latest = offer, decision = decision, statistics = aggregate,
+                            destinationAssessment = if (sameDestination) it.destinationAssessment else initial)
+                    } else it.copy(statistics = aggregate)
                 }
                 acceptance.maybeAccept(offer, decision, snapshot.getString("token").orEmpty())
             } else {

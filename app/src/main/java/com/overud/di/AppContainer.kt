@@ -7,6 +7,9 @@ import kotlinx.coroutines.sync.withLock
 import android.content.Context
 import androidx.room.Room
 import com.overud.analytics.RegionRecorder
+import com.overud.analytics.DestinationController
+import com.overud.geo.AndroidGeocodingProvider
+import com.overud.geo.DestinationResolver
 import com.overud.acceptance.AutoAcceptController
 import com.overud.bridge.SheveryBridge
 import com.overud.capture.*
@@ -28,6 +31,8 @@ class AppContainer(context: Context) {
     private val statistics = StatisticsRepository(database)
     val regions = RegionRecorder(session, RegionRepository(database))
     val acceptance = AutoAcceptController(session, AcceptanceRepository(database.acceptance()), bridge, scope, mutex)
+    private val destinations = DestinationController(session,
+        DestinationResolver(AndroidGeocodingProvider(context)), scope)
     private val tracker = OfferTracker(TrackerCheckpointStore(context))
     val pipeline = CapturePipeline(session, bridge, OcrRecognizer(bridge), tracker, statistics, regions, acceptance, mutex)
     init {
