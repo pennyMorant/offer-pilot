@@ -12,6 +12,7 @@ import com.overud.model.Platform
     AlertDialog(onDismissRequest = onDismiss, title = { Text("规则预览") }, text = {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("仅分析输入文本，不会接单，也不会写入真实订单记录。")
+            Text("按所选平台的已保存要求预览；未保存的草稿不参与判断。", style = MaterialTheme.typography.bodySmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Platform.entries.forEach { item ->
                     FilterChip(selected = preview.platform == item,
