@@ -21,4 +21,5 @@ data class DestinationAssessment(
     val observedCount: Long = 0,
     val classifiedCount: Long = 0,
     val goodRate: Double? = null,
+    val analysisZoneId: String? = null,
 )
