@@ -3,12 +3,17 @@ package com.overud.platform
 import com.overud.model.*
 
 interface OfferParser {
-    fun parse(text: String, now: Long): Offer?
+    fun classify(text: String, source: OfferSource = OfferSource.UI_NODES): PlatformPage
+    fun parse(text: String, now: Long, source: OfferSource = OfferSource.UI_NODES): Offer?
 
     companion object {
-        fun parse(platform: Platform, text: String, now: Long): Offer? = when (platform) {
-            Platform.UBER_EATS -> UberEatsParser.parse(text, now)
-            Platform.DOORDASH -> DoorDashParser.parse(text, now)
+        private fun adapter(platform: Platform): OfferParser = when (platform) {
+            Platform.UBER_EATS -> UberEatsParser
+            Platform.DOORDASH -> DoorDashParser
         }
+        fun classify(platform: Platform, text: String, source: OfferSource = OfferSource.UI_NODES) =
+            adapter(platform).classify(text, source)
+        fun parse(platform: Platform, text: String, now: Long, source: OfferSource = OfferSource.UI_NODES): Offer? =
+            adapter(platform).parse(text, now, source)
     }
 }

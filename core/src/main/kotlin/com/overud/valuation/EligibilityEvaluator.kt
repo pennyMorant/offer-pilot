@@ -37,6 +37,7 @@ object EligibilityEvaluator {
             if (offer.isAddon) {
                 if (!rules.allowAddon) add("未允许自动接追加单")
                 else if (offer.evidence?.incrementalRouteVerified != true) add("追加单增量收入及路线尚未确认")
+                else add("追加单的配送上下文复核尚未接入，保留手动接单")
             }
             addAll(excluded(offer.destination, rules.excludedDestinations, "目的地"))
             addAll(excluded(offer.merchant, rules.excludedMerchants, "商家"))
