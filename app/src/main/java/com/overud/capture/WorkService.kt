@@ -31,7 +31,7 @@ class WorkService : Service() {
             checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) serviceType = serviceType or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
         startForeground(1, notification, serviceType)
         if (job == null) {
-            val runtime = (application as OverudApp).runtime
+            val runtime = (application as OverudApp).container
             runtime.startWork()
             overlay = OfferOverlay(this, runtime).also { it.show() }
             location = WorkLocationTracker(this, runtime).also { it.start() }
@@ -41,7 +41,7 @@ class WorkService : Service() {
     }
     override fun onDestroy() {
         scope.cancel(); overlay?.close(); location?.stop()
-        (application as OverudApp).runtime.stopWork()
+        (application as OverudApp).container.stopWork()
         super.onDestroy()
     }
 }

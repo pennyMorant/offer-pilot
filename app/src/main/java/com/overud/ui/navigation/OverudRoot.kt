@@ -11,14 +11,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.overud.OverudRuntime
+import com.overud.di.AppContainer
 import com.overud.ui.dashboard.DashboardScreen
 import com.overud.ui.orders.OrdersScreen
 import com.overud.ui.regions.RegionsScreen
 import com.overud.ui.rules.RulesScreen
 import com.overud.ui.rules.RulePreviewDialog
 
-@Composable fun OverudRoot(runtime: OverudRuntime, onWork: () -> Unit, onOverlayPermission: () -> Unit, onNotificationPermission: () -> Unit, onLocationPermission: () -> Unit) {
+@Composable fun OverudRoot(runtime: AppContainer, onWork: () -> Unit, onOverlayPermission: () -> Unit, onNotificationPermission: () -> Unit, onLocationPermission: () -> Unit) {
     val state by runtime.state.collectAsStateWithLifecycle()
     val bridge by runtime.bridge.status.collectAsStateWithLifecycle()
     var selected by rememberSaveable { mutableIntStateOf(0) }

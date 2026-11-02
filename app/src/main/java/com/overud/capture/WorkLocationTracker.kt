@@ -8,9 +8,9 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Looper
-import com.overud.OverudRuntime
+import com.overud.di.AppContainer
 
-class WorkLocationTracker(private val context: Context, private val runtime: OverudRuntime) {
+class WorkLocationTracker(private val context: Context, private val runtime: AppContainer) {
     private val manager = context.getSystemService(LocationManager::class.java)
     private val listener = LocationListener { location: Location -> runtime.location(location) }
     @SuppressLint("MissingPermission")

@@ -11,6 +11,6 @@ class OfferNotificationListener : NotificationListenerService() {
         val platform = Platform.fromPackage(sbn.packageName) ?: return
         val extras = sbn.notification.extras
         val text = listOfNotNull(extras.getCharSequence(Notification.EXTRA_TITLE), extras.getCharSequence(Notification.EXTRA_TEXT)).joinToString("\n")
-        (application as OverudApp).runtime.notification(platform, text)
+        (application as OverudApp).container.notification(platform, text)
     }
 }

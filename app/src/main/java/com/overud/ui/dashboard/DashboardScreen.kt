@@ -11,11 +11,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.ui.text.font.FontWeight
-import com.overud.RuntimeState
+import com.overud.work.WorkState
 import com.overud.bridge.BridgeStatus
 import com.overud.ui.components.*
 
-@Composable fun DashboardScreen(state: RuntimeState, bridge: BridgeStatus, onWork: () -> Unit,
+@Composable fun DashboardScreen(state: WorkState, bridge: BridgeStatus, onWork: () -> Unit,
     onAutomatic: (Boolean) -> Unit, onAuthorize: () -> Unit, onRules: () -> Unit, onReplay: () -> Unit, onResolve: () -> Unit) {
     LazyColumn(Modifier.widthIn(max = 760.dp).fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {

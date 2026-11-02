@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val runtime = (application as OverudApp).runtime
+        val runtime = (application as OverudApp).container
         setContent {
             OverudTheme {
                 OverudRoot(runtime,
@@ -39,6 +39,6 @@ class MainActivity : ComponentActivity() {
     }
     override fun onResume() {
         super.onResume()
-        (application as OverudApp).runtime.bridge.refresh()
+        (application as OverudApp).container.bridge.refresh()
     }
 }

@@ -9,12 +9,12 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.overud.OverudRuntime
+import com.overud.di.AppContainer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 
 /** Compact native window; the main app uses the Compose expressive theme. */
-class OfferOverlay(private val context: Context, private val runtime: OverudRuntime) {
+class OfferOverlay(private val context: Context, private val runtime: AppContainer) {
     private val manager = context.getSystemService(WindowManager::class.java)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var view: LinearLayout? = null
