@@ -16,9 +16,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.overud.ui.dashboard.DashboardViewModel
 import com.overud.ui.rules.RulesViewModel
 import com.overud.ui.dashboard.DashboardScreen
-import com.overud.ui.orders.OrdersViewModel
+import com.overud.ui.statistics.StatisticsViewModel
 import com.overud.ui.regions.RegionsViewModel
-import com.overud.ui.orders.OrdersScreen
+import com.overud.ui.statistics.StatisticsScreen
 import com.overud.ui.regions.RegionsScreen
 import com.overud.ui.rules.RulesScreen
 import com.overud.ui.rules.RulePreviewDialog
@@ -27,9 +27,9 @@ import com.overud.ui.rules.RulePreviewDialog
     val dashboard: DashboardViewModel = viewModel(factory = factory)
     val rules: RulesViewModel = viewModel(factory = factory)
     val state by dashboard.state.collectAsStateWithLifecycle()
-    val orders: OrdersViewModel = viewModel(factory = factory)
+    val orders: StatisticsViewModel = viewModel(factory = factory)
     val regions: RegionsViewModel = viewModel(factory = factory)
-    val records by orders.cards.collectAsStateWithLifecycle()
+    val statistics by orders.state.collectAsStateWithLifecycle()
     val regionState by regions.state.collectAsStateWithLifecycle()
     val bridge = state.connection
     var selected by rememberSaveable { mutableStateOf(Destination.DASHBOARD) }
@@ -51,8 +51,8 @@ import com.overud.ui.rules.RulePreviewDialog
                 when (page) {
                     Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
                         { selected = Destination.RULES }, { replay = true }, { resolve = true })
-                    Destination.ORDERS -> OrdersScreen(records)
-                    Destination.REGIONS -> RegionsScreen(regionState)
+                    Destination.STATISTICS -> StatisticsScreen(statistics, orders::select)
+                    Destination.REGIONS -> RegionsScreen(regionState, regions::select)
                     Destination.RULES -> RulesScreen(rules, onOverlayPermission, onNotificationPermission, onLocationPermission)
                 }
             }

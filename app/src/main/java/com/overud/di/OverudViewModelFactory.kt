@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.overud.ui.dashboard.DashboardViewModel
 import com.overud.ui.rules.RulesViewModel
-import com.overud.ui.orders.OrdersViewModel
+import com.overud.ui.statistics.StatisticsViewModel
 import com.overud.ui.regions.RegionsViewModel
 
 class OverudViewModelFactory(private val container: AppContainer) : ViewModelProvider.Factory {
@@ -12,7 +12,7 @@ class OverudViewModelFactory(private val container: AppContainer) : ViewModelPro
         val instance = when (modelClass) {
             DashboardViewModel::class.java -> DashboardViewModel(container.session, container.bridge, container.acceptance)
             RulesViewModel::class.java -> RulesViewModel(container.session)
-            OrdersViewModel::class.java -> OrdersViewModel(container.session)
+            StatisticsViewModel::class.java -> StatisticsViewModel(container.session)
             RegionsViewModel::class.java -> RegionsViewModel(container.session)
             else -> error("Unknown ViewModel: ${modelClass.name}")
         }

@@ -1,0 +1,25 @@
+package com.overud.ui.components
+
+import com.overud.data.database.projection.QualitySummary
+import com.overud.model.Platform
+
+enum class AnalysisPeriod(val label: String, val hours: Set<Int>) {
+    ALL("全天", (0..23).toSet()),
+    BREAKFAST("早餐", (6..10).toSet()),
+    LUNCH("午餐", (11..14).toSet()),
+    AFTERNOON("下午", (15..16).toSet()),
+    DINNER("晚餐", (17..21).toSet()),
+    NIGHT("夜间", (22..23).toSet() + (0..5).toSet()),
+}
+
+data class AnalysisSelection(
+    val platform: Platform? = null,
+    val region: String? = null,
+    val weekday: Int? = null,
+    val period: AnalysisPeriod = AnalysisPeriod.ALL,
+) {
+    fun matches(row: QualitySummary): Boolean =
+        (platform == null || row.platform == platform.name) &&
+        (region == null || row.regionKey == region) &&
+        (weekday == null || row.weekday == weekday) && row.localHour in period.hours
+}
