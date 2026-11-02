@@ -10,8 +10,8 @@ import com.overud.acceptance.AcceptanceState
 import com.overud.bridge.SheveryBridge
 import com.overud.data.repository.AcceptanceRepository
 import com.overud.platform.fingerprint
-import com.overud.valuation.EligibilityEvaluator
 import com.overud.work.WorkSessionController
+import com.overud.work.assessOffer
 
 class AutoAcceptController(
     private val session: WorkSessionController,
@@ -59,20 +59,21 @@ class AutoAcceptController(
     }
     fun maybeAccept(offer: Offer, decision: Decision, token: String) {
         val before = session.state.value
-        if (!before.automatic || !before.working || before.pending || before.policySaving || !decision.eligible || token.isBlank() ||
+        val reviewed = before.assessOffer(offer, System.currentTimeMillis())
+        if (!before.automatic || !before.working || before.pending || before.policySaving || !decision.eligible || !reviewed.eligible || token.isBlank() ||
             token != fingerprint(offer.platform, offer.rawText)) return
         if (repository.hasUnresolved()) {
             session.update { it.copy(pending = true, automatic = false, autoAcceptEnabled = false,
                 deliveryPhase = DeliveryPhase.UNCERTAIN, message = "接单记录待核对") }
             return
         }
-        if (!gate.reserve(offer, decision, before.automatic, before.working)) return
+        if (!gate.reserve(offer, reviewed, before.automatic, before.working)) return
         try {
-            if (!repository.reserve(offer, decision)) { gate.releaseBeforeDispatch(); return }
+            if (!repository.reserve(offer, reviewed)) { gate.releaseBeforeDispatch(); return }
             val current = session.state.value
-            val rechecked = EligibilityEvaluator.assess(offer, current.policy, System.currentTimeMillis())
+            val rechecked = current.assessOffer(offer, System.currentTimeMillis())
             if (!current.automatic || !current.working || current.policySaving ||
-                current.policy.version != decision.policyVersion || !rechecked.eligible) {
+                current.policy.version != reviewed.policyVersion || !rechecked.eligible) {
                 repository.update(offer.id, "aborted", "开关或规则已变化")
                 gate.releaseBeforeDispatch()
                 return
@@ -81,7 +82,7 @@ class AutoAcceptController(
             session.update { it.copy(pending = true, automatic = false, deliveryPhase = DeliveryPhase.AWAITING_CONFIRMATION) }
             val dispatch = session.state.value
             if (!dispatch.autoAcceptEnabled || !dispatch.working || dispatch.policySaving ||
-                dispatch.policy.version != decision.policyVersion) {
+                dispatch.policy.version != reviewed.policyVersion || !dispatch.assessOffer(offer, System.currentTimeMillis()).eligible) {
                 repository.update(offer.id, "aborted", "automatic_mode_changed")
                 gate.releaseBeforeDispatch()
                 session.releaseDelivery("接单动作已停止")

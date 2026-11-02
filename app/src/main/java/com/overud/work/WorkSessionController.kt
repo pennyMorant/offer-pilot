@@ -1,7 +1,6 @@
 package com.overud.work
 
 import com.overud.model.*
-import com.overud.valuation.EligibilityEvaluator
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -31,7 +30,7 @@ class WorkSessionController(
     }
     fun stopWork() {
         mutable.update { it.copy(working = false, automatic = false, autoAcceptEnabled = false, latest = null, decision = null,
-            destinationAssessment = DestinationAssessment(), message = "工作已结束") }
+            destinationAssessment = DestinationAssessment(), destinationEvidence = null, message = "工作已结束") }
         bridge.unbind()
     }
     fun setAutomatic(enabled: Boolean) {
@@ -55,7 +54,7 @@ class WorkSessionController(
                 val saved = runCatching { store.save(updated) }.getOrDefault(false)
                 if (saved) mutable.update {
                     val decision = it.latest?.let { offer ->
-                        EligibilityEvaluator.assess(offer, updated, System.currentTimeMillis())
+                        it.copy(policy = updated).assessOffer(offer, System.currentTimeMillis())
                     }
                     it.copy(policy = updated, decision = decision, policySaving = false,
                         message = "规则已保存；可重新开启自动接单")

@@ -21,6 +21,7 @@ data class WorkState(
     val currentRegion: String? = null,
     val policySaving: Boolean = false,
     val policySaveError: String? = null,
+    val destinationEvidence: DestinationEvidence? = null,
     val destinationAssessment: DestinationAssessment = DestinationAssessment(),
     val deliveryPhase: DeliveryPhase = DeliveryPhase.AVAILABLE,
 )

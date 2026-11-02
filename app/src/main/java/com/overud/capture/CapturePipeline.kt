@@ -13,8 +13,8 @@ import com.overud.data.repository.StatisticsRepository
 import com.overud.platform.OfferParser
 import com.overud.platform.DeliveryScreenParser
 import com.overud.platform.DeliveryScreenState
-import com.overud.valuation.EligibilityEvaluator
 import com.overud.work.WorkSessionController
+import com.overud.work.assessOffer
 
 class CapturePipeline(
     private val session: WorkSessionController,
@@ -58,7 +58,7 @@ class CapturePipeline(
             if (text.isBlank()) waiting.interrupt() else waiting.frame(platform)
             val deliveryVisible = DeliveryScreenParser.parse(text) != DeliveryScreenState.UNKNOWN
             var offer = OfferParser.parse(platform, text, now)
-            val nodeDecision = offer?.let { EligibilityEvaluator.assess(it, session.state.value.policy, now) }
+            val nodeDecision = offer?.let { session.state.value.assessOffer(it, now) }
             if (!deliveryVisible && (offer == null || (!offer.reliable && nodeDecision?.eligible != true)) && now - lastOcrAt > 4000) {
                 lastOcrAt = now
                 val ocr = recognizer.recognize(platform.packageName)
@@ -78,7 +78,7 @@ class CapturePipeline(
                 if (!session.state.value.working) { waiting.interrupt(); return@withLock }
                 offer = tracker.observe(offer, now)
                 waiting.quote(offer)
-                val decision = EligibilityEvaluator.assess(offer, session.state.value.policy, now)
+                val decision = session.state.value.assessOffer(offer, now)
                 val changed = statistics.record(offer, regions.usableRegion())
                 val aggregate = if (changed) statistics.snapshot() else session.state.value.statistics
                 session.update {
@@ -87,7 +87,8 @@ class CapturePipeline(
                         val initial = DestinationAssessment(resolution = if (offer.destination.isNullOrBlank())
                             DestinationResolution.MISSING else DestinationResolution.RESOLVING)
                         it.copy(latest = offer, decision = decision, statistics = aggregate,
-                            destinationAssessment = if (sameDestination) it.destinationAssessment else initial)
+                            destinationAssessment = if (sameDestination) it.destinationAssessment else initial,
+                            destinationEvidence = if (sameDestination) it.destinationEvidence else null)
                     } else it.copy(statistics = aggregate)
                 }
                 acceptance.maybeAccept(offer, decision, snapshot.getString("token").orEmpty())
