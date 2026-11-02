@@ -11,6 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import com.overud.capture.WorkService
 import com.overud.ui.navigation.OverudRoot
+import com.overud.di.OverudViewModelFactory
 import com.overud.ui.theme.OverudTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,9 +21,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val runtime = (application as OverudApp).container
+        val factory = OverudViewModelFactory(runtime)
         setContent {
             OverudTheme {
-                OverudRoot(runtime,
+                OverudRoot(factory,
                     onWork = {
                         if (runtime.state.value.working) stopService(Intent(this, WorkService::class.java))
                         else {

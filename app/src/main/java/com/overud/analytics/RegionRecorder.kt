@@ -44,4 +44,5 @@ class RegionRecorder(private val session: WorkSessionController, private val rep
         }
         exposureAt = now; exposureKey = key
         if (now - regionsRefreshedAt > 15_000) { refreshRegions(); regionsRefreshedAt = now }
-    }}
+    }
+}
