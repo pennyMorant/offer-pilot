@@ -32,17 +32,16 @@ import com.overud.ui.rules.RulePreviewDialog
     val records by orders.records.collectAsStateWithLifecycle()
     val regionState by regions.state.collectAsStateWithLifecycle()
     val bridge = state.connection
-    var selected by rememberSaveable { mutableIntStateOf(0) }
+    var selected by rememberSaveable { mutableStateOf(Destination.DASHBOARD) }
     var replay by rememberSaveable { mutableStateOf(false) }
     var resolve by remember { mutableStateOf(false) }
-    val pages = listOf("工作台", "订单", "区域", "规则")
     Scaffold(
         bottomBar = {
             NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
-                pages.forEachIndexed { index, label ->
-                    NavigationBarItem(selected = selected == index, onClick = { selected = index },
-                        icon = { Text(listOf("◉", "≡", "⌖", "☷")[index], style = MaterialTheme.typography.titleLarge) },
-                        label = { Text(label) })
+                Destination.entries.forEach { destination ->
+                    NavigationBarItem(selected = selected == destination, onClick = { selected = destination },
+                        icon = { Text(destination.symbol, style = MaterialTheme.typography.titleLarge) },
+                        label = { Text(destination.label) })
                 }
             }
         },
@@ -50,11 +49,11 @@ import com.overud.ui.rules.RulePreviewDialog
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
             AnimatedContent(selected, label = "navigation") { page ->
                 when (page) {
-                    0 -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
-                        { selected = 3 }, { replay = true }, { resolve = true })
-                    1 -> OrdersScreen(records)
-                    2 -> RegionsScreen(regionState)
-                    else -> RulesScreen(rules, onOverlayPermission, onNotificationPermission, onLocationPermission)
+                    Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
+                        { selected = Destination.RULES }, { replay = true }, { resolve = true })
+                    Destination.ORDERS -> OrdersScreen(records)
+                    Destination.REGIONS -> RegionsScreen(regionState)
+                    Destination.RULES -> RulesScreen(rules, onOverlayPermission, onNotificationPermission, onLocationPermission)
                 }
             }
         }

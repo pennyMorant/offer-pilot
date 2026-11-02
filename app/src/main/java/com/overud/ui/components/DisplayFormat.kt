@@ -5,4 +5,3 @@ package com.overud.ui.components
 import java.util.Locale
 
 fun money(cents: Long) = "$${"%.2f".format(Locale.US, cents / 100.0)}"
-fun decimal(cents: Long) = "%.2f".format(Locale.US, cents / 100.0)
