@@ -27,7 +27,7 @@ class DeliveryRecorder(
 
     fun dispatch(offer: Offer) {
         val duration = offer.durationSeconds
-        val knownTotal = offer.reliable || offer.evidence?.totalsVerified == true
+        val knownTotal = offer.hasVerifiedDuration()
         val quote = duration?.takeIf {
             knownTotal && !offer.isAddon && it in 1..DeliveryMeasurement.MAX_MILLIS / 1000
         }?.times(1000)

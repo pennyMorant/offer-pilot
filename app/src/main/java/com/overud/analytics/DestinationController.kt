@@ -71,7 +71,7 @@ class DestinationController(
     }
 
     private fun trustedDuration(offer: Offer?): Long? {
-        val known = offer?.reliable == true || offer?.evidence?.totalsVerified == true
+        val known = offer?.hasVerifiedDuration() == true
         return offer?.durationSeconds?.takeIf { known && it in 1..86400 }
     }
 

@@ -10,7 +10,7 @@ object RegionalEligibilityEvaluator {
         if (!rules.enabled) return emptyList()
         if (!rules.valid()) return listOf("区域质量要求无效")
         val duration = offer.durationSeconds
-        val totalsKnown = offer.reliable || offer.evidence?.totalsVerified == true
+        val totalsKnown = offer.hasVerifiedDuration()
         if (!totalsKnown || duration == null || duration !in 1..86400 || offer.isAddon) {
             return listOf("缺少可信完整送达耗时，无法检查目的地区域要求")
         }

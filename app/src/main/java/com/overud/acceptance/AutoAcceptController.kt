@@ -38,8 +38,8 @@ class AutoAcceptController(
             deliveryPhase = if (unresolved) DeliveryPhase.UNCERTAIN else DeliveryPhase.AVAILABLE,
             message = if (unresolved) "有接单结果待核对，请先确认配送状态" else it.message) }
     }
-    fun observe(platform: Platform, text: String) {
-        observer.observe(platform, text)
+    fun observe(platform: Platform, page: PlatformPage) {
+        observer.observe(platform, page)
     }
     fun resolvePending() {
         scope.launch {

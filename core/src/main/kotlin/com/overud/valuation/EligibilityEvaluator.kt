@@ -46,15 +46,14 @@ object EligibilityEvaluator {
     }
 
     private fun routeLimits(offer: Offer, rules: AcceptanceRules) = buildList {
-        val totalsKnown = offer.reliable || offer.evidence?.totalsVerified == true
         if (rules.enabled(RuleCondition.MAXIMUM_DISTANCE)) {
             val distance = offer.distanceMeters
-            if (!totalsKnown || distance == null || distance <= 0) add("缺少可信总里程")
+            if (!offer.hasVerifiedDistance() || distance == null || distance <= 0) add("缺少可信总里程")
             else if (distance > rules.maximumMeters) add("总里程超过上限")
         }
         if (rules.enabled(RuleCondition.MAXIMUM_DURATION)) {
             val duration = offer.durationSeconds
-            if (!totalsKnown || duration == null || duration <= 0) add("缺少可信总耗时")
+            if (!offer.hasVerifiedDuration() || duration == null || duration <= 0) add("缺少可信总耗时")
             else if (duration > rules.maximumSeconds) add("订单耗时超过上限")
         }
         val pickupLimit = rules.maximumPickupMeters

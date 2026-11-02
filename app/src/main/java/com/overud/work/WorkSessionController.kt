@@ -29,7 +29,7 @@ class WorkSessionController(
         mutable.update { it.copy(working = true, automatic = false, autoAcceptEnabled = false, message = "正在监听订单页面") }
     }
     fun stopWork() {
-        mutable.update { it.copy(working = false, automatic = false, autoAcceptEnabled = false, latest = null, decision = null,
+        mutable.update { it.copy(working = false, automatic = false, autoAcceptEnabled = false, latest = null, decision = null, currentPage = null,
             destinationAssessment = DestinationAssessment(), destinationEvidence = null, message = "工作已结束") }
         bridge.unbind()
     }

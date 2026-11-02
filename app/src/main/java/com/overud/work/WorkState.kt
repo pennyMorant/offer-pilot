@@ -11,6 +11,7 @@ data class WorkState(
     val autoAcceptEnabled: Boolean = false,
     val policy: Policy = Policy(),
     val latest: Offer? = null,
+    val currentPage: PlatformPage? = null,
     val decision: Decision? = null,
     val deliveryHistory: List<DeliverySummary> = emptyList(),
     val waitingHistory: List<WaitingObservation> = emptyList(),

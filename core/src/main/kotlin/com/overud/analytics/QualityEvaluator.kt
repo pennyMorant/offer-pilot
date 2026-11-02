@@ -2,6 +2,8 @@ package com.overud.analytics
 
 import com.overud.model.Offer
 import com.overud.model.OfferSource
+import com.overud.model.hasVerifiedDistance
+import com.overud.model.hasVerifiedDuration
 import com.overud.valuation.ValueEngine
 import kotlin.math.roundToLong
 
@@ -11,9 +13,8 @@ object QualityEvaluator {
 
     fun extract(offer: Offer, previous: QualitySample? = null): QualitySample {
         val amount = offer.amountCents?.takeIf { it > 0 }
-        val totalsKnown = offer.reliable || offer.evidence?.totalsVerified == true
-        val observedDistance = offer.distanceMeters?.takeIf { it > 0 && totalsKnown }
-        val observedDuration = offer.durationSeconds?.takeIf { it > 0 && totalsKnown }
+        val observedDistance = offer.distanceMeters?.takeIf { it > 0 && offer.hasVerifiedDistance() }
+        val observedDuration = offer.durationSeconds?.takeIf { it > 0 && offer.hasVerifiedDuration() }
         // Preserve confirmed features only for aggregation of the same active quote.
         // They are never copied back into the offer used by the auto-accept evaluator.
         val distance = observedDistance ?: previous?.distanceMeters

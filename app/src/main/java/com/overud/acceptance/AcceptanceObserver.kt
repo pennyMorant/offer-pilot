@@ -21,9 +21,10 @@ class AcceptanceObserver(
 
     fun reset() { activeToken = null; completionSince = null; lastCompletionAt = 0; lastActiveAt = 0 }
 
-    fun observe(platform: Platform, text: String) {
+    fun observe(platform: Platform, page: PlatformPage) {
         if (!session.state.value.working) return
-        val screen = DeliveryScreenParser.parse(text)
+        if (page.platform != platform) return
+        val screen = DeliveryScreenParser.parse(page)
         var record = repository.active()
         if (screen == DeliveryScreenState.ACTIVE && (record == null || record.state !in unresolved)) {
             if (!repository.adoptActive(platform, session.state.value.policy.version)) return

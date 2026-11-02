@@ -11,8 +11,7 @@ import com.overud.acceptance.AutoAcceptController
 import com.overud.bridge.SheveryBridge
 import com.overud.data.repository.StatisticsRepository
 import com.overud.platform.OfferParser
-import com.overud.platform.DeliveryScreenParser
-import com.overud.platform.DeliveryScreenState
+import com.overud.platform.QuoteObservationResolver
 import com.overud.work.WorkSessionController
 import com.overud.work.assessOffer
 
@@ -54,25 +53,25 @@ class CapturePipeline(
             val now = System.currentTimeMillis()
             regions.trackExposure(platform, now)
             session.update { it.copy(lastCaptureAt = now) }
-            acceptance.observe(platform, text)
-            if (text.isBlank()) waiting.interrupt() else waiting.frame(platform)
-            val deliveryVisible = DeliveryScreenParser.parse(text) != DeliveryScreenState.UNKNOWN
-            var offer = OfferParser.parse(platform, text, now)
-            val nodeDecision = offer?.let { session.state.value.assessOffer(it, now) }
-            if (!deliveryVisible && (offer == null || (!offer.reliable && nodeDecision?.eligible != true)) && now - lastOcrAt > 4000) {
+            val nodePage = OfferParser.classify(platform, text)
+            acceptance.observe(platform, nodePage)
+            if (text.isBlank() || nodePage.type in setOf(PlatformPageType.OFFLINE, PlatformPageType.HISTORY,
+                    PlatformPageType.CANCELLED, PlatformPageType.AMBIGUOUS)) waiting.interrupt() else waiting.frame(platform)
+            val nodeOffer = OfferParser.parse(platform, text, now)
+            val nodeDecision = nodeOffer?.let { session.state.value.assessOffer(it, now) }
+            val needsOcr = nodeOffer == null || (!nodeOffer.reliable && nodeDecision?.eligible != true)
+            val ocr = if (nodePage.allowsOcrFallback && needsOcr && now - lastOcrAt > 4000) {
                 lastOcrAt = now
-                val ocr = recognizer.recognize(platform.packageName)
-                currentCoroutineContext().ensureActive()
-                if (ocr != null) {
-                    val parsed = OfferParser.parse(platform, ocr, now)
-                    // OCR-only observations inform the driver but do not authorize an action.
-                    if (offer == null || (offer.amountCents == null && parsed?.amountCents != null)) {
-                        offer = parsed?.let {
-                            it.copy(reliable = false, evidence = it.evidence?.copy(source = OfferSource.OCR))
-                        }
-                    }
-                }
+                recognizer.recognize(platform.packageName)
+            } else null
+            currentCoroutineContext().ensureActive()
+            val observation = QuoteObservationResolver.resolve(platform, text, ocr, now)
+            session.update { it.copy(currentPage = observation.page) }
+            if (observation.sourceConflict) {
+                waiting.interrupt()
+                session.update { it.copy(message = "节点与截图识别不一致，本帧不接单、不计入报价统计") }
             }
+            var offer = observation.offer
             if (offer != null) {
                 currentCoroutineContext().ensureActive()
                 if (!session.state.value.working) { waiting.interrupt(); return@withLock }
@@ -94,6 +93,8 @@ class CapturePipeline(
                 acceptance.maybeAccept(offer, decision, snapshot.getString("token").orEmpty())
             } else {
                 tracker.absent(platform, now)
+                session.update { it.copy(latest = null, decision = null, destinationEvidence = null,
+                    destinationAssessment = DestinationAssessment()) }
             }
         } catch (e: Exception) {
             if (e is CancellationException) { deliveries.invalidate(); waiting.invalidate(); throw e }

@@ -10,10 +10,8 @@ object ValueEngine {
         if (offer.currency != "USD") return Valuation(null, null, null)
         val amountKnown = offer.reliable || offer.evidence?.amountVerified == true
         val amount = offer.amountCents?.takeIf { it > 0 && amountKnown }
-        val totalsKnown = (offer.reliable || offer.evidence?.totalsVerified == true) &&
-            (!offer.isAddon || offer.evidence?.incrementalRouteVerified == true)
-        val miles = offer.distanceMeters?.takeIf { it > 0 && totalsKnown }?.div(METERS_PER_MILE)
-        val seconds = offer.durationSeconds?.takeIf { it > 0 && totalsKnown }
+        val miles = offer.distanceMeters?.takeIf { it > 0 && offer.hasVerifiedDistance() }?.div(METERS_PER_MILE)
+        val seconds = offer.durationSeconds?.takeIf { it > 0 && offer.hasVerifiedDuration() }
         val cost = if (miles != null && effective.costCentsPerMile >= 0) miles * effective.costCentsPerMile else null
         val contribution = if (amount != null && cost != null) amount - cost else null
         return Valuation(
