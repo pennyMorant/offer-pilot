@@ -30,9 +30,10 @@ object RuleInputParser {
         val distance = if (input.distance == miles(base.maximumMeters)) base.maximumMeters
             else meters(input.distance) ?: return null
         val duration = input.time.toLongOrNull()?.takeIf { it in 1..1440 }?.times(60) ?: return null
+        val savedPickup = base.maximumPickupMeters
         val pickup = when {
             input.pickup.isBlank() -> null
-            base.maximumPickupMeters != null && input.pickup == miles(base.maximumPickupMeters) -> base.maximumPickupMeters
+            savedPickup != null && input.pickup == miles(savedPickup) -> savedPickup
             else -> meters(input.pickup) ?: return null
         }
         return base.copy(

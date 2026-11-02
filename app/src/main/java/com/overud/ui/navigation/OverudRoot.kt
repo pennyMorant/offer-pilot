@@ -16,6 +16,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.overud.ui.dashboard.DashboardViewModel
 import com.overud.ui.rules.RulesViewModel
 import com.overud.ui.dashboard.DashboardScreen
+import com.overud.ui.orders.OrdersViewModel
+import com.overud.ui.regions.RegionsViewModel
 import com.overud.ui.orders.OrdersScreen
 import com.overud.ui.regions.RegionsScreen
 import com.overud.ui.rules.RulesScreen
@@ -25,7 +27,11 @@ import com.overud.ui.rules.RulePreviewDialog
     val dashboard: DashboardViewModel = viewModel(factory = factory)
     val rules: RulesViewModel = viewModel(factory = factory)
     val state by dashboard.state.collectAsStateWithLifecycle()
-    val bridge by dashboard.connection.collectAsStateWithLifecycle()
+    val orders: OrdersViewModel = viewModel(factory = factory)
+    val regions: RegionsViewModel = viewModel(factory = factory)
+    val records by orders.records.collectAsStateWithLifecycle()
+    val regionState by regions.state.collectAsStateWithLifecycle()
+    val bridge = state.connection
     var selected by rememberSaveable { mutableIntStateOf(0) }
     var replay by rememberSaveable { mutableStateOf(false) }
     var resolve by remember { mutableStateOf(false) }
@@ -46,8 +52,8 @@ import com.overud.ui.rules.RulePreviewDialog
                 when (page) {
                     0 -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
                         { selected = 3 }, { replay = true }, { resolve = true })
-                    1 -> OrdersScreen(state.records)
-                    2 -> RegionsScreen(state.records, state.regions)
+                    1 -> OrdersScreen(records)
+                    2 -> RegionsScreen(regionState)
                     else -> RulesScreen(rules, onOverlayPermission, onNotificationPermission, onLocationPermission)
                 }
             }

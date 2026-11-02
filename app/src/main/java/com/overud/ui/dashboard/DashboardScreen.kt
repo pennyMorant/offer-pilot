@@ -11,11 +11,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.ui.text.font.FontWeight
-import com.overud.work.WorkState
 import com.overud.bridge.BridgeStatus
 import com.overud.ui.components.*
 
-@Composable fun DashboardScreen(state: WorkState, bridge: BridgeStatus, onWork: () -> Unit,
+@Composable fun DashboardScreen(state: DashboardUiState, bridge: BridgeStatus, onWork: () -> Unit,
     onAutomatic: (Boolean) -> Unit, onAuthorize: () -> Unit, onRules: () -> Unit, onReplay: () -> Unit, onResolve: () -> Unit) {
     LazyColumn(Modifier.widthIn(max = 760.dp).fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -74,8 +73,8 @@ import com.overud.ui.components.*
                 ?: EmptyStateCard("等待第一张报价", "开始工作后，在 Uber 或 DoorDash 打开订单报价，分析结果会出现在这里。")
         }
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MetricCard("已记录报价", state.records.size.toString(), Modifier.weight(1f))
-            MetricCard("符合当前记录规则", state.records.count { it.eligible }.toString(), Modifier.weight(1f))
+            MetricCard("已记录报价", state.recordCount.toString(), Modifier.weight(1f))
+            MetricCard("符合当前记录规则", state.eligibleCount.toString(), Modifier.weight(1f))
         } }
     }
 }
