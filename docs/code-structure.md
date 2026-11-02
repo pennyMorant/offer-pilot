@@ -284,3 +284,5 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - core/platform/AcceptanceActionPolicy.kt：首步动作词表选择、完整标签匹配和页面门控，上限 120 行。
 - app/bridge/AcceptTargetResolver.kt：活动窗口、报价指纹、节点与可点击父节点复核，上限 180 行。
 - AutoAcceptController 负责确认等待任务及超时状态，沿用 200 行上限；超时不释放未决占用，不增加数据库记录。
+- core/platform/AcceptanceConfirmationPolicy.kt：确认页报价锚点与动作匹配，上限 120 行。
+- app/acceptance/AcceptanceConfirmation.kt：一个内存确认上下文、连接/规则/意愿复核与一次性执行，上限 180 行。
