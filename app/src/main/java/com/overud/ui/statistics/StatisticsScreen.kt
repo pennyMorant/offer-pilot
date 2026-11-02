@@ -22,5 +22,11 @@ fun StatisticsScreen(state: AnalysisUiState, onSelection: (AnalysisSelection) ->
         item { QualityStandardNote() }
         if (state.cards.isEmpty()) item { EmptyStateCard("此范围还没有统计样本", "工作期间识别到的报价会归入统计分组，包括未接的报价。") }
         items(state.cards, key = { it.id }) { QualityCard(it) }
+        item { Text("配送耗时与报价对比", style = MaterialTheme.typography.titleLarge) }
+        item { DeliveryMeasurementNote() }
+        if (state.deliveries.isEmpty()) item {
+            EmptyStateCard("此范围还没有配送观测汇总", "明确送达后累计；未识别到完整起点的配送不会补造耗时。")
+        }
+        items(state.deliveries, key = { it.id }) { DeliveryCard(it) }
     }
 }

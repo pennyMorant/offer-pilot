@@ -23,5 +23,11 @@ fun RegionsScreen(state: AnalysisUiState, onSelection: (AnalysisSelection) -> Un
         item { EmptyStateCard("收到报价时的位置", "按位置网格统计，未知位置单独归组。数据仅代表个人观测，不代表平台全部订单或真实派单频率。") }
         if (state.cards.isEmpty()) item { EmptyStateCard("地区样本不足", "开始工作并授权定位后，报价会归入相应网格。") }
         items(state.cards, key = { it.id }) { QualityCard(it) }
+        item { Text("配送耗时与报价对比", style = MaterialTheme.typography.titleLarge) }
+        item { DeliveryMeasurementNote() }
+        if (state.deliveries.isEmpty()) item {
+            EmptyStateCard("此范围还没有配送观测汇总", "明确送达后累计；未识别到完整起点的配送不会补造耗时。")
+        }
+        items(state.deliveries, key = { it.id }) { DeliveryCard(it) }
     }
 }
