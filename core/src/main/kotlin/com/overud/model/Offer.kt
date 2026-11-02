@@ -15,4 +15,5 @@ data class Offer(
     val isAddon: Boolean = false,
     val reliable: Boolean = false,
     val rawText: String = "",
+    val evidence: QuoteEvidence? = null,
 )

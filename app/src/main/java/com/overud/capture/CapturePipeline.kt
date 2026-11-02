@@ -46,7 +46,12 @@ class CapturePipeline(
                 if (ocr != null) {
                     val parsed = OfferParser.parse(platform, ocr, now)
                     // OCR-only observations inform the driver but do not authorize an action.
-                    if (offer == null || (offer.amountCents == null && parsed?.amountCents != null)) offer = parsed?.copy(reliable = false)
+                    if (offer == null || (offer.amountCents == null && parsed?.amountCents != null)) {
+                        offer = parsed?.copy(
+                            reliable = false,
+                            evidence = parsed.evidence?.copy(source = OfferSource.OCR),
+                        )
+                    }
                 }
             }
             if (offer != null) {

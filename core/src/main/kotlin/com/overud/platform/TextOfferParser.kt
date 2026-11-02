@@ -38,6 +38,7 @@ abstract class TextOfferParser(
             isAddon = Regex("add.?on|add a delivery|追加", RegexOption.IGNORE_CASE).containsMatchIn(text),
             reliable = cents != null && meters != null && seconds != null && totalExplicit,
             rawText = text,
+            evidence = QuoteEvidence(amountVerified = cents != null, totalsVerified = totalExplicit),
         )
     }
 }
