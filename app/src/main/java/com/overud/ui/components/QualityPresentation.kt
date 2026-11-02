@@ -21,6 +21,7 @@ fun qualityPresentation(summary: QualitySummary, byRegion: Boolean): QualityCard
         averageMile = averageMoney(summary.perMileMilliSum, summary.perMileCount, 1000),
         averageHour = averageMoney(summary.perHourMilliSum, summary.perHourCount, 1000),
         goodRate = if (classified >= 10) (summary.goodCount * 100.0 / classified).roundToInt() else null,
+        metricSamples = "金额样本 ${summary.amountCount} · 里程效率样本 ${summary.perMileCount} · 时间效率样本 ${summary.perHourCount}",
     )
 }
 

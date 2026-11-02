@@ -13,4 +13,5 @@ data class QualityCardState(
     val averageMile: String,
     val averageHour: String,
     val goodRate: Int?,
+    val metricSamples: String,
 )

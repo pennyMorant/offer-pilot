@@ -17,6 +17,7 @@ fun QualityCard(state: QualityCardState) {
             HorizontalDivider()
             Text("平均报价 ${state.averageAmount}")
             Text("每英里报价均值 ${state.averageMile}/mi · 预估毛时薪均值 ${state.averageHour}/h")
+            Text(state.metricSamples, style = MaterialTheme.typography.bodySmall)
             Text(state.goodRate?.let { "可分类样本中的优质比例 $it%" } ?: "可分类样本少于 10 张，暂不判断区域或时段倾向",
                 color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
         }

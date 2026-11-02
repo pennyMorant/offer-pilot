@@ -33,4 +33,5 @@ fun HourlyQualityRecord.adjust(sample: QualitySample, delta: Int) {
     mileBins = MetricHistogram.adjust(mileBins, MetricHistogram.MILE_BOUNDS, sample.centsPerMileMilli, delta)
     hourBins = MetricHistogram.adjust(hourBins, MetricHistogram.HOUR_BOUNDS, sample.centsPerHourMilli, delta)
     require(offerCount >= 0 && goodCount >= 0 && normalCount >= 0 && lowCount >= 0 && unknownCount >= 0)
+    require(goodCount + normalCount + lowCount + unknownCount == offerCount)
 }

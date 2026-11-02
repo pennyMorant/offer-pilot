@@ -14,6 +14,7 @@ class StatisticsRepository(private val database: OverudDatabase) {
     private var prunedAt = 0L
 
     fun record(offer: Offer, region: String?): Boolean {
+        if (offer.amountCents == null || offer.amountCents <= 0) return false
         val previous = current[offer.platform]?.takeIf { it.token == offer.id }
         val original = previous?.bucket
         val bucket = if (original == null) AnalysisBucket.at(offer.platform, region, offer.firstObservedAt)
@@ -25,7 +26,8 @@ class StatisticsRepository(private val database: OverudDatabase) {
         var changed = false
         database.runInTransaction {
             val checkpoint = dao.checkpoint(offer.platform.name)
-            val alreadyRecorded = checkpoint?.offerToken == offer.id && checkpoint.expiresAt > System.currentTimeMillis()
+            val alreadyRecorded = checkpoint != null && checkpoint.offerToken == offer.id &&
+                checkpoint.expiresAt > System.currentTimeMillis()
             // After a process restart only the token remains; do not invent a reversible sample.
             if (previous == null && alreadyRecorded) return@runInTransaction
             if (previous != null) {
@@ -55,14 +57,15 @@ class StatisticsRepository(private val database: OverudDatabase) {
         return StatisticsSnapshot(dao.totals(since), dao.timeSummaries(since), dao.regionSummaries(since), System.currentTimeMillis())
     }
 
-    fun prune() {
+    fun prune(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - prunedAt < 24L * 3600 * 1000) return
+        if (now - prunedAt in 0 until 24L * 3600 * 1000) return false
         database.runInTransaction {
             database.quality().prune(retentionStart())
             database.regions().prune(retentionStart())
         }
         prunedAt = now
+        return true
     }
 
     private fun retentionStart() = System.currentTimeMillis() - 90L * 24 * 3600 * 1000

@@ -40,7 +40,7 @@ class AppContainer(context: Context) {
         }
     }
     fun startWork() { tracker.reset(); regions.clear(); session.startWork() }
-    fun stopWork() { session.stopWork(); regions.clear() }
+    fun stopWork() { session.stopWork(); regions.clear(); tracker.reset() }
     fun setAutomatic(enabled: Boolean) = session.setAutomatic(enabled)
     fun notification(platform: Platform, text: String) = session.notification(platform, text)
 }

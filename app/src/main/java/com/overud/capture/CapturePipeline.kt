@@ -25,6 +25,7 @@ class CapturePipeline(
     private var lastOcrAt = 0L
     suspend fun poll() = mutex.withLock {
         if (!session.state.value.working) return@withLock
+        if (statistics.prune()) session.update { it.copy(statistics = statistics.snapshot()) }
         val service = bridge.service ?: return@withLock
         try {
             val snapshot = service.snapshot()
