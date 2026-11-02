@@ -49,6 +49,9 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
                 else it.disabledConditions + condition, error = null)
         }
     }
+    fun hourlyBasis(basis: HourlyBasis) {
+        if (!state.value.saving) mutable.update { it.copy(hourlyBasis = basis, error = null) }
+    }
     fun edit(field: RuleField, value: String) {
         if (state.value.saving) return
         mutable.update {

@@ -27,6 +27,7 @@ object RuleJsonCodec {
         put("time", rules.maximumSeconds)
         put("pickup", rules.maximumPickupMeters ?: JSONObject.NULL)
         put("cost", rules.costCentsPerMile)
+        put("hourlyBasis", rules.hourlyBasis.name)
         put("stack", rules.allowStacked)
         put("addon", rules.allowAddon)
         put("destinations", JSONArray(rules.excludedDestinations.toList()))
@@ -46,6 +47,7 @@ object RuleJsonCodec {
             maximumSeconds = json.getLong("time"),
             maximumPickupMeters = if (json.isNull("pickup")) null else json.getLong("pickup"),
             costCentsPerMile = json.getLong("cost"),
+            hourlyBasis = if (json.has("hourlyBasis")) HourlyBasis.valueOf(json.getString("hourlyBasis")) else HourlyBasis.GROSS,
             allowStacked = json.getBoolean("stack"),
             allowAddon = json.getBoolean("addon"),
             excludedDestinations = strings(json.getJSONArray("destinations")),

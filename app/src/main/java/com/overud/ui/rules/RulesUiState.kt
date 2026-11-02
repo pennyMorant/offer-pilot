@@ -1,5 +1,6 @@
 package com.overud.ui.rules
 
+import com.overud.model.HourlyBasis
 import com.overud.model.Platform
 import com.overud.model.RuleCondition
 
@@ -23,6 +24,7 @@ data class RulesUiState(
     val inheritShared: Boolean = false,
     val saving: Boolean = false,
     val error: String? = null,
+    val hourlyBasis: HourlyBasis = HourlyBasis.GROSS,
 )
 
 data class RulePreviewState(

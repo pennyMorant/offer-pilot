@@ -14,7 +14,11 @@ fun policySummaries(policy: Policy): List<PlatformPolicySummary> = Platform.entr
         val details = buildList {
             if (rules.enabled(RuleCondition.MINIMUM_AMOUNT)) add("报价 ≥ ${money(rules.minimumCents)}")
             if (rules.enabled(RuleCondition.MINIMUM_PER_MILE)) add("≥ ${money(rules.minimumCentsPerMile)}/mi")
-            if (rules.enabled(RuleCondition.MINIMUM_HOURLY)) add("毛时薪 ≥ ${money(rules.minimumCentsPerHour)}/h")
+            if (rules.enabled(RuleCondition.MINIMUM_HOURLY)) {
+                val basis = if (rules.hourlyBasis == HourlyBasis.GROSS) "毛时薪" else "扣车辆成本后时薪"
+                add("$basis ≥ ${money(rules.minimumCentsPerHour)}/h")
+            }
+            add("车辆成本 ${money(rules.costCentsPerMile)}/mi")
             if (rules.enabled(RuleCondition.MAXIMUM_DISTANCE)) add("≤ ${miles(rules.maximumMeters)} mi")
             if (rules.enabled(RuleCondition.MAXIMUM_DURATION)) add("≤ ${rules.maximumSeconds / 60} min")
             val pickup = rules.maximumPickupMeters

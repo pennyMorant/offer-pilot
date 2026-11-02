@@ -36,7 +36,7 @@ fun RulesScreen(
             item { EmptyStateCard("此平台跟随公共要求", "公共要求保存后会同时应用于所有跟随它的平台。") }
         } else {
             item { SectionLabel("最低收益 · USD") }
-            item { EarningsFields(state, viewModel::edit, viewModel::condition) }
+            item { EarningsFields(state, viewModel::edit, viewModel::condition, viewModel::hourlyBasis) }
             item { SectionLabel("距离与时间") }
             item { DistanceTimeFields(state, viewModel::edit, viewModel::condition) }
             item { SectionLabel("额外偏好") }
