@@ -19,12 +19,17 @@ object AcceptanceConfirmationPolicy {
         if (offer.isAddon || offer.isStacked || offer.currency != "USD") return false
         val page = OfferParser.classify(offer.platform, text)
         if (page.type != PlatformPageType.ACCEPT_CONFIRMATION) return false
+        if (PageSignal.ADDON in page.signals || Regex("\\b[2-9] (orders|deliveries)\\b|叠单",
+                RegexOption.IGNORE_CASE).containsMatchIn(text)) return false
         val money = QuoteMoneyParser.parse(text)
         if (money.cents == null || money.cents != offer.amountCents || money.currency != offer.currency) return false
         val locations = DeliveryLocationParser.parse(text)
         if (!same(offer.merchant, locations.merchant) || !same(offer.destination, locations.destination)) return false
         // Require the same explicitly scoped route as well; changed or missing terms need manual review.
         val route = RouteMetricsParser.parse(text, false)
+        if (route.pickupMeters != null && route.pickupMeters != offer.pickupMeters) return false
+        val originalPickup = DeliveryLocationParser.parse(offer.rawText).pickup
+        if (locations.pickup != null && !same(originalPickup, locations.pickup)) return false
         return route.distanceVerified && route.durationVerified &&
             route.meters == offer.distanceMeters && route.seconds == offer.durationSeconds
     }
