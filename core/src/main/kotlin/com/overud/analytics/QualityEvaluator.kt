@@ -12,7 +12,7 @@ object QualityEvaluator {
     const val VERSION = 1
 
     fun extract(offer: Offer, previous: QualitySample? = null): QualitySample {
-        val amount = offer.amountCents?.takeIf { it > 0 }
+        val amount = offer.amountCents?.takeIf { it > 0 && offer.currency == "USD" }
         val observedDistance = offer.distanceMeters?.takeIf { it > 0 && offer.hasVerifiedDistance() }
         val observedDuration = offer.durationSeconds?.takeIf { it > 0 && offer.hasVerifiedDuration() }
         // Preserve confirmed features only for aggregation of the same active quote.

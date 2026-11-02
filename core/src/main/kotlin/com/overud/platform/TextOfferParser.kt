@@ -20,7 +20,7 @@ abstract class TextOfferParser(
         val incremental = addon && amount.incremental && totals
         val amountVerified = amount.cents != null && amount.currency == "USD"
         return Offer(
-            id = fingerprint(platform, listOf(amount.cents, route.meters, route.seconds,
+            id = fingerprint(platform, listOf(amount.cents, amount.currency, route.meters, route.seconds,
                 locations.merchant, locations.destination, addon).joinToString("|")),
             platform = platform, observedAt = now,
             amountCents = amount.cents, distanceMeters = route.meters, durationSeconds = route.seconds,

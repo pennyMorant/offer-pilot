@@ -16,6 +16,7 @@ class StatisticsRepository(private val database: OverudDatabase) {
     private val snapshotRevision = AtomicLong()
 
     fun record(offer: Offer, region: String?): Boolean {
+        if (offer.currency != "USD") return false
         val amount = offer.amountCents
         if (amount == null || amount <= 0) return false
         val previous = current[offer.platform]?.takeIf { it.token == offer.id }
