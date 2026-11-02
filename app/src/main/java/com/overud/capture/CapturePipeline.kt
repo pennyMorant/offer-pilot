@@ -28,6 +28,7 @@ class CapturePipeline(
     private val mutex: Mutex,
 ) {
     private var lastOcrAt = 0L
+    private val sourceConflictMessage = "节点与截图识别不一致，本帧不接单、不计入报价统计"
     suspend fun poll() = mutex.withLock {
         try {
             deliveries.checkContinuity()
@@ -70,7 +71,7 @@ class CapturePipeline(
             session.update { if (it.working) it.copy(currentPage = observation.page) else it }
             if (observation.sourceConflict) {
                 waiting.interrupt()
-                session.update { if (it.working) it.copy(message = "节点与截图识别不一致，本帧不接单、不计入报价统计") else it }
+                session.update { if (it.working) it.copy(message = sourceConflictMessage) else it }
             }
             var offer = observation.offer
             if (offer != null) {
@@ -87,6 +88,7 @@ class CapturePipeline(
                         val initial = DestinationAssessment(resolution = if (offer.destination.isNullOrBlank())
                             DestinationResolution.MISSING else DestinationResolution.RESOLVING)
                         it.copy(latest = offer, decision = decision, statistics = aggregate,
+                            message = if (it.message == sourceConflictMessage) "正在分析当前报价" else it.message,
                             destinationAssessment = if (sameDestination) it.destinationAssessment else initial,
                             destinationEvidence = if (sameDestination) it.destinationEvidence else null)
                     } else it.copy(statistics = aggregate)
