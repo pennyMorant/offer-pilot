@@ -66,6 +66,14 @@ class AutoAcceptController(
             }
             // Persist before IPC. A process failure can never cause a blind retry.
             session.update { it.copy(pending = true, automatic = false, deliveryPhase = DeliveryPhase.AWAITING_CONFIRMATION) }
+            val dispatch = session.state.value
+            if (!dispatch.autoAcceptEnabled || !dispatch.working || dispatch.policySaving ||
+                dispatch.policy.version != decision.policyVersion) {
+                repository.update(offer.id, "aborted", "automatic_mode_changed")
+                gate.releaseBeforeDispatch()
+                session.releaseDelivery("接单动作已停止")
+                return
+            }
             gate.dispatched()
             val result = bridge.service?.accept(token, offer.platform.packageName) ?: "service_disconnected"
             if (result == "dispatched") {

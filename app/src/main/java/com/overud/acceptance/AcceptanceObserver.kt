@@ -17,8 +17,9 @@ class AcceptanceObserver(
     private var activeToken: String? = null
     private var completionSince: Long? = null
     private var lastCompletionAt = 0L
+    private var lastActiveAt = 0L
 
-    fun reset() { activeToken = null; completionSince = null; lastCompletionAt = 0 }
+    fun reset() { activeToken = null; completionSince = null; lastCompletionAt = 0; lastActiveAt = 0 }
 
     fun observe(platform: Platform, text: String) {
         if (!session.state.value.working) return
@@ -35,7 +36,10 @@ class AcceptanceObserver(
         when (screen) {
             DeliveryScreenState.ACTIVE, DeliveryScreenState.ACCEPTED -> {
                 if (record.state != "accepted") repository.update(record.offerId, "accepted", "confirmed_delivery_screen")
-                if (screen == DeliveryScreenState.ACTIVE) activeToken = record.offerId
+                if (screen == DeliveryScreenState.ACTIVE) {
+                    activeToken = record.offerId
+                    lastActiveAt = SystemClock.elapsedRealtime()
+                }
                 completionSince = null
                 onConfirmed()
                 session.update { it.copy(pending = true, automatic = false, deliveryPhase = DeliveryPhase.ACTIVE,
@@ -44,6 +48,7 @@ class AcceptanceObserver(
             DeliveryScreenState.COMPLETED -> {
                 if (record.state != "accepted" || activeToken != record.offerId) return
                 val now = SystemClock.elapsedRealtime()
+                if (now - lastActiveAt !in 0..30_000) { completionSince = null; return }
                 val first = completionSince
                 if (first == null || now - lastCompletionAt > 3000) {
                     completionSince = now

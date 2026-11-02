@@ -10,10 +10,13 @@ object DeliveryScreenParser {
     private val completed = setOf("delivery complete", "delivery completed", "order delivered",
         "订单已送达", "配送完成", "送达成功")
     private val accepted = setOf("order accepted", "delivery accepted", "订单已接受", "接单成功")
+    private val history = setOf("trip history", "order history", "delivery history", "past deliveries",
+        "earnings activity", "历史订单", "配送历史", "行程历史")
     private val quoteAction = Regex("^(accept|match|接受|接单)(\\b|\\s|$)", RegexOption.IGNORE_CASE)
 
     fun parse(text: String): DeliveryScreenState {
         val lines = text.lines().map { it.trim().trimEnd('!', '.', '。', '！').lowercase(Locale.ROOT) }.toSet()
+        if (lines.any { it in history }) return DeliveryScreenState.UNKNOWN
         if (lines.any(quoteAction::containsMatchIn) && Regex("(?:US\\$|\\$)\\s*\\d").containsMatchIn(text)) {
             return DeliveryScreenState.UNKNOWN
         }

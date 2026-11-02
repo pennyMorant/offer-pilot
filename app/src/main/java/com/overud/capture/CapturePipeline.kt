@@ -9,6 +9,8 @@ import com.overud.acceptance.AutoAcceptController
 import com.overud.bridge.SheveryBridge
 import com.overud.data.repository.StatisticsRepository
 import com.overud.platform.OfferParser
+import com.overud.platform.DeliveryScreenParser
+import com.overud.platform.DeliveryScreenState
 import com.overud.valuation.EligibilityEvaluator
 import com.overud.work.WorkSessionController
 
@@ -39,9 +41,10 @@ class CapturePipeline(
             regions.trackExposure(platform, now)
             session.update { it.copy(lastCaptureAt = now) }
             acceptance.observe(platform, text)
+            val deliveryVisible = DeliveryScreenParser.parse(text) != DeliveryScreenState.UNKNOWN
             var offer = OfferParser.parse(platform, text, now)
             val nodeDecision = offer?.let { EligibilityEvaluator.assess(it, session.state.value.policy, now) }
-            if ((offer == null || (!offer.reliable && nodeDecision?.eligible != true)) && now - lastOcrAt > 4000) {
+            if (!deliveryVisible && (offer == null || (!offer.reliable && nodeDecision?.eligible != true)) && now - lastOcrAt > 4000) {
                 lastOcrAt = now
                 val ocr = recognizer.recognize(platform.packageName)
                 currentCoroutineContext().ensureActive()
