@@ -101,3 +101,5 @@ docs/architecture.md          完整目标架构及自动接单设计
 已接入 Uber Eats / DoorDash 独立页面词表、总量/增量字段口径及完整来源观察选择。历史与冲突页不解析成新报价，OCR 不获得自动执行资格。当前覆盖和限制见 [平台页面说明](docs/platform-pages.md)。
 
 本次安装包及操作说明见 [安装交付说明](docs/install-handoff.md)。
+
+工作台新增“选择订单图片测试”：从手机选图查看 OCR、报价字段及已保存规则判断，不需要 Shevery，不接单、不写入统计；关闭清除结果。

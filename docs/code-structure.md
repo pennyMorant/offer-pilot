@@ -286,3 +286,13 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - AutoAcceptController 负责确认等待任务及超时状态，沿用 200 行上限；超时不释放未决占用，不增加数据库记录。
 - core/platform/AcceptanceConfirmationPolicy.kt：确认页报价锚点与动作匹配，上限 120 行。
 - app/acceptance/AcceptanceConfirmation.kt：一个内存确认上下文、连接/规则/意愿复核与一次性执行，上限 180 行。
+
+
+## 16. 手动图片测试入口
+
+- capture/ImportedImageRecognizer.kt：用户选图解码、缩放、OCR 及资源释放，上限 150 行，不连接实时采集或接单。
+- ui/imagetest/ImageTestUiState.kt：纯内存预览状态，上限 120 行。
+- ui/imagetest/ImageTestViewModel.kt：异步识别、过期回调隔离与已保存规则评估，上限 180 行。
+- ui/imagetest/ImageTestDialog.kt：选图器、平台选择、字段与 OCR 原文展示，上限 150 行。
+
+仅从工作台进入，不新增持久化数据或测试记录。关闭清空，结果不获得自动点击资格。
