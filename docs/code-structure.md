@@ -246,3 +246,13 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - ui/components/DeliveryCardState.kt：纯展示模型，上限 120 行；DeliveryPresentation.kt、DeliveryCard.kt：筛选分组、均值格式和展示，各上限 150 行。
 
 地区和时段页继续经 ViewModel/UiState 获取汇总，不读取逐单配送，不直接访问数据库。
+
+## 12. 车辆成本与时薪口径
+
+- core/model/HourlyBasis.kt：毛报价与扣配置车辆成本后口径，上限 120 行。
+- core/model/Assessment.kt：贡献、车辆成本和成本后时薪估计，上限 120 行。
+- ValueEngine / EligibilityEvaluator 继续分别负责计算与硬条件，维持原有各 200 行上限。
+- ui/components/VehicleCostPresentation.kt、VehicleCostSummary.kt：同一套估算格式和卡片展示，各上限 150 行。
+- Policy / AcceptanceRules、规则偏好、草稿、预览与平台继承继续在原职责中处理，不增设存储表。
+
+不把用户配置成本混入固定历史质量标准，不将成本后报价时薪称为净时薪或完整周期时薪。
