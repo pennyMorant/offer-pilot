@@ -32,6 +32,7 @@ class AppContainer(context: Context) {
         .addMigrations(DatabaseMigrations.TO_AGGREGATES, WaitingSchema.MIGRATION, DeliverySchema.MIGRATION).build()
     val bridge = SheveryBridge(context)
     val session = WorkSessionController(bridge, PolicyStore(context), scope, mutex)
+    val importedImages = ImportedImageRecognizer(context)
     val state = session.state
     private val statistics = StatisticsRepository(database)
     val regions = RegionRecorder(session, RegionRepository(database))

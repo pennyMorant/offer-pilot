@@ -6,6 +6,7 @@ import com.overud.ui.dashboard.DashboardViewModel
 import com.overud.ui.rules.RulesViewModel
 import com.overud.ui.statistics.StatisticsViewModel
 import com.overud.ui.regions.RegionsViewModel
+import com.overud.ui.imagetest.ImageTestViewModel
 
 class OverudViewModelFactory(private val container: AppContainer) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -14,6 +15,7 @@ class OverudViewModelFactory(private val container: AppContainer) : ViewModelPro
             RulesViewModel::class.java -> RulesViewModel(container.session)
             StatisticsViewModel::class.java -> StatisticsViewModel(container.session)
             RegionsViewModel::class.java -> RegionsViewModel(container.session)
+            ImageTestViewModel::class.java -> ImageTestViewModel(container.importedImages, container.session)
             else -> error("Unknown ViewModel: ${modelClass.name}")
         }
         return modelClass.cast(instance) ?: error("ViewModel type mismatch")
