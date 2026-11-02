@@ -8,7 +8,11 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.overud.bridge.SheveryBridge
 import com.overud.data.*
-import com.overud.domain.*
+import com.overud.model.*
+import com.overud.platform.*
+import com.overud.valuation.*
+import com.overud.acceptance.*
+import com.overud.region.RegionCell
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -150,7 +154,7 @@ class OverudRuntime(context: Context, private val database: OverudDatabase) {
                 if (canonical != lastCanonical || now - lastOfferAt > 10_000 || currentOfferId == null) currentOfferId = "$canonical-$now"
                 lastCanonical = canonical; lastOfferAt = now
                 offer = offer.copy(id = currentOfferId!!)
-                val decision = ValueEngine.assess(offer, state.value.policy, now)
+                val decision = EligibilityEvaluator.assess(offer, state.value.policy, now)
                 record(offer, decision)
                 mutable.update { it.copy(latest = offer, decision = decision) }
                 maybeAccept(offer, decision, snapshot.getString("token").orEmpty())
@@ -186,7 +190,7 @@ class OverudRuntime(context: Context, private val database: OverudDatabase) {
         if (database.offers().reserve(attempt) == -1L) { gate.releaseBeforeDispatch(); return }
         try {
             val current = state.value
-            val rechecked = ValueEngine.assess(offer, current.policy, System.currentTimeMillis())
+            val rechecked = EligibilityEvaluator.assess(offer, current.policy, System.currentTimeMillis())
             if (!current.automatic || !current.working || current.policy.version != decision.policyVersion || !rechecked.eligible) {
                 database.offers().updateAttempt(offer.id, "aborted", "开关或规则已变化")
                 gate.releaseBeforeDispatch()

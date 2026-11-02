@@ -12,7 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import com.overud.data.OfferRecord
 import com.overud.data.RegionSummary
-import com.overud.domain.Platform
+import com.overud.model.Platform
 import com.overud.ui.components.*
 
 @Composable fun RegionsScreen(records: List<OfferRecord>, regions: List<RegionSummary>) {

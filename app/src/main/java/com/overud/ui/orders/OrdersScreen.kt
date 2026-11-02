@@ -12,7 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.platform.LocalConfiguration
 import com.overud.data.OfferRecord
-import com.overud.domain.Platform
+import com.overud.model.Platform
 import com.overud.ui.components.*
 import java.text.SimpleDateFormat
 import java.util.Date

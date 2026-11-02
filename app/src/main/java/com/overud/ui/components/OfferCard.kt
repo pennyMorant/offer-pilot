@@ -9,7 +9,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalConfiguration
-import com.overud.domain.*
+import com.overud.model.*
+import com.overud.platform.*
+import com.overud.valuation.*
+import com.overud.acceptance.*
+import com.overud.region.RegionCell
 import java.text.SimpleDateFormat
 import java.util.Date
 

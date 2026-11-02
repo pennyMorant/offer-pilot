@@ -1,8 +1,8 @@
 package com.overud.data
 
 import android.content.Context
-import com.overud.domain.Platform
-import com.overud.domain.Policy
+import com.overud.model.Platform
+import com.overud.model.Policy
 
 class PolicyStore(context: Context) {
     private val prefs = context.getSharedPreferences("policy", Context.MODE_PRIVATE)

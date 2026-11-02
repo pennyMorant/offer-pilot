@@ -1,16 +1,19 @@
-package com.overud.domain
+package com.overud.platform
 
+import com.overud.model.*
 import java.math.BigDecimal
 import java.math.RoundingMode
 
 /** Conservative parser: ambiguous screens are display-only, never eligible for automation. */
-object OfferParser {
+abstract class TextOfferParser(
+    private val platform: Platform,
+    private val accept: Regex,
+) : OfferParser {
     private val money = Regex("(?:US\\$|\\$)\\s*(\\d{1,4}(?:,\\d{3})*(?:\\.\\d{2})?)(?![\\d.])")
     private val distance = Regex("(\\d+(?:\\.\\d+)?)\\s*(mi(?:les?)?|km)\\b", RegexOption.IGNORE_CASE)
     private val minutes = Regex("(\\d+)\\s*(?:min(?:ute)?s?)\\b", RegexOption.IGNORE_CASE)
-    private val accept = Regex("\\b(accept|match)\\b|接受|接单", RegexOption.IGNORE_CASE)
 
-    fun parse(platform: Platform, text: String, now: Long): Offer? {
+    override fun parse(text: String, now: Long): Offer? {
         val amounts = money.findAll(text).toList()
         if (amounts.isEmpty() || !accept.containsMatchIn(text)) return null
         val distances = distance.findAll(text).toList()

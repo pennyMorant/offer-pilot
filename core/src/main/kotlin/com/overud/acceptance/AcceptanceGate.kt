@@ -1,6 +1,6 @@
-package com.overud.domain
+package com.overud.acceptance
 
-enum class AcceptanceState { IDLE, DISPATCHING, OUTCOME_UNKNOWN, ACCEPTED }
+import com.overud.model.*
 
 /** Caller serializes access; an unresolved dispatch survives process restart in the journal. */
 class AcceptanceGate(initial: AcceptanceState = AcceptanceState.IDLE) {

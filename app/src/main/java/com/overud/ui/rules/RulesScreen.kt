@@ -11,7 +11,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.saveable.rememberSaveable
-import com.overud.domain.*
+import com.overud.model.*
+import com.overud.platform.*
+import com.overud.valuation.*
+import com.overud.acceptance.*
+import com.overud.region.RegionCell
 import com.overud.ui.components.*
 import java.math.BigDecimal
 import java.math.RoundingMode

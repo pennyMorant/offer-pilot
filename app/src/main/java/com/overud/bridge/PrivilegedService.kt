@@ -6,8 +6,8 @@ import android.os.Bundle
 import android.os.HandlerThread
 import android.os.ParcelFileDescriptor
 import android.view.accessibility.AccessibilityNodeInfo
-import com.overud.domain.Platform
-import com.overud.domain.fingerprint
+import com.overud.model.Platform
+import com.overud.platform.fingerprint
 
 /** Runs under the Shevery/Shizuku shell identity. Hidden APIs stay in this boundary. */
 class PrivilegedService : IPrivilegedService.Stub() {
