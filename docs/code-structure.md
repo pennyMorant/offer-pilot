@@ -267,3 +267,14 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - DestinationController 继续负责异步解析和证据发布，上限 180 行；不在回调中执行点击。
 
 不持久化临时目的地证据，不新增逐单表或查询日志。
+
+## 14. 平台页面与报价观察
+
+- core/model/PlatformPage.kt：页面类型、来源与信号，上限 120 行。
+- core/platform/PlatformPageRules.kt：独立平台词表模型，上限 120 行。
+- UberEatsPages.kt、DoorDashPages.kt、PageClassifier.kt：各平台标签与冲突分类，各上限 200 行。
+- QuoteMoneyParser.kt、RouteMetricsParser.kt、TextOfferParser.kt：金额、指标作用范围和标准报价构造，各上限 200 行。
+- QuoteObservationResolver.kt：完整观察选择及来源冲突，上限 200 行；其中 QuoteObservation 模型不超过 120 行。
+- ui/components/PlatformPagePresentation.kt、OfferFieldPresentation.kt：页面与指标口径格式化，各上限 150 行。
+
+页面规则不放进 Android 工作流；隐藏 API 仍只在 bridge。页面观察、原始文字与来源差异不持久化。
