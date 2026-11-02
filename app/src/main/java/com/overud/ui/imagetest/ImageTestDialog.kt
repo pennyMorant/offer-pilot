@@ -48,6 +48,7 @@ import com.overud.ui.components.*
                 Text("每英里：${state.decision?.valuation?.centsPerMile?.let { money(it.toLong()) } ?: "—"}")
                 Text("预计毛时薪：${state.decision?.valuation?.grossCentsPerHour?.let { money(it.toLong()) } ?: "—"}")
                 VehicleCostSummary(state.decision?.valuation)
+                Prop22Summary(state.decision?.valuation?.prop22)
                 Text("接单判断", style = MaterialTheme.typography.titleSmall)
                 state.decision?.reasons?.forEach { Text("• $it") }
                 Text("图片来源始终保留手动接单限制；不查询目的地区域，启用区域要求时显示证据不足。",

@@ -11,6 +11,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.overud.di.AppContainer
 import com.overud.ui.components.vehicleCostPresentation
+import com.overud.ui.components.prop22Compact
 import com.overud.ui.components.platformPagePresentation
 import com.overud.ui.components.offerAmountPresentation
 import kotlinx.coroutines.*
@@ -52,6 +53,7 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         val amount = offerAmountPresentation(it)
                         "${it.platform.label}  $amount\n${state.decision?.reasons?.firstOrNull() ?: "符合接单要求"}\n" +
                             vehicleCostPresentation(state.decision?.valuation).compact + "\n" +
+                            prop22Compact(state.decision?.valuation?.prop22) +
                             destinationPresentation(state.destinationAssessment, Locale.getDefault()).title
                     } ?: platformPagePresentation(state.currentPage) ?: "等待新报价")
                 pause.isEnabled = state.autoAcceptEnabled

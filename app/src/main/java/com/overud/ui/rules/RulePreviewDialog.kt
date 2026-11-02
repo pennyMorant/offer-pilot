@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.overud.model.Platform
 import com.overud.ui.components.VehicleCostSummary
+import com.overud.ui.components.Prop22Summary
 
 @Composable fun RulePreviewDialog(viewModel: RulesViewModel, onDismiss: () -> Unit) {
     val preview by viewModel.preview.collectAsStateWithLifecycle()
@@ -30,6 +31,7 @@ import com.overud.ui.components.VehicleCostSummary
             preview.pageSummary?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             Text(preview.explanation)
             preview.valuation?.let { VehicleCostSummary(it) }
+            Prop22Summary(preview.valuation?.prop22)
         }
     }, confirmButton = { TextButton(onClick = onDismiss) { Text("完成") } })
 }

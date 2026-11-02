@@ -34,6 +34,7 @@ import java.util.Date
             }
             Text(decision?.reasons?.joinToString("；")?.ifEmpty { "满足所有接单要求" } ?: "等待分析", color = MaterialTheme.colorScheme.primary)
             VehicleCostSummary(decision?.valuation)
+            Prop22Summary(decision?.valuation?.prop22)
             DestinationSummary(destination)
         }
     }
