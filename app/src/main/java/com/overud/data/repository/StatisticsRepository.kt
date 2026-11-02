@@ -65,6 +65,7 @@ class StatisticsRepository(private val database: OverudDatabase) {
             database.quality().prune(retentionStart())
             database.regions().prune(retentionStart())
             database.waiting().prune(retentionStart())
+            database.deliveries().prune(retentionStart())
         }
         prunedAt = now
         return true
