@@ -24,8 +24,10 @@ class AutoAcceptController(
 ) {
     private var gate = AcceptanceGate()
     private var confirmationTimeout: Job? = null
+    private val confirmation = AcceptanceConfirmation(session, bridge)
     private val observer = AcceptanceObserver(repository, session,
         onConfirmed = { token, platform ->
+            confirmation.clear()
             confirmationTimeout?.cancel()
             gate.occupyConfirmed()
             deliveries.confirmed(token, platform)
@@ -37,6 +39,7 @@ class AutoAcceptController(
             onDeliveryCompleted(platform)
         })
     fun restore() {
+        confirmation.clear()
         confirmationTimeout?.cancel()
         val unresolved = repository.hasUnresolved()
         if (unresolved) gate = AcceptanceGate(AcceptanceState.OUTCOME_UNKNOWN)
@@ -45,13 +48,15 @@ class AutoAcceptController(
             deliveryPhase = if (unresolved) DeliveryPhase.UNCERTAIN else DeliveryPhase.AVAILABLE,
             message = if (unresolved) "有接单结果待核对，请先确认配送状态" else it.message) }
     }
-    fun observe(platform: Platform, page: PlatformPage) {
+    fun observe(platform: Platform, page: PlatformPage, text: String, token: String) {
         observer.observe(platform, page)
+        confirmation.observe(page, text, token)
     }
     fun resolvePending() {
         scope.launch {
             mutex.withLock {
                 runCatching { repository.resolve() }.onSuccess {
+                    confirmation.clear()
                     confirmationTimeout?.cancel()
                     gate.userResolved()
                     observer.reset()
@@ -98,10 +103,12 @@ class AutoAcceptController(
             }
             gate.dispatched()
             deliveries.dispatch(offer)
-            val result = bridge.service?.accept(token, offer.platform.packageName) ?: "service_disconnected"
+            val service = bridge.service
+            val result = service?.accept(token, offer.platform.packageName) ?: "service_disconnected"
             if (result == "dispatched") {
                 repository.update(offer.id, "outcome_unknown", "点击已发送，等待平台确认")
                 session.update { it.copy(automatic = false, pending = true, message = "接单动作已发出，正在核对平台结果") }
+                if (service != null) confirmation.start(offer, token, reviewed.policyVersion, service)
                 awaitConfirmation()
             } else {
                 deliveries.discardCandidate()
@@ -110,6 +117,7 @@ class AutoAcceptController(
                 session.releaseDelivery("本次未执行接单：$result")
             }
         } catch (e: Exception) {
+            confirmation.clear()
             confirmationTimeout?.cancel()
             deliveries.discardCandidate()
             runCatching { repository.update(offer.id, "outcome_unknown", "执行中断：${e.javaClass.simpleName}") }
@@ -121,12 +129,13 @@ class AutoAcceptController(
     private fun awaitConfirmation() {
         confirmationTimeout?.cancel()
         confirmationTimeout = scope.launch {
-            delay(15_000)
+            delay(com.overud.platform.AcceptanceConfirmationPolicy.WINDOW_MILLIS)
             mutex.withLock {
                 val state = session.state.value
                 if (gate.state != AcceptanceState.OUTCOME_UNKNOWN || !state.pending ||
                     state.deliveryPhase != DeliveryPhase.AWAITING_CONFIRMATION) return@withLock
                 // The persisted slot remains unresolved. A timeout is never evidence of failure.
+                confirmation.clear()
                 session.update { it.copy(automatic = false, autoAcceptEnabled = false,
                     deliveryPhase = DeliveryPhase.UNCERTAIN,
                     message = "接单确认超时，请检查平台配送状态；自动接单已关闭") }

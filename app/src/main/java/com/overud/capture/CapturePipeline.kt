@@ -56,7 +56,7 @@ class CapturePipeline(
             regions.trackExposure(platform, now)
             session.update { it.copy(lastCaptureAt = now) }
             val nodePage = OfferParser.classify(platform, text)
-            acceptance.observe(platform, nodePage)
+            acceptance.observe(platform, nodePage, text, snapshot.getString("token").orEmpty())
             if (text.isBlank() || nodePage.type in setOf(PlatformPageType.OFFLINE, PlatformPageType.HISTORY,
                     PlatformPageType.CANCELLED, PlatformPageType.AMBIGUOUS)) waiting.interrupt() else waiting.frame(platform)
             val nodeOffer = OfferParser.parse(platform, text, now)
