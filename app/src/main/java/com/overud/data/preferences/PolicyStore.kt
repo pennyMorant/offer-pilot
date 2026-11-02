@@ -3,12 +3,16 @@ package com.overud.data.preferences
 import android.content.Context
 import com.overud.model.Platform
 import com.overud.model.Policy
+import com.overud.model.RuleCondition
 
 class PolicyStore(context: Context) {
     private val prefs = context.getSharedPreferences("policy", Context.MODE_PRIVATE)
-    fun read() = Policy(
+    fun read(): Policy {
+        val overrides = RuleJsonCodec.decode(prefs.getString("overrides", "{}") ?: "{}")
+        return Policy(
         version = prefs.getLong("version", 1),
-        enabledPlatforms = Platform.entries.filter { prefs.getBoolean(it.name, true) }.toSet(),
+        enabledPlatforms = if (overrides == null) emptySet()
+            else Platform.entries.filter { prefs.getBoolean(it.name, true) }.toSet(),
         minimumCents = prefs.getLong("min", 800),
         minimumCentsPerMile = prefs.getLong("mile", 200),
         minimumCentsPerHour = prefs.getLong("hour", 2500),
@@ -19,7 +23,13 @@ class PolicyStore(context: Context) {
         allowStacked = prefs.getBoolean("stack", false),
         allowAddon = prefs.getBoolean("addon", false),
         excludedDestinations = prefs.getStringSet("excluded", emptySet())!!.toSet(),
+        excludedMerchants = prefs.getStringSet("merchants", emptySet())!!.toSet(),
+        disabledConditions = prefs.getStringSet("disabled", emptySet())!!.mapNotNull { name ->
+            RuleCondition.entries.find { it.name == name }
+        }.toSet(),
+        platformOverrides = overrides.orEmpty(),
     )
+    }
     fun save(policy: Policy): Boolean {
         if (!policy.valid()) return false
         val edit = prefs.edit().putLong("version", policy.version)
@@ -28,6 +38,9 @@ class PolicyStore(context: Context) {
             .putLong("time", policy.maximumSeconds).putLong("cost", policy.costCentsPerMile)
             .putLong("pickup", policy.maximumPickupMeters ?: 0).putBoolean("stack", policy.allowStacked)
             .putBoolean("addon", policy.allowAddon).putStringSet("excluded", policy.excludedDestinations)
+            .putStringSet("merchants", policy.excludedMerchants)
+            .putStringSet("disabled", policy.disabledConditions.map { it.name }.toSet())
+            .putString("overrides", RuleJsonCodec.encode(policy.platformOverrides))
         Platform.entries.forEach { edit.putBoolean(it.name, it in policy.enabledPlatforms) }
         return edit.commit()
     }
