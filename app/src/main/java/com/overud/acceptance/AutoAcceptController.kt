@@ -36,11 +36,15 @@ class AutoAcceptController(
     fun resolvePending() {
         scope.launch {
             mutex.withLock {
-                repository.resolve()
-                gate.userResolved()
-                observer.reset()
-                session.update { it.copy(pending = false, automatic = false, autoAcceptEnabled = false,
-                    deliveryPhase = DeliveryPhase.AVAILABLE, message = "已确认当前无进行中的配送；可重新开启自动接单") }
+                runCatching { repository.resolve() }.onSuccess {
+                    gate.userResolved()
+                    observer.reset()
+                    session.update { state -> state.copy(pending = false, automatic = false, autoAcceptEnabled = false,
+                        deliveryPhase = DeliveryPhase.AVAILABLE, message = "已确认当前无进行中的配送；可重新开启自动接单") }
+                }.onFailure {
+                    session.update { state -> state.copy(pending = true, automatic = false, autoAcceptEnabled = false,
+                        deliveryPhase = DeliveryPhase.UNCERTAIN, message = "订单占用状态未能保存，保持暂停，请稍后重试") }
+                }
             }
         }
     }
