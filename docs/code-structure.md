@@ -256,3 +256,14 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - Policy / AcceptanceRules、规则偏好、草稿、预览与平台继承继续在原职责中处理，不增设存储表。
 
 不把用户配置成本混入固定历史质量标准，不将成本后报价时薪称为净时薪或完整周期时薪。
+
+## 13. 区域质量接单要求
+
+- core/model/RegionalRequirement.kt、DestinationEvidence.kt：要求和临时报价证据，各上限 120 行。
+- core/valuation/RegionalEligibilityEvaluator.kt：当前报价、时效、精度、范围和样本门控，上限 200 行。
+- app/work/OfferDecision.kt：在现有工作快照中核对统计修订后评估报价，上限 120 行。
+- data/preferences/RegionalRuleCodec.kt：公共/平台配置共用编码与校验，上限 120 行。
+- ui/rules/RegionalRequirementFields.kt：开关和阈值输入，上限 150 行。
+- DestinationController 继续负责异步解析和证据发布，上限 180 行；不在回调中执行点击。
+
+不持久化临时目的地证据，不新增逐单表或查询日志。
