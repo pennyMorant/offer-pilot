@@ -9,8 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import rikka.shizuku.Shizuku
 
-data class BridgeStatus(val connected: Boolean = false, val authorized: Boolean = false, val serviceReady: Boolean = false, val message: String = "等待 Shevery 连接")
-
 class SheveryBridge(context: Context) {
     private val mutable = MutableStateFlow(BridgeStatus())
     val status = mutable.asStateFlow()
