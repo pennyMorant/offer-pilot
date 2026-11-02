@@ -13,8 +13,37 @@ data class Policy(
     val allowStacked: Boolean = false,
     val allowAddon: Boolean = false,
     val excludedDestinations: Set<String> = emptySet(),
+    val excludedMerchants: Set<String> = emptySet(),
+    val disabledConditions: Set<RuleCondition> = emptySet(),
+    val platformOverrides: Map<Platform, AcceptanceRules> = emptyMap(),
 ) {
-    fun valid() = minimumCents > 0 && minimumCentsPerMile > 0 && minimumCentsPerHour > 0 &&
-        maximumMeters > 0 && maximumSeconds > 0 && costCentsPerMile >= 0 &&
-        (maximumPickupMeters == null || maximumPickupMeters > 0) && enabledPlatforms.isNotEmpty()
+    fun valid() = enabledPlatforms.isNotEmpty() && sharedRules().valid() &&
+        platformOverrides.values.all(AcceptanceRules::valid)
+
+    fun sharedRules() = AcceptanceRules(
+        minimumCents, minimumCentsPerMile, minimumCentsPerHour,
+        maximumMeters, maximumSeconds, maximumPickupMeters, costCentsPerMile,
+        allowStacked, allowAddon, excludedDestinations, excludedMerchants, disabledConditions,
+    )
+
+    fun effective(platform: Platform): Policy =
+        withRules(platformOverrides[platform] ?: sharedRules()).copy(platformOverrides = emptyMap())
+
+    fun withRules(rules: AcceptanceRules, platform: Platform? = null): Policy {
+        if (platform != null) return copy(platformOverrides = platformOverrides + (platform to rules))
+        return copy(
+            minimumCents = rules.minimumCents,
+            minimumCentsPerMile = rules.minimumCentsPerMile,
+            minimumCentsPerHour = rules.minimumCentsPerHour,
+            maximumMeters = rules.maximumMeters,
+            maximumSeconds = rules.maximumSeconds,
+            maximumPickupMeters = rules.maximumPickupMeters,
+            costCentsPerMile = rules.costCentsPerMile,
+            allowStacked = rules.allowStacked,
+            allowAddon = rules.allowAddon,
+            excludedDestinations = rules.excludedDestinations,
+            excludedMerchants = rules.excludedMerchants,
+            disabledConditions = rules.disabledConditions,
+        )
+    }
 }
