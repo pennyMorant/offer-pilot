@@ -2,6 +2,7 @@ package com.overud.geo
 
 import android.location.Address
 import android.os.SystemClock
+import android.net.Uri
 import com.overud.model.*
 import com.overud.region.DestinationCoordinates
 import com.overud.region.RegionCell
@@ -18,8 +19,12 @@ class DestinationResolver(private val provider: AndroidGeocodingProvider) {
     private var lastRequestAt = 0L
 
     suspend fun resolve(text: String): ResolvedDestination = mutex.withLock {
-        DestinationCoordinates.parse(text)?.let { return@withLock it }
-        val query = text.trim().take(240)
+        val raw = text.trim().take(240)
+        val named = if (raw.startsWith("geo:", ignoreCase = true)) {
+            runCatching { Uri.parse(raw).getQueryParameter("q") }.getOrNull()?.takeIf(String::isNotBlank)
+        } else null
+        val query = named ?: raw
+        DestinationCoordinates.parse(query)?.let { return@withLock it }
         if (query.length < 4) return@withLock ResolvedDestination(DestinationResolution.TOO_BROAD)
         val key = query.lowercase(Locale.ROOT)
         val now = SystemClock.elapsedRealtime()

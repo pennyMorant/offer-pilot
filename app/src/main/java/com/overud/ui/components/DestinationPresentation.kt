@@ -43,11 +43,13 @@ fun destinationPresentation(assessment: DestinationAssessment, locale: Locale): 
     }
     val share = assessment.goodRate?.let { " · 优质比例 ${"%.0f".format(locale, it * 100)}%" }.orEmpty()
     val evidence = "$scope · ${assessment.observedCount} 张报价，${assessment.classifiedCount} 张可分类$share"
+    val zoneId = assessment.analysisZoneId ?: TimeZone.getDefault().id
     val timing = assessment.arrivalAt?.let {
         val format = SimpleDateFormat("EEE HH:mm", locale).apply {
-            timeZone = TimeZone.getTimeZone(assessment.analysisZoneId ?: TimeZone.getDefault().id)
+            timeZone = TimeZone.getTimeZone(zoneId)
         }
-        "预计送达 ${format.format(Date(it))} · 按手机时区 ${assessment.analysisZoneId} 分析"
+        "预计送达 ${format.format(Date(it))} · 按手机时区 $zoneId 分析"
     } ?: "总耗时未知，仅展示地区整体参考"
-    return DestinationUiState(title, "$precision · ${regionLabel(assessment.regionKey.orEmpty())}", evidence, timing)
+    val region = assessment.regionKey?.let(::regionLabel) ?: "地区未知"
+    return DestinationUiState(title, "$precision · $region", evidence, timing)
 }

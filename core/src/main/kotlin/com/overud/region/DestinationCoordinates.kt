@@ -7,6 +7,8 @@ object DestinationCoordinates {
     private val geo = Regex("^geo:([+-]?\\d+(?:\\.\\d+)?),([+-]?\\d+(?:\\.\\d+)?)(?:[?;].*)?$", RegexOption.IGNORE_CASE)
 
     fun parse(value: String): ResolvedDestination? {
+        // In geo:0,0?q=address the coordinate is a placeholder, not the destination.
+        if (Regex("[?&]q=", RegexOption.IGNORE_CASE).containsMatchIn(value)) return null
         val match = plain.matchEntire(value.trim()) ?: geo.matchEntire(value.trim()) ?: return null
         val latitude = match.groupValues[1].toDoubleOrNull() ?: return null
         val longitude = match.groupValues[2].toDoubleOrNull() ?: return null
