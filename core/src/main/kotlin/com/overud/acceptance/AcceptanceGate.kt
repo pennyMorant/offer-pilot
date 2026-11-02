@@ -18,4 +18,5 @@ class AcceptanceGate(initial: AcceptanceState = AcceptanceState.IDLE) {
     fun releaseBeforeDispatch() { check(state == AcceptanceState.DISPATCHING); state = AcceptanceState.IDLE }
     fun notDispatched() { state = AcceptanceState.IDLE }
     fun userResolved() { state = AcceptanceState.IDLE }
+    fun occupyConfirmed() { state = AcceptanceState.ACCEPTED }
 }
