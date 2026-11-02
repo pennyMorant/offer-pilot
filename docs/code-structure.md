@@ -278,3 +278,9 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - ui/components/PlatformPagePresentation.kt、OfferFieldPresentation.kt：页面与指标口径格式化，各上限 150 行。
 
 页面规则不放进 Android 工作流；隐藏 API 仍只在 bridge。页面观察、原始文字与来源差异不持久化。
+
+## 15. 平台接单动作
+
+- core/platform/AcceptanceActionPolicy.kt：首步动作词表选择、完整标签匹配和页面门控，上限 120 行。
+- app/bridge/AcceptTargetResolver.kt：活动窗口、报价指纹、节点与可点击父节点复核，上限 180 行。
+- AutoAcceptController 负责确认等待任务及超时状态，沿用 200 行上限；超时不释放未决占用，不增加数据库记录。
