@@ -34,6 +34,7 @@ fun WorkSessionCard(state: DashboardUiState, onWork: () -> Unit) {
                 if (state.working) LoadingIndicator(Modifier.size(34.dp))
             }
             Text(state.message, style = MaterialTheme.typography.bodyLarge)
+            state.currentPageLabel?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             Button(
                 onClick = onWork,
                 enabled = state.working || state.connection.authorized,

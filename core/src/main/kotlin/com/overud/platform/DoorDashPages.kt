@@ -14,7 +14,7 @@ object DoorDashPages {
         completed = setOf("delivery complete", "delivery completed", "order delivered", "订单已送达", "配送完成", "送达成功"),
         cancelled = setOf("order cancelled", "order canceled", "delivery cancelled", "delivery canceled", "订单已取消"),
         offline = setOf("dash now", "schedule a dash", "you're offline", "you are offline", "当前离线", "您已离线"),
-        history = setOf("order history", "delivery history", "past deliveries", "earnings activity", "历史订单", "配送历史"),
+        history = setOf("trip history", "行程历史", "order history", "delivery history", "past deliveries", "earnings activity", "历史订单", "配送历史"),
         addon = setOf("add to route", "add-on order", "add a delivery", "追加订单", "追加配送"),
     )
 

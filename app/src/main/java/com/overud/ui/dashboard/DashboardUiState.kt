@@ -3,6 +3,7 @@ package com.overud.ui.dashboard
 import com.overud.bridge.BridgeStatus
 import com.overud.model.*
 import com.overud.work.WorkState
+import com.overud.ui.components.platformPagePresentation
 
 data class DashboardUiState(
     val working: Boolean,
@@ -20,6 +21,7 @@ data class DashboardUiState(
     val destinationAssessment: DestinationAssessment = DestinationAssessment(),
     val autoAcceptEnabled: Boolean = false,
     val deliveryPhase: DeliveryPhase = DeliveryPhase.AVAILABLE,
+    val currentPageLabel: String? = null,
 ) {
     companion object {
         fun from(work: WorkState, bridge: BridgeStatus) = DashboardUiState(
@@ -30,6 +32,7 @@ data class DashboardUiState(
             destinationAssessment = work.destinationAssessment,
             autoAcceptEnabled = work.autoAcceptEnabled,
             deliveryPhase = work.deliveryPhase,
+            currentPageLabel = platformPagePresentation(work.currentPage),
         )
     }
 }

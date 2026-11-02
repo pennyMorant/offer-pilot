@@ -36,4 +36,5 @@ data class RulePreviewState(
     val platform: Platform = Platform.UBER_EATS,
     val explanation: String = "",
     val valuation: Valuation? = null,
+    val pageSummary: String? = null,
 )

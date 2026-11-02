@@ -38,17 +38,18 @@ class CapturePipeline(
                 deliveries.refresh()
             }
             val service = bridge.service ?: run {
-                waiting.interrupt(); deliveries.invalidate(); return@withLock
+                clearQuote(); waiting.interrupt(); deliveries.invalidate(); return@withLock
             }
             val snapshot = service.snapshot()
             snapshot.getString("error")?.let { error ->
+                clearQuote()
                 deliveries.invalidate()
                 waiting.interrupt()
                 session.update { it.copy(automatic = false, autoAcceptEnabled = false, message = "采集不可用：$error") }
                 return@withLock
             }
             val platform = Platform.fromPackage(snapshot.getString("package").orEmpty())
-                ?: run { waiting.interrupt(); return@withLock }
+                ?: run { clearQuote(); waiting.interrupt(); return@withLock }
             val text = snapshot.getString("text").orEmpty()
             val now = System.currentTimeMillis()
             regions.trackExposure(platform, now)
@@ -66,10 +67,10 @@ class CapturePipeline(
             } else null
             currentCoroutineContext().ensureActive()
             val observation = QuoteObservationResolver.resolve(platform, text, ocr, now)
-            session.update { it.copy(currentPage = observation.page) }
+            session.update { if (it.working) it.copy(currentPage = observation.page) else it }
             if (observation.sourceConflict) {
                 waiting.interrupt()
-                session.update { it.copy(message = "节点与截图识别不一致，本帧不接单、不计入报价统计") }
+                session.update { if (it.working) it.copy(message = "节点与截图识别不一致，本帧不接单、不计入报价统计") else it }
             }
             var offer = observation.offer
             if (offer != null) {
@@ -93,14 +94,19 @@ class CapturePipeline(
                 acceptance.maybeAccept(offer, decision, snapshot.getString("token").orEmpty())
             } else {
                 tracker.absent(platform, now)
-                session.update { it.copy(latest = null, decision = null, destinationEvidence = null,
-                    destinationAssessment = DestinationAssessment()) }
+                clearQuote(observation.page)
             }
         } catch (e: Exception) {
             if (e is CancellationException) { deliveries.invalidate(); waiting.invalidate(); throw e }
+            clearQuote()
             deliveries.invalidate()
             runCatching { waiting.interrupt() }
             session.update { it.copy(automatic = false, autoAcceptEnabled = false, message = "采集已暂停：${e.message ?: "服务连接异常"}") }
         }
+    }
+
+    private fun clearQuote(page: PlatformPage? = null) {
+        session.update { it.copy(latest = null, decision = null, destinationEvidence = null,
+            destinationAssessment = DestinationAssessment(), currentPage = page.takeIf { _ -> it.working }) }
     }
 }

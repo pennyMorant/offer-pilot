@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.overud.model.*
 import com.overud.platform.OfferParser
 import com.overud.valuation.EligibilityEvaluator
+import com.overud.ui.components.platformPagePresentation
 import com.overud.work.WorkSessionController
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -105,6 +106,7 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
         val decision = offer?.let { EligibilityEvaluator.assess(it, session.state.value.policy, it.observedAt) }
         val explanation = decision?.reasons?.joinToString("；")?.ifEmpty { "符合当前全部接单要求" }
             ?: "无法识别报价，请包含接单按钮文字和金额"
-        mutablePreview.value = RulePreviewState(text, platform, explanation, decision?.valuation)
+        mutablePreview.value = RulePreviewState(text, platform, explanation, decision?.valuation,
+            platformPagePresentation(OfferParser.classify(platform, text)))
     }
 }

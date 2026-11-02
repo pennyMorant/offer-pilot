@@ -14,7 +14,7 @@ object UberEatsPages {
         completed = setOf("delivery complete", "delivery completed", "order delivered", "配送完成", "订单已送达", "送达成功"),
         cancelled = setOf("delivery cancelled", "delivery canceled", "order cancelled", "order canceled", "订单已取消"),
         offline = setOf("you're offline", "you are offline", "go online", "当前离线", "您已离线"),
-        history = setOf("trip history", "delivery history", "past deliveries", "earnings activity", "行程历史", "配送历史"),
+        history = setOf("order history", "历史订单", "trip history", "delivery history", "past deliveries", "earnings activity", "行程历史", "配送历史"),
         addon = setOf("add a delivery", "add-on delivery", "追加配送", "追加订单"),
     )
 

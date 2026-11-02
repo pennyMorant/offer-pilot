@@ -27,6 +27,7 @@ import com.overud.ui.components.VehicleCostSummary
                 label = { Text("报价文本") }, minLines = 4, maxLines = 8)
             Text("文本预览不查询目的地区域；启用区域要求时，区域条件保留为证据不足。",
                 style = MaterialTheme.typography.bodySmall)
+            preview.pageSummary?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             Text(preview.explanation)
             preview.valuation?.let { VehicleCostSummary(it) }
         }

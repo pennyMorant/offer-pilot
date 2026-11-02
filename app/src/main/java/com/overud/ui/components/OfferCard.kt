@@ -25,9 +25,8 @@ import java.util.Date
                 Text(offer.platform.label, style = MaterialTheme.typography.labelLarge)
                 Text(SimpleDateFormat("HH:mm", locale).format(Date(offer.observedAt)), style = MaterialTheme.typography.labelMedium)
             }
-            Text(offer.amountCents?.let(::money) ?: "金额待识别", style = MaterialTheme.typography.displayLarge)
-            Text("${offer.distanceMeters?.let { "%.1f mi".format(it / ValueEngine.METERS_PER_MILE) } ?: "里程未知"}  ·  ${offer.durationSeconds?.let { "${it / 60} min" } ?: "耗时未知"}",
-                style = MaterialTheme.typography.titleMedium)
+            Text(offerAmountPresentation(offer), style = MaterialTheme.typography.displayLarge)
+            Text(offerRoutePresentation(offer), style = MaterialTheme.typography.titleMedium)
             HorizontalDivider()
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 Column { Text("每英里报价", style = MaterialTheme.typography.labelMedium); Text(decision?.valuation?.centsPerMile?.let { money(it.toLong()) } ?: "—", style = MaterialTheme.typography.titleLarge) }

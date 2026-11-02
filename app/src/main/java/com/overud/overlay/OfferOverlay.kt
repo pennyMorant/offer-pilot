@@ -11,6 +11,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.overud.di.AppContainer
 import com.overud.ui.components.vehicleCostPresentation
+import com.overud.ui.components.platformPagePresentation
+import com.overud.ui.components.offerAmountPresentation
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import com.overud.ui.components.destinationPresentation
@@ -47,11 +49,11 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                 }
                 label.text = "Overud · $mode\n" +
                     (offer?.let {
-                        val amount = it.amountCents?.let { cents -> "$${"%.2f".format(cents / 100.0)}" } ?: "金额未知"
+                        val amount = offerAmountPresentation(it)
                         "${it.platform.label}  $amount\n${state.decision?.reasons?.firstOrNull() ?: "符合接单要求"}\n" +
                             vehicleCostPresentation(state.decision?.valuation).compact + "\n" +
                             destinationPresentation(state.destinationAssessment, Locale.getDefault()).title
-                    } ?: "等待新报价")
+                    } ?: platformPagePresentation(state.currentPage) ?: "等待新报价")
                 pause.isEnabled = state.autoAcceptEnabled
             }
         }
