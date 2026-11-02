@@ -10,11 +10,13 @@ fun deliveryCards(history: List<DeliverySummary>, selected: AnalysisSelection, b
             (selected.region == null || row.regionKey == selected.region) &&
             (selected.weekday == null || row.weekday == selected.weekday) && row.localHour in selected.period.hours
     }
-    val groups = rows.groupBy {
+    val ordered = if (byRegion) rows.sortedWith(compareBy({ it.regionKey }, { it.platform }, { it.zoneId }, { it.measurementVersion }))
+        else rows.sortedWith(compareBy({ it.weekday }, { it.localHour }, { it.platform }, { it.zoneId }, { it.measurementVersion }))
+    val groups = ordered.groupBy {
         listOf(it.platform, if (byRegion) it.regionKey else "ALL",
             if (byRegion) 0 else it.weekday, if (byRegion) 0 else it.localHour, it.zoneId, it.measurementVersion).joinToString("|")
     }
-    return groups.toSortedMap().map { (key, group) ->
+    return groups.map { (key, group) ->
         val row = group.first()
         val completed = group.sumOf { it.completedCount }
         val interrupted = group.sumOf { it.interruptedCount }

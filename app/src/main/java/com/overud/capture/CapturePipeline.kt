@@ -31,6 +31,7 @@ class CapturePipeline(
     private var lastOcrAt = 0L
     suspend fun poll() = mutex.withLock {
         try {
+            deliveries.checkContinuity()
             if (!session.state.value.working) { waiting.interrupt(); return@withLock }
             if (statistics.prune()) {
                 session.update { it.copy(statistics = statistics.snapshot()) }

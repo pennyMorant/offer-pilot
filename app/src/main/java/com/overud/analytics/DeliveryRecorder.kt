@@ -19,7 +19,7 @@ class DeliveryRecorder(
 ) {
     private data class Observation(
         val token: String, val bucket: AnalysisBucket, val started: Long?,
-        val quotedMillis: Long?, val generation: Long,
+        val quotedMillis: Long?, val generation: Long, var lastEvidence: Long = 0,
     )
     private val generation = AtomicLong()
     private var candidate: Observation? = null
@@ -39,23 +39,27 @@ class DeliveryRecorder(
     fun discardCandidate() { candidate = null }
 
     fun confirmed(token: String, platform: Platform) {
-        settleInvalidated()
-        val current = active
-        if (current?.token == token && current.bucket.platform == platform) return
-        interrupt()
+        checkContinuity()
         val now = SystemClock.elapsedRealtime()
+        val current = active
+        if (current?.token == token && current.bucket.platform == platform) {
+            current.lastEvidence = now
+            return
+        }
+        interrupt()
         val match = candidate?.takeIf {
             val started = it.started
             it.token == token && it.bucket.platform == platform && it.generation == generation.get() &&
                 started != null && now - started in 0..120_000
         }
-        active = match ?: Observation(token,
-            AnalysisBucket.at(platform, regions.usableRegion(), System.currentTimeMillis()), null, null, generation.get())
+        active = (match ?: Observation(token,
+            AnalysisBucket.at(platform, regions.usableRegion(), System.currentTimeMillis()), null, null, generation.get()))
+            .copy(lastEvidence = now)
         candidate = null
     }
 
     fun completed(token: String, platform: Platform) {
-        settleInvalidated()
+        checkContinuity()
         val current = active ?: return
         if (current.token != token || current.bucket.platform != platform) return
         val elapsed = current.started?.let { SystemClock.elapsedRealtime() - it }
@@ -68,6 +72,12 @@ class DeliveryRecorder(
         val current = active
         active = null
         if (current != null) persist(current, false, null)
+    }
+
+    fun checkContinuity() {
+        settleInvalidated()
+        val current = active ?: return
+        if (SystemClock.elapsedRealtime() - current.lastEvidence !in 0..30_000) interrupt()
     }
 
     fun resolved() { discardCandidate(); interrupt() }

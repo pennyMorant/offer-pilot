@@ -23,6 +23,6 @@ fun DeliveryCard(state: DeliveryCardState) {
 fun DeliveryMeasurementNote() {
     Text("配送耗时观测 · 按观测起点地区和小时归组。完整计时从本次自动接单动作开始，" +
         "到明确送达界面，包含页面确认延迟；手动配送、重启或中断后起点不明时仅计完成次数。" +
-        "这是已接配送的样本，不代表所有报价，也不代表实际收入。",
+        "配送状态证据超过 30 秒未续接时中断计时。这是已接配送的样本，不代表所有报价，也不代表实际收入。",
         style = MaterialTheme.typography.bodySmall)
 }
