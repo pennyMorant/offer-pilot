@@ -29,7 +29,7 @@ import com.overud.ui.rules.RulePreviewDialog
     val state by dashboard.state.collectAsStateWithLifecycle()
     val orders: OrdersViewModel = viewModel(factory = factory)
     val regions: RegionsViewModel = viewModel(factory = factory)
-    val records by orders.records.collectAsStateWithLifecycle()
+    val records by orders.cards.collectAsStateWithLifecycle()
     val regionState by regions.state.collectAsStateWithLifecycle()
     val bridge = state.connection
     var selected by rememberSaveable { mutableStateOf(Destination.DASHBOARD) }

@@ -12,26 +12,29 @@ import com.overud.bridge.SheveryBridge
 import com.overud.capture.*
 import com.overud.data.database.OverudDatabase
 import com.overud.data.preferences.PolicyStore
+import com.overud.data.preferences.TrackerCheckpointStore
+import com.overud.data.database.migration.DatabaseMigrations
 import com.overud.data.repository.*
 import com.overud.work.WorkSessionController
 
 class AppContainer(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
-    private val database = Room.databaseBuilder(context, OverudDatabase::class.java, "overud.db").build()
+    private val database = Room.databaseBuilder(context, OverudDatabase::class.java, "overud.db")
+        .addMigrations(DatabaseMigrations.TO_AGGREGATES).build()
     val bridge = SheveryBridge(context)
     val session = WorkSessionController(bridge, PolicyStore(context), scope, mutex)
     val state = session.state
-    private val offers = OfferRepository(database)
+    private val statistics = StatisticsRepository(database)
     val regions = RegionRecorder(session, RegionRepository(database))
     val acceptance = AutoAcceptController(session, AcceptanceRepository(database.acceptance()), bridge, scope, mutex)
-    private val tracker = OfferTracker()
-    val pipeline = CapturePipeline(session, bridge, OcrRecognizer(bridge), tracker, offers, regions, acceptance, mutex)
+    private val tracker = OfferTracker(TrackerCheckpointStore(context))
+    val pipeline = CapturePipeline(session, bridge, OcrRecognizer(bridge), tracker, statistics, regions, acceptance, mutex)
     init {
         scope.launch {
             mutex.withLock {
-                session.update { it.copy(records = offers.recent()) }
-                regions.refreshRegions()
+                statistics.prune()
+                session.update { it.copy(statistics = statistics.snapshot()) }
                 acceptance.restore()
             }
         }

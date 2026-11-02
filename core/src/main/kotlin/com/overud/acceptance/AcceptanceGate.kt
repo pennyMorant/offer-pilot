@@ -6,9 +6,10 @@ import com.overud.model.*
 class AcceptanceGate(initial: AcceptanceState = AcceptanceState.IDLE) {
     var state = initial
         private set
-    private val attempted = mutableSetOf<String>()
+    private val attempted = linkedSetOf<String>()
     fun reserve(offer: Offer, decision: Decision, enabled: Boolean, working: Boolean): Boolean {
         if (!enabled || !working || !decision.eligible || state != AcceptanceState.IDLE || !attempted.add(offer.id)) return false
+        if (attempted.size > 256) attempted.remove(attempted.first())
         state = AcceptanceState.DISPATCHING
         return true
     }

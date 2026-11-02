@@ -11,14 +11,12 @@ class RegionRecorder(private val session: WorkSessionController, private val rep
     @Volatile private var lastLocation: Location? = null
     private var exposureKey: String? = null
     private var exposureAt = 0L
-    private var regionsRefreshedAt = 0L
     fun clear() {
         lastLocation = null
         exposureKey = null
         exposureAt = 0L
         session.update { it.copy(currentRegion = null) }
     }
-    fun refreshRegions() { session.update { it.copy(regions = repository.recent()) } }
     fun location(location: Location) {
         if (!session.state.value.working) return
         lastLocation = Location(location)
@@ -43,6 +41,5 @@ class RegionRecorder(private val session: WorkSessionController, private val rep
             }, elapsed)
         }
         exposureAt = now; exposureKey = key
-        if (now - regionsRefreshedAt > 15_000) { refreshRegions(); regionsRefreshedAt = now }
     }
 }

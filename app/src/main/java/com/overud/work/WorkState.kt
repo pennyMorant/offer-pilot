@@ -1,8 +1,7 @@
 package com.overud.work
 
 import com.overud.model.*
-import com.overud.data.database.entity.OfferRecord
-import com.overud.data.database.projection.RegionSummary
+import com.overud.data.repository.StatisticsSnapshot
 
 data class WorkState(
     val working: Boolean = false,
@@ -10,11 +9,10 @@ data class WorkState(
     val policy: Policy = Policy(),
     val latest: Offer? = null,
     val decision: Decision? = null,
-    val records: List<OfferRecord> = emptyList(),
+    val statistics: StatisticsSnapshot = StatisticsSnapshot(),
     val message: String = "开始工作后，将自动分析新报价",
     val pending: Boolean = false,
     val lastCaptureAt: Long? = null,
-    val regions: List<RegionSummary> = emptyList(),
     val currentRegion: String? = null,
     val policySaving: Boolean = false,
     val policySaveError: String? = null,

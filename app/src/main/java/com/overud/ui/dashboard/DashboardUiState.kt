@@ -12,8 +12,8 @@ data class DashboardUiState(
     val decision: Decision?,
     val message: String,
     val pending: Boolean,
-    val recordCount: Int,
-    val eligibleCount: Int,
+    val recordCount: Long,
+    val goodCount: Long,
     val connection: BridgeStatus,
     val policySaving: Boolean = false,
     val policySummaries: List<PlatformPolicySummary> = emptyList(),
@@ -21,7 +21,7 @@ data class DashboardUiState(
     companion object {
         fun from(work: WorkState, bridge: BridgeStatus) = DashboardUiState(
             work.working, work.automatic, work.policy, work.latest, work.decision,
-            work.message, work.pending, work.records.size, work.records.count { it.eligible }, bridge,
+            work.message, work.pending, work.statistics.totals.sumOf { it.offerCount }, work.statistics.totals.sumOf { it.goodCount }, bridge,
             policySaving = work.policySaving,
             policySummaries = policySummaries(work.policy),
         )

@@ -16,4 +16,5 @@ data class Offer(
     val reliable: Boolean = false,
     val rawText: String = "",
     val evidence: QuoteEvidence? = null,
+    val firstObservedAt: Long = observedAt,
 )

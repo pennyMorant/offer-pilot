@@ -7,7 +7,7 @@ import kotlinx.coroutines.sync.withLock
 import com.overud.analytics.RegionRecorder
 import com.overud.acceptance.AutoAcceptController
 import com.overud.bridge.SheveryBridge
-import com.overud.data.repository.OfferRepository
+import com.overud.data.repository.StatisticsRepository
 import com.overud.platform.OfferParser
 import com.overud.valuation.EligibilityEvaluator
 import com.overud.work.WorkSessionController
@@ -17,7 +17,7 @@ class CapturePipeline(
     private val bridge: SheveryBridge,
     private val recognizer: OcrRecognizer,
     private val tracker: OfferTracker,
-    private val offers: OfferRepository,
+    private val statistics: StatisticsRepository,
     private val regions: RegionRecorder,
     private val acceptance: AutoAcceptController,
     private val mutex: Mutex,
@@ -59,9 +59,12 @@ class CapturePipeline(
                 if (!session.state.value.working) return@withLock
                 offer = tracker.observe(offer, now)
                 val decision = EligibilityEvaluator.assess(offer, session.state.value.policy, now)
-                offers.record(offer, decision, regions.usableRegion())
-                session.update { it.copy(latest = offer, decision = decision, records = offers.recent()) }
+                val changed = statistics.record(offer, regions.usableRegion())
+                val aggregate = if (changed) statistics.snapshot() else session.state.value.statistics
+                session.update { it.copy(latest = offer, decision = decision, statistics = aggregate) }
                 acceptance.maybeAccept(offer, decision, snapshot.getString("token").orEmpty())
+            } else {
+                tracker.absent(platform, now)
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e

@@ -41,8 +41,8 @@ import com.overud.ui.components.*
                 ?: EmptyStateCard("等待第一张报价", "开始工作后，在 Uber 或 DoorDash 打开订单报价，分析结果会出现在这里。")
         }
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MetricCard("已记录报价", state.recordCount.toString(), Modifier.weight(1f))
-            MetricCard("符合当前记录规则", state.eligibleCount.toString(), Modifier.weight(1f))
+            MetricCard("90 天报价", state.recordCount.toString(), Modifier.weight(1f))
+            MetricCard("优质报价", state.goodCount.toString(), Modifier.weight(1f))
         } }
     }
 }
