@@ -6,6 +6,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import com.overud.analytics.RegionRecorder
 import com.overud.analytics.WaitingRecorder
+import com.overud.analytics.DeliveryRecorder
 import com.overud.acceptance.AutoAcceptController
 import com.overud.bridge.SheveryBridge
 import com.overud.data.repository.StatisticsRepository
@@ -24,6 +25,7 @@ class CapturePipeline(
     private val regions: RegionRecorder,
     private val acceptance: AutoAcceptController,
     private val waiting: WaitingRecorder,
+    private val deliveries: DeliveryRecorder,
     private val mutex: Mutex,
 ) {
     private var lastOcrAt = 0L
@@ -33,10 +35,14 @@ class CapturePipeline(
             if (statistics.prune()) {
                 session.update { it.copy(statistics = statistics.snapshot()) }
                 waiting.refresh()
+                deliveries.refresh()
             }
-            val service = bridge.service ?: run { waiting.interrupt(); return@withLock }
+            val service = bridge.service ?: run {
+                waiting.interrupt(); deliveries.invalidate(); return@withLock
+            }
             val snapshot = service.snapshot()
             snapshot.getString("error")?.let { error ->
+                deliveries.invalidate()
                 waiting.interrupt()
                 session.update { it.copy(automatic = false, autoAcceptEnabled = false, message = "采集不可用：$error") }
                 return@withLock
@@ -88,7 +94,8 @@ class CapturePipeline(
                 tracker.absent(platform, now)
             }
         } catch (e: Exception) {
-            if (e is CancellationException) { waiting.invalidate(); throw e }
+            if (e is CancellationException) { deliveries.invalidate(); waiting.invalidate(); throw e }
+            deliveries.invalidate()
             runCatching { waiting.interrupt() }
             session.update { it.copy(automatic = false, autoAcceptEnabled = false, message = "采集已暂停：${e.message ?: "服务连接异常"}") }
         }

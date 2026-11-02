@@ -10,8 +10,8 @@ import com.overud.work.WorkSessionController
 class AcceptanceObserver(
     private val repository: AcceptanceRepository,
     private val session: WorkSessionController,
-    private val onConfirmed: () -> Unit,
-    private val onCompleted: (Platform) -> Unit,
+    private val onConfirmed: (String, Platform) -> Unit,
+    private val onCompleted: (String, Platform) -> Unit,
 ) {
     private val unresolved = setOf("dispatching", "outcome_unknown", "accepted")
     private var activeToken: String? = null
@@ -41,7 +41,7 @@ class AcceptanceObserver(
                     lastActiveAt = SystemClock.elapsedRealtime()
                 }
                 completionSince = null
-                onConfirmed()
+                onConfirmed(record.offerId, platform)
                 session.update { it.copy(pending = true, automatic = false, deliveryPhase = DeliveryPhase.ACTIVE,
                     message = "已识别进行中的配送，自动接单暂停") }
             }
@@ -60,7 +60,7 @@ class AcceptanceObserver(
                 repository.update(record.offerId, "completed", "confirmed_completion_screen")
                 reset()
                 session.releaseDelivery("已识别配送完成")
-                onCompleted(platform)
+                onCompleted(record.offerId, platform)
             }
             DeliveryScreenState.UNKNOWN -> completionSince = null
         }

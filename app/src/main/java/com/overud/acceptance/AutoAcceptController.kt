@@ -1,6 +1,7 @@
 package com.overud.acceptance
 
 import com.overud.model.*
+import com.overud.analytics.DeliveryRecorder
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -18,11 +19,17 @@ class AutoAcceptController(
     private val bridge: SheveryBridge,
     private val scope: CoroutineScope,
     private val mutex: Mutex,
+    private val deliveries: DeliveryRecorder,
     onDeliveryCompleted: (Platform) -> Unit = {},
 ) {
     private var gate = AcceptanceGate()
     private val observer = AcceptanceObserver(repository, session,
-        onConfirmed = { gate.occupyConfirmed() }, onCompleted = { platform -> gate.userResolved(); onDeliveryCompleted(platform) })
+        onConfirmed = { token, platform -> gate.occupyConfirmed(); deliveries.confirmed(token, platform) },
+        onCompleted = { token, platform ->
+            gate.userResolved()
+            deliveries.completed(token, platform)
+            onDeliveryCompleted(platform)
+        })
     fun restore() {
         val unresolved = repository.hasUnresolved()
         if (unresolved) gate = AcceptanceGate(AcceptanceState.OUTCOME_UNKNOWN)
@@ -40,6 +47,7 @@ class AutoAcceptController(
                 runCatching { repository.resolve() }.onSuccess {
                     gate.userResolved()
                     observer.reset()
+                    deliveries.resolved()
                     session.update { state -> state.copy(pending = false, automatic = false, autoAcceptEnabled = false,
                         deliveryPhase = DeliveryPhase.AVAILABLE, message = "已确认当前无进行中的配送；可重新开启自动接单") }
                 }.onFailure {
@@ -80,16 +88,19 @@ class AutoAcceptController(
                 return
             }
             gate.dispatched()
+            deliveries.dispatch(offer)
             val result = bridge.service?.accept(token, offer.platform.packageName) ?: "service_disconnected"
             if (result == "dispatched") {
                 repository.update(offer.id, "outcome_unknown", "点击已发送，等待平台确认")
                 session.update { it.copy(automatic = false, pending = true, message = "接单动作已发出，正在核对平台结果") }
             } else {
+                deliveries.discardCandidate()
                 repository.update(offer.id, "aborted", result)
                 gate.notDispatched()
                 session.releaseDelivery("本次未执行接单：$result")
             }
         } catch (e: Exception) {
+            deliveries.discardCandidate()
             runCatching { repository.update(offer.id, "outcome_unknown", "执行中断：${e.javaClass.simpleName}") }
             session.update { it.copy(automatic = false, autoAcceptEnabled = false, pending = true,
                 deliveryPhase = DeliveryPhase.UNCERTAIN, message = "接单结果待核对，请检查平台") }

@@ -8,6 +8,7 @@ import kotlinx.coroutines.sync.withLock
 import android.content.Context
 import androidx.room.Room
 import com.overud.analytics.RegionRecorder
+import com.overud.analytics.DeliveryRecorder
 import com.overud.analytics.WaitingRecorder
 import com.overud.analytics.DestinationController
 import com.overud.geo.AndroidGeocodingProvider
@@ -35,19 +36,26 @@ class AppContainer(context: Context) {
     private val statistics = StatisticsRepository(database)
     val regions = RegionRecorder(session, RegionRepository(database))
     private val waiting = WaitingRecorder(session, regions, WaitingRepository(database), scope, mutex)
-    val acceptance = AutoAcceptController(session, AcceptanceRepository(database.acceptance()), bridge, scope, mutex, waiting::start)
+    private val deliveries = DeliveryRecorder(session, regions, DeliveryRepository(database), scope, mutex)
+    val acceptance = AutoAcceptController(session, AcceptanceRepository(database.acceptance()), bridge, scope, mutex,
+        deliveries, waiting::start)
     private val destinations = DestinationController(session,
         DestinationResolver(AndroidGeocodingProvider(context)), scope)
     private val tracker = OfferTracker(TrackerCheckpointStore(context))
-    val pipeline = CapturePipeline(session, bridge, OcrRecognizer(bridge), tracker, statistics, regions, acceptance, waiting, mutex)
+    val pipeline = CapturePipeline(session, bridge, OcrRecognizer(bridge), tracker, statistics, regions, acceptance, waiting, deliveries, mutex)
     init {
-        scope.launch { bridge.status.collect { if (!it.serviceReady) waiting.invalidate() } }
+        scope.launch {
+            bridge.status.collect {
+                if (!it.serviceReady) { waiting.invalidate(); deliveries.invalidate() }
+            }
+        }
         scope.launch {
             mutex.withLock {
                 runCatching {
                     statistics.prune()
                     session.update { it.copy(statistics = statistics.snapshot()) }
                     waiting.refresh()
+                    deliveries.refresh()
                     acceptance.restore()
                 }.onFailure {
                     session.update { state -> state.copy(automatic = false, autoAcceptEnabled = false, pending = true,
@@ -57,7 +65,7 @@ class AppContainer(context: Context) {
         }
     }
     fun startWork() { tracker.reset(); regions.clear(); session.startWork() }
-    fun stopWork() { waiting.invalidate(); session.stopWork(); regions.clear(); tracker.reset() }
+    fun stopWork() { deliveries.invalidate(); waiting.invalidate(); session.stopWork(); regions.clear(); tracker.reset() }
     fun setAutomatic(enabled: Boolean) = session.setAutomatic(enabled)
     fun notification(platform: Platform, text: String) = session.notification(platform, text)
 }
