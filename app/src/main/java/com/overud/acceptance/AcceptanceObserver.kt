@@ -11,7 +11,7 @@ class AcceptanceObserver(
     private val repository: AcceptanceRepository,
     private val session: WorkSessionController,
     private val onConfirmed: () -> Unit,
-    private val onCompleted: () -> Unit,
+    private val onCompleted: (Platform) -> Unit,
 ) {
     private val unresolved = setOf("dispatching", "outcome_unknown", "accepted")
     private var activeToken: String? = null
@@ -59,8 +59,8 @@ class AcceptanceObserver(
                 if (now - first < 600) return
                 repository.update(record.offerId, "completed", "confirmed_completion_screen")
                 reset()
-                onCompleted()
                 session.releaseDelivery("已识别配送完成")
+                onCompleted(platform)
             }
             DeliveryScreenState.UNKNOWN -> completionSince = null
         }

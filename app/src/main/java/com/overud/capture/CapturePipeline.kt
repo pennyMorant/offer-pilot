@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import com.overud.analytics.RegionRecorder
+import com.overud.analytics.WaitingRecorder
 import com.overud.acceptance.AutoAcceptController
 import com.overud.bridge.SheveryBridge
 import com.overud.data.repository.StatisticsRepository
@@ -22,25 +23,32 @@ class CapturePipeline(
     private val statistics: StatisticsRepository,
     private val regions: RegionRecorder,
     private val acceptance: AutoAcceptController,
+    private val waiting: WaitingRecorder,
     private val mutex: Mutex,
 ) {
     private var lastOcrAt = 0L
     suspend fun poll() = mutex.withLock {
-        if (!session.state.value.working) return@withLock
         try {
-            if (statistics.prune()) session.update { it.copy(statistics = statistics.snapshot()) }
-            val service = bridge.service ?: return@withLock
+            if (!session.state.value.working) { waiting.interrupt(); return@withLock }
+            if (statistics.prune()) {
+                session.update { it.copy(statistics = statistics.snapshot()) }
+                waiting.refresh()
+            }
+            val service = bridge.service ?: run { waiting.interrupt(); return@withLock }
             val snapshot = service.snapshot()
             snapshot.getString("error")?.let { error ->
+                waiting.interrupt()
                 session.update { it.copy(automatic = false, autoAcceptEnabled = false, message = "采集不可用：$error") }
                 return@withLock
             }
-            val platform = Platform.fromPackage(snapshot.getString("package").orEmpty()) ?: return@withLock
+            val platform = Platform.fromPackage(snapshot.getString("package").orEmpty())
+                ?: run { waiting.interrupt(); return@withLock }
             val text = snapshot.getString("text").orEmpty()
             val now = System.currentTimeMillis()
             regions.trackExposure(platform, now)
             session.update { it.copy(lastCaptureAt = now) }
             acceptance.observe(platform, text)
+            waiting.frame(platform)
             val deliveryVisible = DeliveryScreenParser.parse(text) != DeliveryScreenState.UNKNOWN
             var offer = OfferParser.parse(platform, text, now)
             val nodeDecision = offer?.let { EligibilityEvaluator.assess(it, session.state.value.policy, now) }
@@ -60,8 +68,9 @@ class CapturePipeline(
             }
             if (offer != null) {
                 currentCoroutineContext().ensureActive()
-                if (!session.state.value.working) return@withLock
+                if (!session.state.value.working) { waiting.interrupt(); return@withLock }
                 offer = tracker.observe(offer, now)
+                waiting.quote(offer)
                 val decision = EligibilityEvaluator.assess(offer, session.state.value.policy, now)
                 val changed = statistics.record(offer, regions.usableRegion())
                 val aggregate = if (changed) statistics.snapshot() else session.state.value.statistics
@@ -79,7 +88,8 @@ class CapturePipeline(
                 tracker.absent(platform, now)
             }
         } catch (e: Exception) {
-            if (e is CancellationException) throw e
+            if (e is CancellationException) { waiting.invalidate(); throw e }
+            runCatching { waiting.interrupt() }
             session.update { it.copy(automatic = false, autoAcceptEnabled = false, message = "采集已暂停：${e.message ?: "服务连接异常"}") }
         }
     }

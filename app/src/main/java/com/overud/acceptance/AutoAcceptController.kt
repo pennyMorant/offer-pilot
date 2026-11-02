@@ -18,10 +18,11 @@ class AutoAcceptController(
     private val bridge: SheveryBridge,
     private val scope: CoroutineScope,
     private val mutex: Mutex,
+    onDeliveryCompleted: (Platform) -> Unit = {},
 ) {
     private var gate = AcceptanceGate()
     private val observer = AcceptanceObserver(repository, session,
-        onConfirmed = { gate.occupyConfirmed() }, onCompleted = { gate.userResolved() })
+        onConfirmed = { gate.occupyConfirmed() }, onCompleted = { platform -> gate.userResolved(); onDeliveryCompleted(platform) })
     fun restore() {
         val unresolved = repository.hasUnresolved()
         if (unresolved) gate = AcceptanceGate(AcceptanceState.OUTCOME_UNKNOWN)

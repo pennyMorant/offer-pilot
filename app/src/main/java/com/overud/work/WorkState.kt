@@ -1,6 +1,7 @@
 package com.overud.work
 
 import com.overud.model.*
+import com.overud.analytics.WaitingObservation
 import com.overud.data.repository.StatisticsSnapshot
 
 data class WorkState(
@@ -10,6 +11,7 @@ data class WorkState(
     val policy: Policy = Policy(),
     val latest: Offer? = null,
     val decision: Decision? = null,
+    val waitingHistory: List<WaitingObservation> = emptyList(),
     val statistics: StatisticsSnapshot = StatisticsSnapshot(),
     val message: String = "开始工作后，将自动分析新报价",
     val pending: Boolean = false,
