@@ -45,19 +45,24 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ## 工程结构
 
 ```text
-core/                         订单模型、解析、收益规则、执行门控、区域索引及测试
+core/                         model、platform、valuation、acceptance、region
 app/src/main/java/com/overud/
+  di/                         依赖装配与 ViewModel 工厂
+  work/                       工作时段与共享工作状态
   bridge/                     Shevery 连接及特权 UI 自动化
-  capture/                    工作服务、OCR 调度所需截图、悬浮窗、通知和定位
-  data/                       Room 数据库与规则持久化
-  ui/                         Material 3 Expressive 页面与主题
-  OverudRuntime.kt            采集、评估、记录及接单协调
+  capture/                    工作服务、采集调度、OCR、报价追踪和通知
+  acceptance/                 自动接单协调、复核和确认
+  analytics/                  区域覆盖时长记录
+  geo/                        工作期间定位
+  overlay/                    悬浮报价与立即暂停
+  data/                       database、repository、mapping、preferences
+  ui/                         navigation、各页面 ViewModel、组件与主题
 docs/architecture.md          完整目标架构及自动接单设计
 ```
 
 ## 已检查及尚未完成的边界
 
-核心规则测试、Debug APK 编译和 Android Lint 已通过；在 Android 15 模拟器上检查启动和主要页面。模拟器没有真实平台账号与 Shevery 服务，因此尚未确认真实订单界面的覆盖率和实际接单行为。
+目录重构前的初始版本曾通过核心规则测试、Debug APK 编译及 Android Lint，并检查过 Android 15 模拟器页面。本轮目录重构按用户要求仅做静态代码审核，未运行编译、测试或模拟器；此前结果不代表重构后版本的构建结果。尚未确认真实平台订单覆盖率和实际接单行为。
 
 区域汇总使用目标平台在前台且采集正常时的工作时长代理，不能代表平台真实在线时长或整个市场需求。当前没有地图供应商、地址地理编码、路线服务、目的地概率模型、实际配送收入结算、多步平台确认适配或云端同步。区域数据不足时明确显示未知，不生成模拟热区。
 
@@ -67,6 +72,7 @@ docs/architecture.md          完整目标架构及自动接单设计
 
 - [目标架构](docs/architecture.md)
 - [代码目录与文件上限](docs/code-structure.md)
+- [分项提交与静态审核记录](docs/implementation-progress.md)
 - [Material 3 版本说明](https://developer.android.com/jetpack/androidx/releases/compose-material3)
 - [Shevery](https://github.com/HmnDev-Tech/shevery)
 - [Shizuku API](https://github.com/RikkaApps/Shizuku-API)

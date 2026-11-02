@@ -5,7 +5,7 @@
 - 以实现用户确认的架构和功能为主，不擅自扩大工作范围。
 - 用户未要求时，不主动运行测试、模拟器检查或扩大测试体系。需要运行时遵从用户当次指令。
 - 测试保持精简，现有核心用例优先维护；不为简单 UI、数据类、getter/setter 添加测试。
-- 不自动提交、推送或发布。
+- 用户已授权本轮按“小项完成 → Git 提交 → 静态审核 → 继续”推进。发现问题单独修复并提交；不推送或发布。
 
 ## 目录与依赖
 
@@ -37,11 +37,13 @@
 
 接近上限时先按职责拆分，不按行数切成 `Part1`、`Part2`。函数通常控制在 50 行内；复杂 Compose 布局优先拆成具名组件。禁止为了保持文件短小把业务规则挪进 UI。
 
-## 当前需要整理的文件
+## 已完成的目录整理
 
-- `OverudRoot.kt`：拆分根导航、四个页面、规则预览及公共组件。
-- `OverudRuntime.kt`：拆分工作时段、采集流水线、接单协调及区域记录。
-- `Models.kt`：拆分订单模型、规则模型、评估模型和价值引擎。
-- `ValueEngineTest.kt`：暂保留现有少量用例，不随目录整理扩大测试数量。
+- UI 已按 navigation、dashboard、orders、regions、rules、components、theme 归档，页面经 ViewModel 获取状态。
+- 原 `OverudRuntime.kt` 已删除，职责分入 work、capture、acceptance、analytics 和 di。
+- 原 `Models.kt` 已拆入 model、valuation、platform、acceptance 和 region。
+- data 已按 database/entity、database/dao、repository、mapping、preferences 归档。
+- 隐藏 API 封装在 bridge；定位与悬浮窗分别位于 geo、overlay。
+- `ValueEngineTest.kt` 保留现有少量用例，不随目录整理扩大测试数量。
 
-现有文件超过新上限的，在下次修改相关职责时完成拆分；不能在超限文件继续堆叠功能。
+新增功能继续遵守对应文件上限；不能在超限文件继续堆叠功能。
