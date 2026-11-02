@@ -236,3 +236,13 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - ui/components/WaitingPresentation.kt：完成样本均值和中断数口径，上限 150 行。
 
 不新增逐单等待表或区间恢复日志。
+
+## 11. 配送观测汇总职责
+
+- core/analytics/DeliveryMeasurement.kt：观测版本与时长有效范围，上限 120 行。
+- app/analytics/DeliveryRecorder.kt：一个候选和当前配送的内存关联，完成/中断处理，上限 200 行。
+- data/database/entity/DeliveryAggregate.java、dao/DeliveryDao.java、projection/DeliverySummary.java、migration/DeliverySchema.kt：小时结果累计及 v3→v4 迁移，各上限 120 行。
+- data/repository/DeliveryRepository.kt：完成/计时/配对独立分母的累计事务，上限 180 行。
+- ui/components/DeliveryCardState.kt：纯展示模型，上限 120 行；DeliveryPresentation.kt、DeliveryCard.kt：筛选分组、均值格式和展示，各上限 150 行。
+
+地区和时段页继续经 ViewModel/UiState 获取汇总，不读取逐单配送，不直接访问数据库。

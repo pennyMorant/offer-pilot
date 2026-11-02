@@ -91,3 +91,5 @@ docs/architecture.md          完整目标架构及自动接单设计
 - [Shizuku API](https://github.com/RikkaApps/Shizuku-API)
 
 送达后等待观测的起止条件、样本限制和汇总字段见 [等待观测说明](docs/observed-waiting.md)。
+
+配送完成观测及报价耗时对比已接入地区/时段统计页，只保存小时汇总；手动或重启后起点未知的配送不补造时长。数据库增加 v3→v4 迁移代码，详见 [配送观测说明](docs/delivery-observations.md)。
