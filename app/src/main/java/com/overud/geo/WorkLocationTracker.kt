@@ -1,4 +1,4 @@
-package com.overud.capture
+package com.overud.geo
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -8,11 +8,11 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Looper
-import com.overud.di.AppContainer
+import com.overud.analytics.RegionRecorder
 
-class WorkLocationTracker(private val context: Context, private val runtime: AppContainer) {
+class WorkLocationTracker(private val context: Context, private val regions: RegionRecorder) {
     private val manager = context.getSystemService(LocationManager::class.java)
-    private val listener = LocationListener { location: Location -> runtime.location(location) }
+    private val listener = LocationListener { location: Location -> regions.location(location) }
     @SuppressLint("MissingPermission")
     fun start() {
         if (context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&

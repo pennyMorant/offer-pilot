@@ -9,11 +9,11 @@ import android.os.IBinder
 import com.overud.MainActivity
 import com.overud.OverudApp
 import com.overud.R
-import kotlinx.coroutines.*
+import com.overud.geo.WorkLocationTracker
+import com.overud.overlay.OfferOverlay
 
 class WorkService : Service() {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var job: Job? = null
+    private var scheduler: CaptureScheduler? = null
     private var overlay: OfferOverlay? = null
     private var location: WorkLocationTracker? = null
     override fun onBind(intent: Intent?): IBinder? = null
@@ -30,17 +30,17 @@ class WorkService : Service() {
         if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
             checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) serviceType = serviceType or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
         startForeground(1, notification, serviceType)
-        if (job == null) {
+        if (scheduler == null) {
             val runtime = (application as OverudApp).container
             runtime.startWork()
             overlay = OfferOverlay(this, runtime).also { it.show() }
-            location = WorkLocationTracker(this, runtime).also { it.start() }
-            job = scope.launch { while (isActive) { runtime.poll(); delay(900) } }
+            location = WorkLocationTracker(this, runtime.regions).also { it.start() }
+            scheduler = CaptureScheduler(runtime.pipeline).also { it.start() }
         }
         return START_NOT_STICKY
     }
     override fun onDestroy() {
-        scope.cancel(); overlay?.close(); location?.stop()
+        scheduler?.close(); overlay?.close(); location?.stop()
         (application as OverudApp).container.stopWork()
         super.onDestroy()
     }

@@ -1,4 +1,4 @@
-package com.overud.capture
+package com.overud.overlay
 
 import android.content.Context
 import android.graphics.PixelFormat
