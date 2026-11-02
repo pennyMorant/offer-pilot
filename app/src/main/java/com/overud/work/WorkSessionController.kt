@@ -32,7 +32,8 @@ class WorkSessionController(
     }
     fun setAutomatic(enabled: Boolean) {
         mutable.update {
-            val allowed = enabled && it.working && it.policy.valid() && bridge.status.value.serviceReady && !it.pending
+            val allowed = enabled && it.working && it.policy.valid() && !it.policySaving &&
+                bridge.status.value.serviceReady && !it.pending
             it.copy(automatic = allowed, message = when {
                 !enabled -> "自动接单已关闭"
                 allowed -> "自动接单运行中，所有已配置要求必须同时满足"
@@ -41,13 +42,19 @@ class WorkSessionController(
         }
     }
     fun savePolicy(policy: Policy) {
+        if (state.value.policySaving) return
         // Immediately invalidate pending decisions while persistence completes.
-        mutable.update { it.copy(automatic = false) }
+        mutable.update { it.copy(automatic = false, policySaving = true, policySaveError = null) }
         scope.launch {
             mutex.withLock {
                 val updated = policy.copy(version = state.value.policy.version + 1)
-                if (store.save(updated)) mutable.update { it.copy(policy = updated, message = "规则已保存；可重新开启自动接单") }
-                else mutable.update { it.copy(message = "规则保存失败，请检查输入") }
+                val saved = runCatching { store.save(updated) }.getOrDefault(false)
+                if (saved) mutable.update {
+                    it.copy(policy = updated, policySaving = false, message = "规则已保存；可重新开启自动接单")
+                }
+                else mutable.update {
+                    it.copy(policySaving = false, policySaveError = "规则保存失败，请检查输入", message = "规则保存失败")
+                }
             }
         }
     }

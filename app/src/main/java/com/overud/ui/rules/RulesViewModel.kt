@@ -2,7 +2,7 @@ package com.overud.ui.rules
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.overud.model.Platform
+import com.overud.model.*
 import com.overud.platform.OfferParser
 import com.overud.valuation.EligibilityEvaluator
 import com.overud.work.WorkSessionController
@@ -12,19 +12,45 @@ import kotlinx.coroutines.launch
 class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
     private val mutable = MutableStateFlow(RuleInputParser.fromPolicy(session.state.value.policy))
     val state = mutable.asStateFlow()
+    private val drafts = mutableMapOf<Platform?, RulesUiState>()
+    private var loadedVersion = -1L
     private val mutablePreview = MutableStateFlow(RulePreviewState())
     val preview = mutablePreview.asStateFlow()
 
     init {
         viewModelScope.launch {
-            session.state.map { it.policy }.distinctUntilChanged().collect { policy ->
-                mutable.value = RuleInputParser.fromPolicy(policy)
-                updatePreview(mutablePreview.value.text, mutablePreview.value.platform)
-            }
+            session.state.map { Triple(it.policy, it.policySaving, it.policySaveError) }
+                .distinctUntilChanged().collect { (policy, saving, error) ->
+                    if (policy.version != loadedVersion) {
+                        val scope = state.value.scope
+                        loadedVersion = policy.version
+                        drafts.clear()
+                        mutable.value = RuleInputParser.fromPolicy(policy, scope)
+                        updatePreview()
+                    }
+                    mutable.update { it.copy(saving = saving, error = error ?: it.error) }
+                }
         }
     }
 
+    fun selectScope(scope: Platform?) {
+        if (state.value.saving) return
+        drafts[state.value.scope] = state.value
+        val next = drafts[scope] ?: RuleInputParser.fromPolicy(session.state.value.policy, scope)
+        mutable.value = next.copy(platforms = state.value.platforms, error = null)
+    }
+    fun inheritShared(enabled: Boolean) {
+        if (!state.value.saving) mutable.update { it.copy(inheritShared = enabled, error = null) }
+    }
+    fun condition(condition: RuleCondition, enabled: Boolean) {
+        if (state.value.saving) return
+        mutable.update {
+            it.copy(disabledConditions = if (enabled) it.disabledConditions - condition
+                else it.disabledConditions + condition, error = null)
+        }
+    }
     fun edit(field: RuleField, value: String) {
+        if (state.value.saving) return
         mutable.update {
             when (field) {
                 RuleField.MINIMUM -> it.copy(minimum = value)
@@ -35,18 +61,36 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
                 RuleField.PICKUP -> it.copy(pickup = value)
                 RuleField.COST -> it.copy(cost = value)
                 RuleField.EXCLUDED -> it.copy(excluded = value)
+                RuleField.MERCHANTS -> it.copy(excludedMerchants = value)
             }.copy(error = null)
         }
     }
     fun platform(platform: Platform, enabled: Boolean) {
+        if (state.value.saving) return
         mutable.update { it.copy(platforms = if (enabled) it.platforms + platform else it.platforms - platform, error = null) }
     }
-    fun stacked(enabled: Boolean) { mutable.update { it.copy(stacked = enabled) } }
-    fun addon(enabled: Boolean) { mutable.update { it.copy(addon = enabled) } }
+    fun stacked(enabled: Boolean) {
+        if (!state.value.saving) mutable.update { it.copy(stacked = enabled) }
+    }
+    fun addon(enabled: Boolean) {
+        if (!state.value.saving) mutable.update { it.copy(addon = enabled) }
+    }
     fun save() {
-        val policy = RuleInputParser.toPolicy(state.value, session.state.value.policy)
-        if (policy == null) mutable.update { it.copy(error = "请输入有效的接单要求，并至少开启一个平台") }
-        else session.savePolicy(policy)
+        if (state.value.saving) return
+        drafts[state.value.scope] = state.value
+        var policy = session.state.value.policy.copy(enabledPlatforms = state.value.platforms)
+        val scopes = listOf<Platform?>(null) + Platform.entries
+        for (scope in scopes) {
+            val draft = drafts[scope] ?: continue
+            val updated = RuleInputParser.toPolicy(draft, policy)
+            if (updated == null) {
+                mutable.update { it.copy(error = "${scope?.label ?: "公共要求"}输入无效，至少启用一项最低收益要求") }
+                return
+            }
+            policy = updated
+        }
+        if (policy.valid()) session.savePolicy(policy)
+        else mutable.update { it.copy(error = "请至少开启一个平台，并检查所有接单要求") }
     }
     fun updatePreview(text: String = preview.value.text, platform: Platform = preview.value.platform) {
         val offer = OfferParser.parse(platform, text, System.currentTimeMillis())

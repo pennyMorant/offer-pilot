@@ -16,4 +16,6 @@ data class WorkState(
     val lastCaptureAt: Long? = null,
     val regions: List<RegionSummary> = emptyList(),
     val currentRegion: String? = null,
+    val policySaving: Boolean = false,
+    val policySaveError: String? = null,
 )

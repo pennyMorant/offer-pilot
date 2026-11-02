@@ -1,6 +1,6 @@
 package com.overud.ui.rules
 
-import com.overud.model.Policy
+import com.overud.model.*
 import com.overud.valuation.ValueEngine
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -8,42 +8,70 @@ import java.util.Locale
 import kotlin.math.roundToLong
 
 object RuleInputParser {
-    fun fromPolicy(policy: Policy) = RulesUiState(
-        minimum = decimal(policy.minimumCents),
-        mile = decimal(policy.minimumCentsPerMile),
-        hour = decimal(policy.minimumCentsPerHour),
-        distance = miles(policy.maximumMeters),
-        time = (policy.maximumSeconds / 60).toString(),
-        pickup = policy.maximumPickupMeters?.let(::miles).orEmpty(),
-        cost = decimal(policy.costCentsPerMile),
-        excluded = policy.excludedDestinations.joinToString(", "),
-        platforms = policy.enabledPlatforms,
-        stacked = policy.allowStacked,
-        addon = policy.allowAddon,
-    )
+    fun fromPolicy(policy: Policy, scope: Platform? = null): RulesUiState {
+        val selected = scope?.let(policy::effective) ?: policy
+        val disabled = selected.disabledConditions.toMutableSet()
+        if (selected.maximumPickupMeters == null) disabled += RuleCondition.MAXIMUM_PICKUP
+        return RulesUiState(
+            minimum = decimal(selected.minimumCents),
+            mile = decimal(selected.minimumCentsPerMile),
+            hour = decimal(selected.minimumCentsPerHour),
+            distance = miles(selected.maximumMeters),
+            time = (selected.maximumSeconds / 60).toString(),
+            pickup = selected.maximumPickupMeters?.let(::miles).orEmpty(),
+            cost = decimal(selected.costCentsPerMile),
+            excluded = selected.excludedDestinations.joinToString(", "),
+            platforms = policy.enabledPlatforms,
+            stacked = selected.allowStacked,
+            addon = selected.allowAddon,
+            excludedMerchants = selected.excludedMerchants.joinToString(", "),
+            disabledConditions = disabled,
+            scope = scope,
+            inheritShared = scope != null && scope !in policy.platformOverrides,
+        )
+    }
 
     fun toPolicy(input: RulesUiState, base: Policy): Policy? {
-        val amount = cents(input.minimum) ?: return null
-        val perMile = cents(input.mile) ?: return null
-        val perHour = cents(input.hour) ?: return null
-        val cost = cents(input.cost) ?: return null
-        val distance = if (input.distance == miles(base.maximumMeters)) base.maximumMeters
-            else meters(input.distance) ?: return null
-        val duration = input.time.toLongOrNull()?.takeIf { it in 1..1440 }?.times(60) ?: return null
-        val savedPickup = base.maximumPickupMeters
+        val scope = input.scope
+        if (scope != null && input.inheritShared) {
+            return base.copy(platformOverrides = base.platformOverrides - scope)
+        }
+        val selected = scope?.let(base::effective) ?: base
+        val rules = parseRules(input, selected) ?: return null
+        return base.withRules(rules, scope)
+    }
+
+    private fun parseRules(input: RulesUiState, selected: Policy): AcceptanceRules? {
+        fun active(condition: RuleCondition) = condition !in input.disabledConditions
+        val amount = if (active(RuleCondition.MINIMUM_AMOUNT)) cents(input.minimum) ?: return null else selected.minimumCents
+        val mile = if (active(RuleCondition.MINIMUM_PER_MILE)) cents(input.mile) ?: return null else selected.minimumCentsPerMile
+        val hour = if (active(RuleCondition.MINIMUM_HOURLY)) cents(input.hour) ?: return null else selected.minimumCentsPerHour
+        val distance = if (!active(RuleCondition.MAXIMUM_DISTANCE) || input.distance == miles(selected.maximumMeters)) {
+            selected.maximumMeters
+        } else meters(input.distance) ?: return null
+        val duration = if (active(RuleCondition.MAXIMUM_DURATION)) {
+            input.time.toLongOrNull()?.takeIf { it in 1..1440 }?.times(60) ?: return null
+        } else selected.maximumSeconds
+        val savedPickup = selected.maximumPickupMeters
         val pickup = when {
-            input.pickup.isBlank() -> null
+            !active(RuleCondition.MAXIMUM_PICKUP) -> savedPickup
             savedPickup != null && input.pickup == miles(savedPickup) -> savedPickup
             else -> meters(input.pickup) ?: return null
         }
-        return base.copy(
-            enabledPlatforms = input.platforms, minimumCents = amount,
-            minimumCentsPerMile = perMile, minimumCentsPerHour = perHour,
-            maximumMeters = distance, maximumSeconds = duration,
-            maximumPickupMeters = pickup, costCentsPerMile = cost,
-            allowStacked = input.stacked, allowAddon = input.addon,
-            excludedDestinations = input.excluded.split(',', '，').map(String::trim).filter(String::isNotBlank).toSet(),
-        ).takeIf(Policy::valid)
+        return AcceptanceRules(
+            minimumCents = amount,
+            minimumCentsPerMile = mile,
+            minimumCentsPerHour = hour,
+            maximumMeters = distance,
+            maximumSeconds = duration,
+            maximumPickupMeters = pickup,
+            costCentsPerMile = cents(input.cost) ?: return null,
+            allowStacked = input.stacked,
+            allowAddon = input.addon,
+            excludedDestinations = keywords(input.excluded),
+            excludedMerchants = keywords(input.excludedMerchants),
+            disabledConditions = input.disabledConditions,
+        ).takeIf(AcceptanceRules::valid)
     }
 
     private fun cents(value: String): Long? = runCatching {
@@ -56,6 +84,7 @@ object RuleInputParser {
         ?.takeIf { it.isFinite() && it > 0 && it <= 1000 }
         ?.times(ValueEngine.METERS_PER_MILE)?.roundToLong()?.takeIf { it > 0 }
 
+    private fun keywords(value: String) = value.split(',', '，').map(String::trim).filter(String::isNotBlank).toSet()
     private fun decimal(cents: Long) = "%.2f".format(Locale.US, cents / 100.0)
     private fun miles(meters: Long) = "%.1f".format(Locale.US, meters / ValueEngine.METERS_PER_MILE)
 }

@@ -1,8 +1,9 @@
 package com.overud.ui.rules
 
 import com.overud.model.Platform
+import com.overud.model.RuleCondition
 
-enum class RuleField { MINIMUM, MILE, HOUR, DISTANCE, TIME, PICKUP, COST, EXCLUDED }
+enum class RuleField { MINIMUM, MILE, HOUR, DISTANCE, TIME, PICKUP, COST, EXCLUDED, MERCHANTS }
 
 data class RulesUiState(
     val minimum: String,
@@ -16,6 +17,11 @@ data class RulesUiState(
     val platforms: Set<Platform>,
     val stacked: Boolean,
     val addon: Boolean,
+    val excludedMerchants: String = "",
+    val disabledConditions: Set<RuleCondition> = emptySet(),
+    val scope: Platform? = null,
+    val inheritShared: Boolean = false,
+    val saving: Boolean = false,
     val error: String? = null,
 )
 
