@@ -7,7 +7,10 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.overud.bridge.SheveryBridge
-import com.overud.data.*
+import com.overud.data.database.*
+import com.overud.data.database.entity.*
+import com.overud.data.database.projection.*
+import com.overud.data.preferences.*
 import com.overud.model.*
 import com.overud.platform.*
 import com.overud.valuation.*
@@ -58,7 +61,7 @@ class OverudRuntime(context: Context, private val database: OverudDatabase) {
             refreshRecords()
             refreshRegions()
             mutex.withLock {
-                val unresolved = database.offers().unresolvedCount() > 0
+                val unresolved = database.acceptance().unresolvedCount() > 0
                 if (unresolved) gate = AcceptanceGate(AcceptanceState.OUTCOME_UNKNOWN)
                 mutable.update { it.copy(pending = unresolved, message = if (unresolved) "有接单结果待核对，请先确认配送状态" else it.message) }
             }
@@ -112,7 +115,7 @@ class OverudRuntime(context: Context, private val database: OverudDatabase) {
     fun resolvePending() {
         scope.launch {
             mutex.withLock {
-                database.offers().resolve()
+                database.acceptance().resolve()
                 gate.userResolved()
                 pendingId = null; pendingPlatform = null
                 mutable.update { it.copy(pending = false, automatic = false, message = "已确认当前无进行中的配送；可重新开启自动接单") }
@@ -135,7 +138,7 @@ class OverudRuntime(context: Context, private val database: OverudDatabase) {
             mutable.update { it.copy(lastCaptureAt = now) }
             if (pendingId != null && pendingPlatform == platform &&
                 Regex("order accepted|delivery accepted|订单已接受|接单成功", RegexOption.IGNORE_CASE).containsMatchIn(text)) {
-                database.offers().updateAttempt(pendingId!!, "accepted", "平台界面显示明确接单成功文本")
+                database.acceptance().updateAttempt(pendingId!!, "accepted", "平台界面显示明确接单成功文本")
                 if (gate.state != AcceptanceState.ACCEPTED) gate.confirmed()
                 mutable.update { it.copy(message = "平台已确认接单；配送完成后再恢复自动接单") }
             }
@@ -179,7 +182,7 @@ class OverudRuntime(context: Context, private val database: OverudDatabase) {
         val before = state.value
         if (!before.automatic || !before.working || before.pending || !decision.eligible || token.isBlank() ||
             token != fingerprint(offer.platform, offer.rawText)) return
-        if (database.offers().unresolvedCount() > 0) {
+        if (database.acceptance().unresolvedCount() > 0) {
             mutable.update { it.copy(pending = true, automatic = false, message = "接单记录待核对") }
             return
         }
@@ -187,12 +190,12 @@ class OverudRuntime(context: Context, private val database: OverudDatabase) {
         val attempt = AttemptRecord().apply {
             offerId = offer.id; platform = offer.platform.name; startedAt = System.currentTimeMillis(); policyVersion = decision.policyVersion
         }
-        if (database.offers().reserve(attempt) == -1L) { gate.releaseBeforeDispatch(); return }
+        if (database.acceptance().reserve(attempt) == -1L) { gate.releaseBeforeDispatch(); return }
         try {
             val current = state.value
             val rechecked = EligibilityEvaluator.assess(offer, current.policy, System.currentTimeMillis())
             if (!current.automatic || !current.working || current.policy.version != decision.policyVersion || !rechecked.eligible) {
-                database.offers().updateAttempt(offer.id, "aborted", "开关或规则已变化")
+                database.acceptance().updateAttempt(offer.id, "aborted", "开关或规则已变化")
                 gate.releaseBeforeDispatch()
                 return
             }
@@ -202,15 +205,15 @@ class OverudRuntime(context: Context, private val database: OverudDatabase) {
             val result = bridge.service?.accept(token, offer.platform.packageName) ?: "service_disconnected"
             if (result == "dispatched") {
                 pendingId = offer.id; pendingPlatform = offer.platform
-                database.offers().updateAttempt(offer.id, "outcome_unknown", "点击已发送，等待平台确认")
+                database.acceptance().updateAttempt(offer.id, "outcome_unknown", "点击已发送，等待平台确认")
                 mutable.update { it.copy(automatic = false, pending = true, message = "接单动作已发出，正在核对平台结果") }
             } else {
-                database.offers().updateAttempt(offer.id, "aborted", result)
+                database.acceptance().updateAttempt(offer.id, "aborted", result)
                 gate.notDispatched()
                 mutable.update { it.copy(pending = false, message = "本次未执行接单：$result") }
             }
         } catch (e: Exception) {
-            database.offers().updateAttempt(offer.id, "outcome_unknown", "执行中断：${e.javaClass.simpleName}")
+            database.acceptance().updateAttempt(offer.id, "outcome_unknown", "执行中断：${e.javaClass.simpleName}")
             mutable.update { it.copy(automatic = false, pending = true, message = "接单结果待核对，请检查平台") }
         }
     }
@@ -232,7 +235,7 @@ class OverudRuntime(context: Context, private val database: OverudDatabase) {
     private fun refreshRecords() { mutable.update { it.copy(records = database.offers().recent()) } }
     private fun refreshRegions() {
         val since = (System.currentTimeMillis() - 28L * 24 * 3600 * 1000) / 3_600_000 * 3_600_000
-        mutable.update { it.copy(regions = database.offers().regions(since)) }
+        mutable.update { it.copy(regions = database.regions().regions(since)) }
     }
     private fun trackExposure(platform: Platform, now: Long) {
         val region = usableRegion()
@@ -242,11 +245,11 @@ class OverudRuntime(context: Context, private val database: OverudDatabase) {
             val bucket = now / 3_600_000 * 3_600_000
             val id = "$key:$bucket"
             val local = java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.systemDefault())
-            database.offers().ensureExposure(ExposureRecord().apply {
+            database.regions().ensureExposure(ExposureRecord().apply {
                 this.id = id; regionKey = region!!; this.platform = platform.name; bucketStart = bucket
                 localHour = local.hour; localWeekday = local.dayOfWeek.value
             })
-            database.offers().addExposure(id, elapsed)
+            database.regions().addExposure(id, elapsed)
         }
         exposureAt = now; exposureKey = key
         if (now - regionsRefreshedAt > 15_000) { refreshRegions(); regionsRefreshedAt = now }

@@ -1,4 +1,5 @@
-package com.overud.data;
+package com.overud.data.database/entity;
+
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;

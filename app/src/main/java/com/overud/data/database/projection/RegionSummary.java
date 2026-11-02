@@ -1,4 +1,5 @@
-package com.overud.data;
+package com.overud.data.database/projection;
+
 
 public class RegionSummary {
     public String regionKey;

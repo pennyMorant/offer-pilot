@@ -2,7 +2,7 @@ package com.overud
 
 import android.app.Application
 import androidx.room.Room
-import com.overud.data.OverudDatabase
+import com.overud.data.database.OverudDatabase
 
 class OverudApp : Application() {
     lateinit var runtime: OverudRuntime

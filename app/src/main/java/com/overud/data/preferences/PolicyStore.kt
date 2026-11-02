@@ -1,4 +1,4 @@
-package com.overud.data
+package com.overud.data.preferences
 
 import android.content.Context
 import com.overud.model.Platform
