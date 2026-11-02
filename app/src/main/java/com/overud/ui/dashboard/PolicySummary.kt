@@ -19,6 +19,8 @@ fun policySummaries(policy: Policy): List<PlatformPolicySummary> = Platform.entr
                 add("$basis ≥ ${money(rules.minimumCentsPerHour)}/h")
             }
             add("车辆成本 ${money(rules.costCentsPerMile)}/mi")
+            val region = rules.regionalRequirement
+            if (region.enabled) add("目的地历史优质比例 ≥ ${region.minimumGoodPercent}% · 有效样本 ≥ ${region.minimumClassified}")
             if (rules.enabled(RuleCondition.MAXIMUM_DISTANCE)) add("≤ ${miles(rules.maximumMeters)} mi")
             if (rules.enabled(RuleCondition.MAXIMUM_DURATION)) add("≤ ${rules.maximumSeconds / 60} min")
             val pickup = rules.maximumPickupMeters

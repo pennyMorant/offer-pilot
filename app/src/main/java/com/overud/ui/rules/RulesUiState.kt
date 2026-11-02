@@ -5,7 +5,7 @@ import com.overud.model.HourlyBasis
 import com.overud.model.Platform
 import com.overud.model.RuleCondition
 
-enum class RuleField { MINIMUM, MILE, HOUR, DISTANCE, TIME, PICKUP, COST, EXCLUDED, MERCHANTS }
+enum class RuleField { MINIMUM, MILE, HOUR, DISTANCE, TIME, PICKUP, COST, EXCLUDED, MERCHANTS, REGION_PERCENT, REGION_SAMPLES }
 
 data class RulesUiState(
     val minimum: String,
@@ -26,6 +26,9 @@ data class RulesUiState(
     val saving: Boolean = false,
     val error: String? = null,
     val hourlyBasis: HourlyBasis = HourlyBasis.GROSS,
+    val regionalEnabled: Boolean = false,
+    val regionalGoodPercent: String = "50",
+    val regionalSamples: String = "20",
 )
 
 data class RulePreviewState(

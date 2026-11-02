@@ -21,6 +21,9 @@ object RuleInputParser {
             pickup = selected.maximumPickupMeters?.let(::miles).orEmpty(),
             cost = decimal(selected.costCentsPerMile),
             hourlyBasis = selected.hourlyBasis,
+            regionalEnabled = selected.regionalRequirement.enabled,
+            regionalGoodPercent = selected.regionalRequirement.minimumGoodPercent.toString(),
+            regionalSamples = selected.regionalRequirement.minimumClassified.toString(),
             excluded = selected.excludedDestinations.joinToString(", "),
             platforms = policy.enabledPlatforms,
             stacked = selected.allowStacked,
@@ -59,6 +62,10 @@ object RuleInputParser {
             savedPickup != null && input.pickup == miles(savedPickup) -> savedPickup
             else -> meters(input.pickup) ?: return null
         }
+        val regional = if (input.regionalEnabled) RegionalRequirement(true,
+            input.regionalGoodPercent.toIntOrNull() ?: return null,
+            input.regionalSamples.toLongOrNull() ?: return null)
+            else selected.regionalRequirement.copy(enabled = false)
         return AcceptanceRules(
             minimumCents = amount,
             minimumCentsPerMile = mile,
@@ -68,6 +75,7 @@ object RuleInputParser {
             maximumPickupMeters = pickup,
             costCentsPerMile = cents(input.cost) ?: return null,
             hourlyBasis = input.hourlyBasis,
+            regionalRequirement = regional,
             allowStacked = input.stacked,
             allowAddon = input.addon,
             excludedDestinations = keywords(input.excluded),

@@ -52,6 +52,9 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
     fun hourlyBasis(basis: HourlyBasis) {
         if (!state.value.saving) mutable.update { it.copy(hourlyBasis = basis, error = null) }
     }
+    fun regional(enabled: Boolean) {
+        if (!state.value.saving) mutable.update { it.copy(regionalEnabled = enabled, error = null) }
+    }
     fun edit(field: RuleField, value: String) {
         if (state.value.saving) return
         mutable.update {
@@ -65,6 +68,8 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
                 RuleField.COST -> it.copy(cost = value)
                 RuleField.EXCLUDED -> it.copy(excluded = value)
                 RuleField.MERCHANTS -> it.copy(excludedMerchants = value)
+                RuleField.REGION_PERCENT -> it.copy(regionalGoodPercent = value)
+                RuleField.REGION_SAMPLES -> it.copy(regionalSamples = value)
             }.copy(error = null)
         }
     }

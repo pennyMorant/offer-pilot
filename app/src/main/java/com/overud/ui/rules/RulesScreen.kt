@@ -39,6 +39,8 @@ fun RulesScreen(
             item { EarningsFields(state, viewModel::edit, viewModel::condition, viewModel::hourlyBasis) }
             item { SectionLabel("距离与时间") }
             item { DistanceTimeFields(state, viewModel::edit, viewModel::condition) }
+            item { SectionLabel("目的地区域要求") }
+            item { RegionalRequirementFields(state, viewModel::regional, viewModel::edit) }
             item { SectionLabel("额外偏好") }
             item { PlatformPreferences(state, viewModel) }
         }

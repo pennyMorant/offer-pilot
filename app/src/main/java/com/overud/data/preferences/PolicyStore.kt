@@ -1,6 +1,7 @@
 package com.overud.data.preferences
 
 import android.content.Context
+import com.overud.model.RegionalRequirement
 import com.overud.model.HourlyBasis
 import com.overud.model.Platform
 import com.overud.model.Policy
@@ -13,9 +14,10 @@ class PolicyStore(context: Context) {
         val basis = runCatching {
             HourlyBasis.valueOf(prefs.getString("hourlyBasis", HourlyBasis.GROSS.name)!!)
         }.getOrNull()
+        val region = runCatching { RegionalRuleCodec.read(prefs.getString("regionalRequirement", null)) }.getOrNull()
         return Policy(
             version = prefs.getLong("version", 1),
-            enabledPlatforms = if (overrides == null || basis == null) emptySet()
+            enabledPlatforms = if (overrides == null || basis == null || region == null) emptySet()
                 else Platform.entries.filter { prefs.getBoolean(it.name, true) }.toSet(),
             minimumCents = prefs.getLong("min", 800),
             minimumCentsPerMile = prefs.getLong("mile", 200),
@@ -25,6 +27,7 @@ class PolicyStore(context: Context) {
             maximumPickupMeters = prefs.getLong("pickup", 0).takeIf { it > 0 },
             costCentsPerMile = prefs.getLong("cost", 35),
             hourlyBasis = basis ?: HourlyBasis.GROSS,
+            regionalRequirement = region ?: RegionalRequirement(),
             allowStacked = prefs.getBoolean("stack", false),
             allowAddon = prefs.getBoolean("addon", false),
             excludedDestinations = prefs.getStringSet("excluded", emptySet())!!.toSet(),
@@ -42,6 +45,7 @@ class PolicyStore(context: Context) {
             .putLong("hour", policy.minimumCentsPerHour).putLong("distance", policy.maximumMeters)
             .putLong("time", policy.maximumSeconds).putLong("cost", policy.costCentsPerMile)
             .putString("hourlyBasis", policy.hourlyBasis.name)
+            .putString("regionalRequirement", RegionalRuleCodec.encode(policy.regionalRequirement).toString())
             .putLong("pickup", policy.maximumPickupMeters ?: 0).putBoolean("stack", policy.allowStacked)
             .putBoolean("addon", policy.allowAddon).putStringSet("excluded", policy.excludedDestinations)
             .putStringSet("merchants", policy.excludedMerchants)
