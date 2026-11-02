@@ -3,7 +3,6 @@ package com.overud.data.database.dao;
 import androidx.room.*;
 import java.util.List;
 import com.overud.data.database.entity.*;
-import com.overud.data.database.projection.RegionSummary;
 
 @Dao
 public interface OfferDao {
