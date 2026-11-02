@@ -225,3 +225,14 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - ui/components/DestinationPresentation.kt、DestinationSummary.kt：参考口径与展示，各上限 150 行。
 
 不因接入地址解析或配送状态而增加逐单明细表。
+
+## 10. 送达后等待观测职责
+
+- core/model/WaitingAssessment.kt、core/analytics/WaitingObservation.kt：等待证据和聚合输入，各上限 120 行。
+- core/analytics/WaitingEvaluator.kt：按时段选择等待证据，上限 200 行。
+- app/analytics/WaitingRecorder.kt：单个内存观测区间及中断处理，上限 200 行。
+- data/database/entity/RegionWaitingRecord.java、dao/WaitingDao.java、projection/WaitingSummary.java、migration/WaitingSchema.kt：小时汇总及 v2→v3 迁移，各上限 120 行。
+- data/repository/WaitingRepository.kt：等待累计事务和历史快照，上限 180 行。
+- ui/components/WaitingPresentation.kt：完成样本均值和中断数口径，上限 150 行。
+
+不新增逐单等待表或区间恢复日志。
