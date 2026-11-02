@@ -10,25 +10,25 @@ class PolicyStore(context: Context) {
     fun read(): Policy {
         val overrides = RuleJsonCodec.decode(prefs.getString("overrides", "{}") ?: "{}")
         return Policy(
-        version = prefs.getLong("version", 1),
-        enabledPlatforms = if (overrides == null) emptySet()
-            else Platform.entries.filter { prefs.getBoolean(it.name, true) }.toSet(),
-        minimumCents = prefs.getLong("min", 800),
-        minimumCentsPerMile = prefs.getLong("mile", 200),
-        minimumCentsPerHour = prefs.getLong("hour", 2500),
-        maximumMeters = prefs.getLong("distance", 16093),
-        maximumSeconds = prefs.getLong("time", 2700),
-        maximumPickupMeters = prefs.getLong("pickup", 0).takeIf { it > 0 },
-        costCentsPerMile = prefs.getLong("cost", 35),
-        allowStacked = prefs.getBoolean("stack", false),
-        allowAddon = prefs.getBoolean("addon", false),
-        excludedDestinations = prefs.getStringSet("excluded", emptySet())!!.toSet(),
-        excludedMerchants = prefs.getStringSet("merchants", emptySet())!!.toSet(),
-        disabledConditions = prefs.getStringSet("disabled", emptySet())!!.mapNotNull { name ->
-            RuleCondition.entries.find { it.name == name }
-        }.toSet(),
-        platformOverrides = overrides.orEmpty(),
-    )
+            version = prefs.getLong("version", 1),
+            enabledPlatforms = if (overrides == null) emptySet()
+                else Platform.entries.filter { prefs.getBoolean(it.name, true) }.toSet(),
+            minimumCents = prefs.getLong("min", 800),
+            minimumCentsPerMile = prefs.getLong("mile", 200),
+            minimumCentsPerHour = prefs.getLong("hour", 2500),
+            maximumMeters = prefs.getLong("distance", 16093),
+            maximumSeconds = prefs.getLong("time", 2700),
+            maximumPickupMeters = prefs.getLong("pickup", 0).takeIf { it > 0 },
+            costCentsPerMile = prefs.getLong("cost", 35),
+            allowStacked = prefs.getBoolean("stack", false),
+            allowAddon = prefs.getBoolean("addon", false),
+            excludedDestinations = prefs.getStringSet("excluded", emptySet())!!.toSet(),
+            excludedMerchants = prefs.getStringSet("merchants", emptySet())!!.toSet(),
+            disabledConditions = prefs.getStringSet("disabled", emptySet())!!.mapNotNull { name ->
+                RuleCondition.entries.find { it.name == name }
+            }.toSet(),
+            platformOverrides = overrides.orEmpty(),
+        )
     }
     fun save(policy: Policy): Boolean {
         if (!policy.valid()) return false

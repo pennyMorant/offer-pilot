@@ -21,9 +21,18 @@ data class Policy(
         platformOverrides.values.all(AcceptanceRules::valid)
 
     fun sharedRules() = AcceptanceRules(
-        minimumCents, minimumCentsPerMile, minimumCentsPerHour,
-        maximumMeters, maximumSeconds, maximumPickupMeters, costCentsPerMile,
-        allowStacked, allowAddon, excludedDestinations, excludedMerchants, disabledConditions,
+        minimumCents = minimumCents,
+        minimumCentsPerMile = minimumCentsPerMile,
+        minimumCentsPerHour = minimumCentsPerHour,
+        maximumMeters = maximumMeters,
+        maximumSeconds = maximumSeconds,
+        maximumPickupMeters = maximumPickupMeters,
+        costCentsPerMile = costCentsPerMile,
+        allowStacked = allowStacked,
+        allowAddon = allowAddon,
+        excludedDestinations = excludedDestinations,
+        excludedMerchants = excludedMerchants,
+        disabledConditions = disabledConditions,
     )
 
     fun effective(platform: Platform): Policy =
