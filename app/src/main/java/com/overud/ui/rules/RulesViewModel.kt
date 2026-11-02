@@ -92,7 +92,7 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
             val draft = drafts[scope] ?: continue
             val updated = RuleInputParser.toPolicy(draft, policy)
             if (updated == null) {
-                mutable.update { it.copy(error = "${scope?.label ?: "公共要求"}输入无效，至少启用一项最低收益要求") }
+                mutable.update { it.copy(error = "${scope?.label ?: "公共要求"}输入无效，请检查数值范围并至少启用一项最低收益要求") }
                 return
             }
             policy = updated

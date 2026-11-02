@@ -61,7 +61,7 @@ class DestinationController(
                     if (state.working == input.working && current?.id == input.token &&
                         current?.destination == input.address && trustedDuration(current) == input.duration &&
                         (current?.observedAt ?: 0) / 60000 * 60000 == input.minute &&
-                        state.statistics.refreshedAt == input.history.refreshedAt) {
+                        state.statistics.revision == input.history.revision) {
                         val updated = state.copy(destinationAssessment = assessment, destinationEvidence = evidence)
                         updated.copy(decision = current?.let { updated.assessOffer(it, now) })
                     } else state
@@ -81,7 +81,7 @@ class DestinationController(
         val address = input.address?.takeIf(String::isNotBlank) ?: return null
         if (!input.working) return null
         return DestinationEvidence(token, platform, address, input.duration, input.minute, now,
-            input.history.refreshedAt, QualityEvaluator.VERSION, assessment)
+            input.history.revision, QualityEvaluator.VERSION, assessment)
     }
 
     private fun evaluate(location: Located, input: Input): DestinationAssessment {

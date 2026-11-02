@@ -7,11 +7,13 @@ import com.overud.data.mapping.adjust
 import com.overud.data.mapping.emptyRecord
 import com.overud.model.Offer
 import com.overud.model.Platform
+import java.util.concurrent.atomic.AtomicLong
 
 class StatisticsRepository(private val database: OverudDatabase) {
     private data class Contribution(val token: String, val bucket: AnalysisBucket, val sample: QualitySample)
     private val current = mutableMapOf<Platform, Contribution>()
     private var prunedAt = 0L
+    private val snapshotRevision = AtomicLong()
 
     fun record(offer: Offer, region: String?): Boolean {
         val amount = offer.amountCents
@@ -55,7 +57,8 @@ class StatisticsRepository(private val database: OverudDatabase) {
     fun snapshot(): StatisticsSnapshot {
         val since = retentionStart()
         val dao = database.quality()
-        return StatisticsSnapshot(dao.totals(since), dao.timeSummaries(since), dao.regionSummaries(since), System.currentTimeMillis())
+        return StatisticsSnapshot(dao.totals(since), dao.timeSummaries(since), dao.regionSummaries(since), System.currentTimeMillis(),
+            revision = snapshotRevision.incrementAndGet())
     }
 
     fun prune(): Boolean {

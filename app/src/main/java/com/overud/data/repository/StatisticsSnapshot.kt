@@ -7,4 +7,5 @@ data class StatisticsSnapshot(
     val times: List<QualitySummary> = emptyList(),
     val regions: List<QualitySummary> = emptyList(),
     val refreshedAt: Long = 0,
+    val revision: Long = 0,
 )

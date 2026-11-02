@@ -62,10 +62,7 @@ object RuleInputParser {
             savedPickup != null && input.pickup == miles(savedPickup) -> savedPickup
             else -> meters(input.pickup) ?: return null
         }
-        val regional = if (input.regionalEnabled) RegionalRequirement(true,
-            input.regionalGoodPercent.toIntOrNull() ?: return null,
-            input.regionalSamples.toLongOrNull() ?: return null)
-            else selected.regionalRequirement.copy(enabled = false)
+        val regional = regional(input, selected) ?: return null
         return AcceptanceRules(
             minimumCents = amount,
             minimumCentsPerMile = mile,
@@ -82,6 +79,12 @@ object RuleInputParser {
             excludedMerchants = keywords(input.excludedMerchants),
             disabledConditions = input.disabledConditions,
         ).takeIf(AcceptanceRules::valid)
+    }
+
+    private fun regional(input: RulesUiState, selected: Policy): RegionalRequirement? {
+        if (!input.regionalEnabled) return selected.regionalRequirement.copy(enabled = false)
+        return RegionalRequirement(true, input.regionalGoodPercent.toIntOrNull() ?: return null,
+            input.regionalSamples.toLongOrNull() ?: return null).takeIf(RegionalRequirement::valid)
     }
 
     private fun cents(value: String): Long? = runCatching {
