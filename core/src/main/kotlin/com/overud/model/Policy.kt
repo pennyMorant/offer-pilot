@@ -18,6 +18,7 @@ data class Policy(
     val platformOverrides: Map<Platform, AcceptanceRules> = emptyMap(),
     val hourlyBasis: HourlyBasis = HourlyBasis.GROSS,
     val regionalRequirement: RegionalRequirement = RegionalRequirement(),
+    val prop22: Prop22Policy = Prop22Policy(),
 ) {
     fun valid() = enabledPlatforms.isNotEmpty() && sharedRules().valid() &&
         platformOverrides.values.all(AcceptanceRules::valid)

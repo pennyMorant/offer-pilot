@@ -7,7 +7,8 @@ object ValueEngine {
 
     fun calculate(offer: Offer, policy: Policy): Valuation {
         val effective = policy.effective(offer.platform)
-        if (offer.currency != "USD") return Valuation(null, null, null)
+        val prop22 = Prop22Estimator.calculate(offer, policy.prop22)
+        if (offer.currency != "USD") return Valuation(null, null, null, prop22 = prop22)
         val amountKnown = offer.reliable || offer.evidence?.amountVerified == true
         val amount = offer.amountCents?.takeIf { it > 0 && amountKnown }
         val miles = offer.distanceMeters?.takeIf { it > 0 && offer.hasVerifiedDistance() }?.div(METERS_PER_MILE)
@@ -20,6 +21,7 @@ object ValueEngine {
             contributionCents = contribution,
             vehicleCostCents = cost,
             contributionCentsPerHour = if (seconds != null && contribution != null) contribution * 3600.0 / seconds else null,
+            prop22 = prop22,
         )
     }
 }

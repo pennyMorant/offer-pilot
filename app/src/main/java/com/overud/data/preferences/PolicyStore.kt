@@ -36,10 +36,11 @@ class PolicyStore(context: Context) {
                 RuleCondition.entries.find { it.name == name }
             }.toSet(),
             platformOverrides = overrides.orEmpty(),
+            prop22 = Prop22Preferences.read(prefs),
         )
     }
     fun save(policy: Policy): Boolean {
-        if (!policy.valid()) return false
+        if (!policy.valid() || !policy.prop22.valid()) return false
         val edit = prefs.edit().putLong("version", policy.version)
             .putLong("min", policy.minimumCents).putLong("mile", policy.minimumCentsPerMile)
             .putLong("hour", policy.minimumCentsPerHour).putLong("distance", policy.maximumMeters)
@@ -52,6 +53,7 @@ class PolicyStore(context: Context) {
             .putStringSet("disabled", policy.disabledConditions.map { it.name }.toSet())
             .putString("overrides", RuleJsonCodec.encode(policy.platformOverrides))
         Platform.entries.forEach { edit.putBoolean(it.name, it in policy.enabledPlatforms) }
+        Prop22Preferences.write(edit, policy.prop22)
         return edit.commit()
     }
 }

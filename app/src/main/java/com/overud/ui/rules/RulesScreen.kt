@@ -19,6 +19,7 @@ fun RulesScreen(
     onLocationPermission: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val prop22 by viewModel.prop22.collectAsStateWithLifecycle()
     LazyColumn(
         modifier = Modifier.widthIn(max = 760.dp).fillMaxSize(),
         contentPadding = PaddingValues(20.dp),
@@ -44,6 +45,8 @@ fun RulesScreen(
             item { SectionLabel("额外偏好") }
             item { PlatformPreferences(state, viewModel) }
         }
+        item { SectionLabel("Prop 22 额外收入估算 · 全局设置") }
+        item { Prop22Fields(prop22, state.saving, viewModel::updateProp22) }
         item {
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             Button(

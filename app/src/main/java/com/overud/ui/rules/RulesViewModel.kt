@@ -17,6 +17,8 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
     private var loadedVersion = -1L
     private val mutablePreview = MutableStateFlow(RulePreviewState())
     val preview = mutablePreview.asStateFlow()
+    private val mutableProp22 = MutableStateFlow(Prop22Input.from(session.state.value.policy.prop22))
+    val prop22 = mutableProp22.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -27,6 +29,7 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
                         loadedVersion = policy.version
                         drafts.clear()
                         mutable.value = RuleInputParser.fromPolicy(policy, scope)
+                        mutableProp22.value = Prop22Input.from(policy.prop22)
                         updatePreview()
                     }
                     mutable.update { it.copy(saving = saving, error = error ?: it.error) }
@@ -86,8 +89,13 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
     }
     fun save() {
         if (state.value.saving) return
+        val prop22 = mutableProp22.value.parse(session.state.value.policy.prop22)
+        if (prop22 == null) {
+            mutable.update { it.copy(error = "Prop 22：最低时薪需为 16.90–1000.00 美元，小费比例需为 0–100 的整数") }
+            return
+        }
         drafts[state.value.scope] = state.value
-        var policy = session.state.value.policy.copy(enabledPlatforms = state.value.platforms)
+        var policy = session.state.value.policy.copy(enabledPlatforms = state.value.platforms, prop22 = prop22)
         val scopes = listOf<Platform?>(null) + Platform.entries
         for (scope in scopes) {
             val draft = drafts[scope] ?: continue
@@ -108,5 +116,10 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
             ?: "无法识别报价，请包含接单按钮文字和金额"
         mutablePreview.value = RulePreviewState(text, platform, explanation, decision?.valuation,
             platformPagePresentation(OfferParser.classify(platform, text)))
+    }
+    fun updateProp22(input: Prop22Input) {
+        if (state.value.saving) return
+        mutableProp22.value = input
+        mutable.update { it.copy(error = null) }
     }
 }
