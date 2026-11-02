@@ -4,7 +4,7 @@ import com.overud.model.Valuation
 import java.util.Locale
 
 data class VehicleCostUiState(val cost: String, val contribution: String, val hourly: String) {
-    val compact: String get() = "车辆成本 $cost · 扣成本贡献 $contribution\n扣成本后时薪 $hourly/h"
+    val compact: String get() = "估算车辆成本 $cost · 贡献 $contribution\n扣成本后报价时薪 $hourly/h"
 }
 
 fun vehicleCostPresentation(value: Valuation?) = VehicleCostUiState(

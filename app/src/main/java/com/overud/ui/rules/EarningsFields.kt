@@ -6,6 +6,7 @@ import androidx.compose.material3.*
 import com.overud.model.HourlyBasis
 import androidx.compose.ui.unit.dp
 import com.overud.model.RuleCondition
+import com.overud.ui.components.NumberField
 
 @Composable
 fun EarningsFields(
@@ -27,6 +28,8 @@ fun EarningsFields(
                     label = { Text(if (basis == HourlyBasis.GROSS) "报价毛时薪" else "扣配置车辆成本后时薪") })
             }
         }
+        NumberField("配置车辆成本", state.cost, "$/mi",
+            { onField(RuleField.COST, it) }, enabled = !state.saving)
         val hourlyLabel = if (state.hourlyBasis == HourlyBasis.GROSS) "最低预计毛时薪" else "最低扣车辆成本后时薪"
         RuleConditionField(hourlyLabel, state.hour, "$/h", RuleCondition.MINIMUM_HOURLY,
             RuleField.HOUR, state, onField, onCondition)

@@ -5,14 +5,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.overud.ui.components.NumberField
 import com.overud.ui.components.ToggleRow
 
 @Composable
 fun PlatformPreferences(state: RulesUiState, viewModel: RulesViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        NumberField("车辆成本（用于贡献估计）", state.cost, "$/mi",
-            { viewModel.edit(RuleField.COST, it) }, enabled = !state.saving)
         ToggleRow("允许叠单", "按整组报价与路线评估", state.stacked,
             enabled = !state.saving, onChange = viewModel::stacked)
         ToggleRow("允许追加单", "增量收入及路线无法确认时跳过", state.addon,
