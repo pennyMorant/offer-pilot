@@ -33,9 +33,14 @@ class AppContainer(context: Context) {
     init {
         scope.launch {
             mutex.withLock {
-                statistics.prune()
-                session.update { it.copy(statistics = statistics.snapshot()) }
-                acceptance.restore()
+                runCatching {
+                    statistics.prune()
+                    session.update { it.copy(statistics = statistics.snapshot()) }
+                    acceptance.restore()
+                }.onFailure {
+                    session.update { state -> state.copy(automatic = false, pending = true,
+                        message = "统计存储暂不可用，请检查设备存储后重启应用") }
+                }
             }
         }
     }

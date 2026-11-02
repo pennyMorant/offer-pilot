@@ -25,9 +25,9 @@ class CapturePipeline(
     private var lastOcrAt = 0L
     suspend fun poll() = mutex.withLock {
         if (!session.state.value.working) return@withLock
-        if (statistics.prune()) session.update { it.copy(statistics = statistics.snapshot()) }
-        val service = bridge.service ?: return@withLock
         try {
+            if (statistics.prune()) session.update { it.copy(statistics = statistics.snapshot()) }
+            val service = bridge.service ?: return@withLock
             val snapshot = service.snapshot()
             snapshot.getString("error")?.let { error ->
                 session.update { it.copy(automatic = false, message = "采集不可用：$error") }
@@ -62,7 +62,10 @@ class CapturePipeline(
                 val decision = EligibilityEvaluator.assess(offer, session.state.value.policy, now)
                 val changed = statistics.record(offer, regions.usableRegion())
                 val aggregate = if (changed) statistics.snapshot() else session.state.value.statistics
-                session.update { it.copy(latest = offer, decision = decision, statistics = aggregate) }
+                session.update {
+                    if (it.working) it.copy(latest = offer, decision = decision, statistics = aggregate)
+                    else it.copy(statistics = aggregate)
+                }
                 acceptance.maybeAccept(offer, decision, snapshot.getString("token").orEmpty())
             } else {
                 tracker.absent(platform, now)
