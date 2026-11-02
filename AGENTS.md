@@ -13,6 +13,9 @@
 - 保留 `app` 和 `core` 两个 Gradle 模块，不提前拆成大量模块。
 - `core` 只放纯 Kotlin 业务逻辑，不依赖 Android、Compose、Room 或 Shevery。
 - `app` 依赖 `core`，禁止反向依赖。
+- 订单模型仅在内存中识别、评估和短时去重；禁止新增逐单报价、地址、截图、配送轨迹或结算明细表。
+- 数据库保存按平台、地区、当地小时和质量版本分组的累计统计；逐项指标必须有独立有效样本数。统计默认保留 90 天。
+- 恢复元数据必须有固定容量：每平台一个去重检查点、全局一个接单状态。不得将它们扩成逐单历史日志。
 - UI 依赖 ViewModel/UiState；页面不直接访问数据库、Binder 或执行接单动作。
 - 平台识别规则放进独立平台适配器；Android 隐藏 API 仅允许出现在 `bridge`。
 - 共享代码必须有明确业务含义，不新增笼统的 `Utils.kt`、`Helpers.kt`、`Manager.kt`。
@@ -39,7 +42,7 @@
 
 ## 已完成的目录整理
 
-- UI 已按 navigation、dashboard、orders、regions、rules、components、theme 归档，页面经 ViewModel 获取状态。
+- UI 已按 navigation、dashboard、statistics、regions、rules、components、theme 归档，页面经 ViewModel 获取状态。
 - 原 `OverudRuntime.kt` 已删除，职责分入 work、capture、acceptance、analytics 和 di。
 - 原 `Models.kt` 已拆入 model、valuation、platform、acceptance 和 region。
 - data 已按 database/entity、database/dao、repository、mapping、preferences 归档。

@@ -27,9 +27,9 @@ import com.overud.ui.rules.RulePreviewDialog
     val dashboard: DashboardViewModel = viewModel(factory = factory)
     val rules: RulesViewModel = viewModel(factory = factory)
     val state by dashboard.state.collectAsStateWithLifecycle()
-    val orders: StatisticsViewModel = viewModel(factory = factory)
+    val statisticsViewModel: StatisticsViewModel = viewModel(factory = factory)
     val regions: RegionsViewModel = viewModel(factory = factory)
-    val statistics by orders.state.collectAsStateWithLifecycle()
+    val statistics by statisticsViewModel.state.collectAsStateWithLifecycle()
     val regionState by regions.state.collectAsStateWithLifecycle()
     val bridge = state.connection
     var selected by rememberSaveable { mutableStateOf(Destination.DASHBOARD) }
@@ -51,7 +51,7 @@ import com.overud.ui.rules.RulePreviewDialog
                 when (page) {
                     Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
                         { selected = Destination.RULES }, { replay = true }, { resolve = true })
-                    Destination.STATISTICS -> StatisticsScreen(statistics, orders::select)
+                    Destination.STATISTICS -> StatisticsScreen(statistics, statisticsViewModel::select)
                     Destination.REGIONS -> RegionsScreen(regionState, regions::select)
                     Destination.RULES -> RulesScreen(rules, onOverlayPermission, onNotificationPermission, onLocationPermission)
                 }

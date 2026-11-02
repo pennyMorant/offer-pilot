@@ -9,8 +9,7 @@ enum class AnalysisPeriod(val label: String, val hours: Set<Int>) {
     LUNCH("午餐", (11..14).toSet()),
     AFTERNOON("下午", (15..16).toSet()),
     DINNER("晚餐", (17..21).toSet()),
-    NIGHT("夜间", (22..23).toSet() + (0..5).toSet()),
-    ;
+    NIGHT("夜间", (22..23).toSet() + (0..5).toSet());
 
     val rangeLabel: String get() = when (this) {
         ALL -> "00:00–24:00"

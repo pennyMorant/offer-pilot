@@ -2,7 +2,7 @@
 
 Android 外卖司机助手。基于 Shevery/Shizuku 采集 Uber Eats、DoorDash 报价，计算订单价值，并按用户规则自动接单。
 
-UI 使用 Jetpack Compose 与 **Material 3 Expressive 1.5.0-beta02**，包括 Expressive 主题、动态组件形状及运动方案。界面提供工作台、订单历史、区域记录和接单规则。
+UI 使用 Jetpack Compose 与 **Material 3 Expressive 1.5.0-beta02**。界面提供工作台、时段质量统计、地区质量对比和接单规则。
 
 ## 当前实现
 
@@ -13,9 +13,12 @@ UI 使用 Jetpack Compose 与 **Material 3 Expressive 1.5.0-beta02**，包括 Ex
 - 自动接单总开关、平台开关；公共要求与 Uber Eats / DoorDash 独立要求，支持跟随公共设置。
 - 最低报价、每英里报价、毛时薪、总距离、耗时、取餐距离分别启停；至少保留一项最低收益要求。支持商家和目的地排除关键词。
 - 编辑不同范围时保留各自草稿，统一保存；保存期间暂停自动接单，成功后需主动重新开启。
-- 动作前报价指纹复核、全局执行协调、持久化接单日志、未知结果暂停和用户核对恢复。
-- Room 本地报价记录、位置网格、按平台记录的采集覆盖时间与区域汇总。
-- 规则文本预览：不执行接单、不写入真实报价历史。
+- 动作前报价指纹复核、全局执行协调、单个持久化接单恢复状态、未知结果暂停。
+- 订单模型在内存分析后更新 Room 汇总行，不保存逐单报价、地址、截图或轨迹明细。
+- 按平台、位置网格、当地小时和质量版本累计报价数量、质量分类、指标累计值和区间分布，默认保留 90 天。
+- 统计页支持平台、地区、星期和早餐/午餐/下午/晚餐/夜间筛选；地区页可比较相同时段的不同地区。
+- 各项均值使用独立有效样本数，未知字段单列；固定质量标准独立于自动接单设置。
+- 规则文本预览不执行接单，也不写入真实统计。
 
 目前是第一版开发实现，并非两个平台所有版本的完整适配。只对已开启的条件检查其必需字段；需要距离/耗时时必须确认总口径，缺少信息则跳过。未启用的条件不强制要求对应字段，OCR 单独识别的报价始终只展示。默认币种为 USD，距离界面使用英里。
 
@@ -47,14 +50,14 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ## 工程结构
 
 ```text
-core/                         model、platform、valuation、acceptance、region
+core/                         model、platform、valuation、acceptance、region、analytics
 app/src/main/java/com/overud/
   di/                         依赖装配与 ViewModel 工厂
   work/                       工作时段与共享工作状态
   bridge/                     Shevery 连接及特权 UI 自动化
   capture/                    工作服务、采集调度、OCR、报价追踪和通知
   acceptance/                 自动接单协调、复核和确认
-  analytics/                  区域覆盖时长记录
+  analytics/                  区域覆盖时长记录与质量汇总
   geo/                        工作期间定位
   overlay/                    悬浮报价与立即暂停
   data/                       database、repository、mapping、preferences
@@ -68,6 +71,8 @@ docs/architecture.md          完整目标架构及自动接单设计
 
 区域汇总使用目标平台在前台且采集正常时的工作时长代理，不能代表平台真实在线时长或整个市场需求。当前没有地图供应商、地址地理编码、路线服务、目的地概率模型、实际配送收入结算、多步平台确认适配或云端同步。区域数据不足时明确显示未知，不生成模拟热区。
 
+数据库已增加 v1→v2 迁移代码：将旧报价汇总后移除明细表，旧数据按 UTC 和“口径未知”单列。迁移尚未运行验证。当前区间分布已累计，页面展示均值、质量计数和优质比例，不声称提供精确中位数或任意重算历史。
+
 自动接单已实现语义按钮动作和明确成功文本识别，未明确识别成功时始终保留结果待核对状态；不会将卡片消失当作接单成功。追加单的增量报价和路线尚未实现完整识别，因此即使允许追加单，增量证据不足时也会跳过。
 
 ## 参考
@@ -75,6 +80,7 @@ docs/architecture.md          完整目标架构及自动接单设计
 - [目标架构](docs/architecture.md)
 - [代码目录与文件上限](docs/code-structure.md)
 - [分项提交与静态审核记录](docs/implementation-progress.md)
+- [汇总存储与质量口径](docs/aggregation-storage.md)
 - [Material 3 版本说明](https://developer.android.com/jetpack/androidx/releases/compose-material3)
 - [Shevery](https://github.com/HmnDev-Tech/shevery)
 - [Shizuku API](https://github.com/RikkaApps/Shizuku-API)

@@ -108,29 +108,36 @@ overlay/
 ```text
 data/
 ├── database/
-│   ├── OverudDatabase.java            [120] Room 数据库及迁移注册
+│   ├── OverudDatabase.java            [120] 数据库版本与 DAO
 │   ├── entity/
-│   │   ├── OfferRecord.java           [120]
-│   │   ├── AttemptRecord.java         [120]
-│   │   ├── ExposureRecord.java        [120]
-│   │   └── TripRecord.java            [120]
-│   └── dao/
-│       ├── OfferDao.java              [120] 报价查询
-│       ├── AcceptanceDao.java         [120] 接单日志与占用状态
-│       ├── RegionDao.java             [120] 覆盖时长与区域聚合
-│       └── TripDao.java               [120] 实际配送记录
+│   │   ├── HourlyQualityRecord.java   [120] 每小时质量累计，不含逐单明细
+│   │   ├── StatisticsCheckpoint.java  [80] 每平台一个去重指纹
+│   │   ├── AttemptRecord.java         [120] 一个接单恢复槽位
+│   │   └── ExposureRecord.java        [120] 每小时覆盖时间
+│   ├── dao/
+│   │   ├── HourlyQualityDao.java      [120] 汇总读写与查询
+│   │   ├── QualityQueries.java        [100] 共用统计投影
+│   │   ├── AcceptanceDao.java         [120] 接单恢复状态
+│   │   └── RegionDao.java             [120] 覆盖时间与清理
+│   ├── projection/
+│   │   └── QualitySummary.java        [120] 统计查询投影
+│   └── migration/
+│       ├── AggregateSchema.kt        [120] 汇总表定义
+│       └── DatabaseMigrations.kt     [150] 旧报价聚合后移除明细
 ├── repository/
-│   ├── OfferRepository.kt             [180]
-│   ├── AcceptanceRepository.kt        [180]
-│   ├── RegionRepository.kt            [180]
-│   └── TripRepository.kt              [180]
+│   ├── StatisticsRepository.kt       [180] 贡献修正、去重、保留期
+│   ├── StatisticsSnapshot.kt         [100] 页面统计快照
+│   ├── AcceptanceRepository.kt       [180]
+│   └── RegionRepository.kt           [180]
 ├── preferences/
-│   └── PolicyStore.kt                 [150] 接单规则持久化
+│   ├── PolicyStore.kt                [150]
+│   ├── RuleJsonCodec.kt              [150]
+│   └── TrackerCheckpointStore.kt     [120] 每平台固定一个指纹
 └── mapping/
-    └── OfferMapping.kt                [120] 数据库与业务模型转换
+    └── QualityAccumulator.kt         [150] 内存样本更新汇总
 ```
 
-Repository 封装读写与事务，不为每个实体机械地创建空接口。DAO 不能继续同时承担订单、接单和区域三类查询。
+不新增 OfferRecord、TripRecord 等逐单明细表。Repository 封装事务及累计，DAO 分开处理质量、接单恢复和覆盖时间。统计规则见 `aggregation-storage.md`。
 
 ### UI
 
@@ -149,10 +156,9 @@ ui/
 │   ├── DashboardUiState.kt            [100]
 │   ├── WorkSessionCard.kt             [150]
 │   └── AutoAcceptCard.kt              [150]
-├── orders/
-│   ├── OrdersScreen.kt                [220]
-│   ├── OrdersViewModel.kt             [150]
-│   └── OfferDetailSheet.kt            [150]
+├── statistics/
+│   ├── StatisticsScreen.kt            [220]
+│   └── StatisticsViewModel.kt         [150]
 ├── regions/
 │   ├── RegionsScreen.kt               [220]
 │   ├── RegionsViewModel.kt            [180]
@@ -196,6 +202,13 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 1. `OverudRoot.kt` 已拆分；工作台卡片、规则预览和公共组件独立，页面使用 ViewModel / UiState。
 2. `OverudRuntime.kt` 已移除；工作状态、采集、接单、区域记录与依赖装配独立。
 3. `Models.kt` 已拆分；收益计算与接单条件判断分开，两个平台使用独立解析入口与共享文本解析实现。
-4. data、bridge、capture、geo、overlay 已归档；实体和数据库表结构保持一致。
+4. data、bridge、capture、geo、overlay 已归档；数据库已改为汇总结构，提供 v1→v2 迁移代码。
 
 本轮没有扩张测试体系。以静态审核检查包引用、依赖方向和物理行数；这不等同于编译或设备运行结果。
+
+## 8. 汇总分析新增职责
+
+- core/analytics：AnalysisBucket、QualityEvaluator、QualitySample、MetricHistogram，各文件上限 150 行；纯模型文件仍按 120 行上限。
+- app/analytics/QualitySummaryReducer.kt：统计投影分组累计，上限 150 行。
+- ui/components：AnalysisSelection、AnalysisUiState、AnalysisFilters、RegionPicker、QualityCard、QualityCardState、QualityPresentation、QualityStandardNote；模型上限 120 行，组件/格式化上限 150 行。
+- 不恢复逐单历史页面。地区和时段均使用统计快照，页面不直接访问数据库。
