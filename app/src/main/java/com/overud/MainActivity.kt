@@ -10,8 +10,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import com.overud.capture.WorkService
-import com.overud.ui.OverudRoot
-import com.overud.ui.OverudTheme
+import com.overud.ui.navigation.OverudRoot
+import com.overud.ui.theme.OverudTheme
 
 class MainActivity : ComponentActivity() {
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
