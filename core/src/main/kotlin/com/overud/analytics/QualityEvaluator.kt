@@ -9,11 +9,15 @@ import kotlin.math.roundToLong
 object QualityEvaluator {
     const val VERSION = 1
 
-    fun extract(offer: Offer): QualitySample {
+    fun extract(offer: Offer, previous: QualitySample? = null): QualitySample {
         val amount = offer.amountCents?.takeIf { it > 0 }
         val totalsKnown = offer.reliable || offer.evidence?.totalsVerified == true
-        val distance = offer.distanceMeters?.takeIf { it > 0 && totalsKnown }
-        val duration = offer.durationSeconds?.takeIf { it > 0 && totalsKnown }
+        val observedDistance = offer.distanceMeters?.takeIf { it > 0 && totalsKnown }
+        val observedDuration = offer.durationSeconds?.takeIf { it > 0 && totalsKnown }
+        // Preserve confirmed features only for aggregation of the same active quote.
+        // They are never copied back into the offer used by the auto-accept evaluator.
+        val distance = observedDistance ?: previous?.distanceMeters
+        val duration = observedDuration ?: previous?.durationSeconds
         val perMile = if (amount != null && distance != null) {
             (amount * ValueEngine.METERS_PER_MILE * 1000 / distance).roundToLong()
         } else null
@@ -26,7 +30,9 @@ object QualityEvaluator {
             amount < 500 || perMile < 100_000 || perHour < 1_500_000 -> OrderQuality.LOW
             else -> OrderQuality.NORMAL
         }
-        return QualitySample(amount, distance, duration, perMile, perHour, quality,
-            offer.evidence?.source == OfferSource.OCR)
+        val inherited = (observedDistance == null && previous?.distanceMeters != null) ||
+            (observedDuration == null && previous?.durationSeconds != null)
+        val fromOcr = offer.evidence?.source == OfferSource.OCR || (inherited && previous?.fromOcr == true)
+        return QualitySample(amount, distance, duration, perMile, perHour, quality, fromOcr)
     }
 }
