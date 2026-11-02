@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.overud.model.Platform
+import com.overud.ui.components.VehicleCostSummary
 
 @Composable fun RulePreviewDialog(viewModel: RulesViewModel, onDismiss: () -> Unit) {
     val preview by viewModel.preview.collectAsStateWithLifecycle()
@@ -22,6 +23,7 @@ import com.overud.model.Platform
             OutlinedTextField(value = preview.text, onValueChange = { viewModel.updatePreview(text = it) },
                 label = { Text("报价文本") }, minLines = 4, maxLines = 8)
             Text(preview.explanation)
+            preview.valuation?.let { VehicleCostSummary(it) }
         }
     }, confirmButton = { TextButton(onClick = onDismiss) { Text("完成") } })
 }

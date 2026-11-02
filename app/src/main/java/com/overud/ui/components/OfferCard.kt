@@ -34,6 +34,7 @@ import java.util.Date
                 Column { Text("预计毛时薪", style = MaterialTheme.typography.labelMedium); Text(decision?.valuation?.grossCentsPerHour?.let { money(it.toLong()) } ?: "—", style = MaterialTheme.typography.titleLarge) }
             }
             Text(decision?.reasons?.joinToString("；")?.ifEmpty { "满足所有接单要求" } ?: "等待分析", color = MaterialTheme.colorScheme.primary)
+            VehicleCostSummary(decision?.valuation)
             DestinationSummary(destination)
         }
     }

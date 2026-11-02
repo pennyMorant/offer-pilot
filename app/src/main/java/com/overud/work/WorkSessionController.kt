@@ -1,6 +1,7 @@
 package com.overud.work
 
 import com.overud.model.*
+import com.overud.valuation.EligibilityEvaluator
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -53,7 +54,11 @@ class WorkSessionController(
                 val updated = policy.copy(version = state.value.policy.version + 1)
                 val saved = runCatching { store.save(updated) }.getOrDefault(false)
                 if (saved) mutable.update {
-                    it.copy(policy = updated, policySaving = false, message = "规则已保存；可重新开启自动接单")
+                    val decision = it.latest?.let { offer ->
+                        EligibilityEvaluator.assess(offer, updated, System.currentTimeMillis())
+                    }
+                    it.copy(policy = updated, decision = decision, policySaving = false,
+                        message = "规则已保存；可重新开启自动接单")
                 }
                 else mutable.update {
                     it.copy(policySaving = false, policySaveError = "规则保存失败，请检查输入", message = "规则保存失败")
