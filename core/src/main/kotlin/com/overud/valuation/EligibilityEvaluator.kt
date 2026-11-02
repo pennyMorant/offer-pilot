@@ -3,7 +3,9 @@ package com.overud.valuation
 import com.overud.model.*
 
 object EligibilityEvaluator {
-    fun assess(offer: Offer, policy: Policy, now: Long): Decision {
+    fun assess(
+        offer: Offer, policy: Policy, now: Long, destinationEvidence: DestinationEvidence? = null,
+    ): Decision {
         val rules = policy.effective(offer.platform).sharedRules()
         val value = ValueEngine.calculate(offer, policy)
         val reasons = buildList {
@@ -29,6 +31,7 @@ object EligibilityEvaluator {
                     add(if (afterCost) "扣车辆成本后时薪不达标" else "预计毛时薪不达标")
                 }
             }
+            addAll(RegionalEligibilityEvaluator.reasons(offer, rules.regionalRequirement, destinationEvidence, now))
             addAll(routeLimits(offer, rules))
             if (offer.isStacked && !rules.allowStacked) add("未允许自动接叠单")
             if (offer.isAddon) {

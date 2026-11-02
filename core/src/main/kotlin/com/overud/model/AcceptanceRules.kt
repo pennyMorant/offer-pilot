@@ -14,6 +14,7 @@ data class AcceptanceRules(
     val excludedMerchants: Set<String> = emptySet(),
     val disabledConditions: Set<RuleCondition> = emptySet(),
     val hourlyBasis: HourlyBasis = HourlyBasis.GROSS,
+    val regionalRequirement: RegionalRequirement = RegionalRequirement(),
 ) {
     fun enabled(condition: RuleCondition) = condition !in disabledConditions
 
@@ -26,6 +27,6 @@ data class AcceptanceRules(
         return minimumCents > 0 && minimumCentsPerMile > 0 && minimumCentsPerHour > 0 &&
             maximumMeters > 0 && maximumSeconds > 0 && costCentsPerMile >= 0 &&
             (maximumPickupMeters == null || maximumPickupMeters > 0) &&
-            incomeConditions.any(::enabled)
+            incomeConditions.any(::enabled) && regionalRequirement.valid()
     }
 }
