@@ -10,7 +10,10 @@ object PageClassifier {
     fun classify(platform: Platform, text: String, rules: PlatformPageRules, source: OfferSource): PlatformPage {
         val lines = text.lines().map(::normalize).filter(String::isNotBlank).toSet()
         val signals = buildSet {
-            if (lines.any { it in rules.quoteActions }) add(PageSignal.QUOTE_ACTION)
+            if (lines.any { line -> rules.quoteActions.any { action ->
+                line == action || (line.startsWith("$action ") && money.containsMatchIn(line.removePrefix("$action ")) &&
+                    Regex("^(?:us\\$|\\$)", RegexOption.IGNORE_CASE).containsMatchIn(line.removePrefix("$action ")))
+            } }) add(PageSignal.QUOTE_ACTION)
             if (money.containsMatchIn(text)) add(PageSignal.PRICE)
             if (lines.any { it in rules.confirmation }) add(PageSignal.ACCEPT_CONFIRMATION)
             if (lines.any { it in rules.accepted }) add(PageSignal.ACCEPTED)
@@ -20,7 +23,7 @@ object PageClassifier {
             if (lines.any { it in rules.cancelled }) add(PageSignal.CANCELLED)
             if (lines.any { it in rules.offline }) add(PageSignal.OFFLINE)
             if (lines.any { it in rules.history }) add(PageSignal.HISTORY)
-            if (lines.any { line -> rules.addon.any { line == it || line.startsWith("$it:") } }) add(PageSignal.ADDON)
+            if (lines.any { line -> rules.addon.any { line == it || line.startsWith("$it:") || line.startsWith("$it ") } }) add(PageSignal.ADDON)
         }
         return PlatformPage(platform, decide(signals), source, signals)
     }
