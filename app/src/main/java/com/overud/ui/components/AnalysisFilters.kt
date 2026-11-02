@@ -37,6 +37,7 @@ fun AnalysisFilters(state: AnalysisUiState, onChange: (AnalysisSelection) -> Uni
                     onClick = { onChange(selection.copy(period = period)) }, label = { Text(period.label) })
             }
         }
+        Text("当地时间：${selection.period.rangeLabel}", style = MaterialTheme.typography.bodySmall)
         if (allowRegion) {
             OutlinedButton(onClick = { showRegions = true }, modifier = Modifier.fillMaxWidth()) {
                 Text(selection.region?.let(::regionLabel) ?: "全部地区")
