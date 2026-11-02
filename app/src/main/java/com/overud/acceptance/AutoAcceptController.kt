@@ -46,18 +46,19 @@ class AutoAcceptController(
     }
     fun maybeAccept(offer: Offer, decision: Decision, token: String) {
         val before = session.state.value
-        if (!before.automatic || !before.working || before.pending || !decision.eligible || token.isBlank() ||
+        if (!before.automatic || !before.working || before.pending || before.policySaving || !decision.eligible || token.isBlank() ||
             token != fingerprint(offer.platform, offer.rawText)) return
         if (repository.hasUnresolved()) {
             session.update { it.copy(pending = true, automatic = false, message = "接单记录待核对") }
             return
         }
         if (!gate.reserve(offer, decision, before.automatic, before.working)) return
-        if (!repository.reserve(offer, decision)) { gate.releaseBeforeDispatch(); return }
         try {
+            if (!repository.reserve(offer, decision)) { gate.releaseBeforeDispatch(); return }
             val current = session.state.value
             val rechecked = EligibilityEvaluator.assess(offer, current.policy, System.currentTimeMillis())
-            if (!current.automatic || !current.working || current.policy.version != decision.policyVersion || !rechecked.eligible) {
+            if (!current.automatic || !current.working || current.policySaving ||
+                current.policy.version != decision.policyVersion || !rechecked.eligible) {
                 repository.update(offer.id, "aborted", "开关或规则已变化")
                 gate.releaseBeforeDispatch()
                 return
@@ -65,18 +66,21 @@ class AutoAcceptController(
             // Persist before IPC. A process failure can never cause a blind retry.
             session.update { it.copy(pending = true) }
             gate.dispatched()
+            pendingId = offer.id
+            pendingPlatform = offer.platform
             val result = bridge.service?.accept(token, offer.platform.packageName) ?: "service_disconnected"
             if (result == "dispatched") {
-                pendingId = offer.id; pendingPlatform = offer.platform
                 repository.update(offer.id, "outcome_unknown", "点击已发送，等待平台确认")
                 session.update { it.copy(automatic = false, pending = true, message = "接单动作已发出，正在核对平台结果") }
             } else {
                 repository.update(offer.id, "aborted", result)
                 gate.notDispatched()
+                pendingId = null
+                pendingPlatform = null
                 session.update { it.copy(pending = false, message = "本次未执行接单：$result") }
             }
         } catch (e: Exception) {
-            repository.update(offer.id, "outcome_unknown", "执行中断：${e.javaClass.simpleName}")
+            runCatching { repository.update(offer.id, "outcome_unknown", "执行中断：${e.javaClass.simpleName}") }
             session.update { it.copy(automatic = false, pending = true, message = "接单结果待核对，请检查平台") }
         }
     }

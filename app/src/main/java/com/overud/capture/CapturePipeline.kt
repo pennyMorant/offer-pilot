@@ -39,7 +39,8 @@ class CapturePipeline(
             session.update { it.copy(lastCaptureAt = now) }
             acceptance.observe(platform, text)
             var offer = OfferParser.parse(platform, text, now)
-            if ((offer == null || !offer.reliable) && now - lastOcrAt > 4000) {
+            val nodeDecision = offer?.let { EligibilityEvaluator.assess(it, session.state.value.policy, now) }
+            if ((offer == null || (!offer.reliable && nodeDecision?.eligible != true)) && now - lastOcrAt > 4000) {
                 lastOcrAt = now
                 val ocr = recognizer.recognize(platform.packageName)
                 currentCoroutineContext().ensureActive()
