@@ -18,7 +18,7 @@ class WaitingRecorder(
     private val mutex: Mutex,
 ) {
     private data class Interval(
-        val bucket: AnalysisBucket, val started: Long, var lastSeen: Long,
+        val bucket: AnalysisBucket, val started: Long, val startedEpoch: Long, var lastSeen: Long,
         val excludedToken: String?, val generation: Long,
     )
     private val generation = AtomicLong()
@@ -28,8 +28,9 @@ class WaitingRecorder(
         interrupt()
         if (!session.state.value.working) return
         val now = SystemClock.elapsedRealtime()
-        interval = Interval(AnalysisBucket.at(platform, regions.usableRegion(), System.currentTimeMillis()),
-            now, now, session.state.value.latest?.id, generation.get())
+        val epoch = System.currentTimeMillis()
+        interval = Interval(AnalysisBucket.at(platform, regions.usableRegion(), epoch),
+            now, epoch, now, session.state.value.latest?.id, generation.get())
     }
 
     fun frame(platform: Platform) {
@@ -49,6 +50,7 @@ class WaitingRecorder(
         val evidence = offer.evidence
         val amount = offer.amountCents
         if (offer.platform != current.bucket.platform || offer.id == current.excludedToken ||
+            offer.firstObservedAt < current.startedEpoch ||
             amount == null || amount <= 0 || evidence == null || !evidence.amountVerified || evidence.source != OfferSource.UI_NODES) return
         // OCR and IPC can take time after frame(); never bridge a gap using a late result.
         val now = SystemClock.elapsedRealtime()

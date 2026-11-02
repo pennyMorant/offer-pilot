@@ -18,8 +18,8 @@ object DestinationEvaluator {
         waitingHistory: List<WaitingObservation> = emptyList(),
     ): DestinationAssessment {
         val region = destination.regionKey
-        val resolved = destination.status == DestinationResolution.RESOLVED && region != null
-        val waiting = if (resolved) WaitingEvaluator.assess(region!!, platform, arrivalAt, waitingHistory, zone) else null
+        val waiting = if (destination.status == DestinationResolution.RESOLVED && region != null)
+            WaitingEvaluator.assess(region, platform, arrivalAt, waitingHistory, zone) else null
         val base = DestinationAssessment(destination.status, region, destination.precision, arrivalAt,
             analysisZoneId = zone.id, waiting = waiting)
         if (destination.status != DestinationResolution.RESOLVED || region == null) return base

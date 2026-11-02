@@ -48,7 +48,7 @@ class CapturePipeline(
             regions.trackExposure(platform, now)
             session.update { it.copy(lastCaptureAt = now) }
             acceptance.observe(platform, text)
-            waiting.frame(platform)
+            if (text.isBlank()) waiting.interrupt() else waiting.frame(platform)
             val deliveryVisible = DeliveryScreenParser.parse(text) != DeliveryScreenState.UNKNOWN
             var offer = OfferParser.parse(platform, text, now)
             val nodeDecision = offer?.let { EligibilityEvaluator.assess(it, session.state.value.policy, now) }
