@@ -12,6 +12,8 @@ import android.widget.TextView
 import com.overud.di.AppContainer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import com.overud.ui.components.destinationPresentation
+import java.util.Locale
 
 /** Compact native window; the main app uses the Compose expressive theme. */
 class OfferOverlay(private val context: Context, private val runtime: AppContainer) {
@@ -38,7 +40,11 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
             runtime.state.collectLatest { state ->
                 val offer = state.latest
                 label.text = "Overud · ${if (state.automatic) "自动接单中" else "手动模式"}\n" +
-                    (offer?.let { "${it.platform.label}  $${"%.2f".format((it.amountCents ?: 0) / 100.0)}\n${state.decision?.reasons?.firstOrNull() ?: "符合接单要求"}" } ?: "等待新报价")
+                    (offer?.let {
+                        val amount = it.amountCents?.let { cents -> "$${"%.2f".format(cents / 100.0)}" } ?: "金额未知"
+                        "${it.platform.label}  $amount\n${state.decision?.reasons?.firstOrNull() ?: "符合接单要求"}\n" +
+                            destinationPresentation(state.destinationAssessment, Locale.getDefault()).title
+                    } ?: "等待新报价")
                 pause.isEnabled = state.automatic
             }
         }

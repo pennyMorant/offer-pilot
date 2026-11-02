@@ -17,6 +17,7 @@ data class DashboardUiState(
     val connection: BridgeStatus,
     val policySaving: Boolean = false,
     val policySummaries: List<PlatformPolicySummary> = emptyList(),
+    val destinationAssessment: DestinationAssessment = DestinationAssessment(),
 ) {
     companion object {
         fun from(work: WorkState, bridge: BridgeStatus) = DashboardUiState(
@@ -24,6 +25,7 @@ data class DashboardUiState(
             work.message, work.pending, work.statistics.totals.sumOf { it.offerCount }, work.statistics.totals.sumOf { it.goodCount }, bridge,
             policySaving = work.policySaving,
             policySummaries = policySummaries(work.policy),
+            destinationAssessment = work.destinationAssessment,
         )
     }
 }

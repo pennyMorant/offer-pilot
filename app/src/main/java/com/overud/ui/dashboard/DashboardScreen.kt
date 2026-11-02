@@ -37,7 +37,7 @@ import com.overud.ui.components.*
             TextButton(onClick = onReplay) { Text("规则预览") }
         } }
         item {
-            state.latest?.let { offer -> OfferCard(offer, state.decision) }
+            state.latest?.let { offer -> OfferCard(offer, state.decision, state.destinationAssessment) }
                 ?: EmptyStateCard("等待第一张报价", "开始工作后，在 Uber 或 DoorDash 打开订单报价，分析结果会出现在这里。")
         }
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {

@@ -17,7 +17,7 @@ import com.overud.region.RegionCell
 import java.text.SimpleDateFormat
 import java.util.Date
 
-@Composable fun OfferCard(offer: Offer, decision: Decision?) {
+@Composable fun OfferCard(offer: Offer, decision: Decision?, destination: DestinationAssessment) {
     val locale = LocalConfiguration.current.locales[0]
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
         Column(Modifier.fillMaxWidth().padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -34,7 +34,7 @@ import java.util.Date
                 Column { Text("预计毛时薪", style = MaterialTheme.typography.labelMedium); Text(decision?.valuation?.grossCentsPerHour?.let { money(it.toLong()) } ?: "—", style = MaterialTheme.typography.titleLarge) }
             }
             Text(decision?.reasons?.joinToString("；")?.ifEmpty { "满足所有接单要求" } ?: "等待分析", color = MaterialTheme.colorScheme.primary)
-            Text("目的地接单机会：证据不足", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            DestinationSummary(destination)
         }
     }
 }
