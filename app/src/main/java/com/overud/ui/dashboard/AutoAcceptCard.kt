@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.overud.model.DeliveryPhase
 
 @Composable
 fun AutoAcceptCard(
@@ -22,6 +23,8 @@ fun AutoAcceptCard(
                     Text(
                         text = when {
                             state.policySaving -> "正在保存规则，自动接单暂停"
+                            state.deliveryPhase == DeliveryPhase.ACTIVE && state.autoAcceptEnabled -> "配送中暂停，确认送达后继续"
+                            state.pending -> "订单占用中，等待确认配送状态"
                             state.automatic -> "符合全部开启条件时直接接单"
                             else -> "开启后按已保存要求执行"
                         },
@@ -29,9 +32,9 @@ fun AutoAcceptCard(
                     )
                 }
                 Switch(
-                    checked = state.automatic,
+                    checked = state.autoAcceptEnabled,
                     onCheckedChange = onAutomatic,
-                    enabled = state.automatic || (state.working && state.connection.serviceReady &&
+                    enabled = state.autoAcceptEnabled || (state.working && state.connection.serviceReady &&
                         !state.pending && !state.policySaving),
                 )
             }

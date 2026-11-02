@@ -30,7 +30,7 @@ class CapturePipeline(
             val service = bridge.service ?: return@withLock
             val snapshot = service.snapshot()
             snapshot.getString("error")?.let { error ->
-                session.update { it.copy(automatic = false, message = "采集不可用：$error") }
+                session.update { it.copy(automatic = false, autoAcceptEnabled = false, message = "采集不可用：$error") }
                 return@withLock
             }
             val platform = Platform.fromPackage(snapshot.getString("package").orEmpty()) ?: return@withLock
@@ -77,7 +77,7 @@ class CapturePipeline(
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            session.update { it.copy(automatic = false, message = "采集已暂停：${e.message ?: "服务连接异常"}") }
+            session.update { it.copy(automatic = false, autoAcceptEnabled = false, message = "采集已暂停：${e.message ?: "服务连接异常"}") }
         }
     }
 }

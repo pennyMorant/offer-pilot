@@ -18,16 +18,18 @@ class WorkSessionController(
     val state = mutable.asStateFlow()
     init {
         scope.launch {
-            bridge.status.collect { if (!it.serviceReady) mutable.update { state -> state.copy(automatic = false) } }
+            bridge.status.collect {
+                if (!it.serviceReady) mutable.update { state -> state.copy(automatic = false, autoAcceptEnabled = false) }
+            }
         }
     }
     fun update(transform: (WorkState) -> WorkState) = mutable.update(transform)
     fun startWork() {
         bridge.bind()
-        mutable.update { it.copy(working = true, automatic = false, message = "正在监听订单页面") }
+        mutable.update { it.copy(working = true, automatic = false, autoAcceptEnabled = false, message = "正在监听订单页面") }
     }
     fun stopWork() {
-        mutable.update { it.copy(working = false, automatic = false, latest = null, decision = null,
+        mutable.update { it.copy(working = false, automatic = false, autoAcceptEnabled = false, latest = null, decision = null,
             destinationAssessment = DestinationAssessment(), message = "工作已结束") }
         bridge.unbind()
     }
@@ -35,7 +37,7 @@ class WorkSessionController(
         mutable.update {
             val allowed = enabled && it.working && it.policy.valid() && !it.policySaving &&
                 bridge.status.value.serviceReady && !it.pending
-            it.copy(automatic = allowed, message = when {
+            it.copy(automatic = allowed, autoAcceptEnabled = allowed, message = when {
                 !enabled -> "自动接单已关闭"
                 allowed -> "自动接单运行中，所有已配置要求必须同时满足"
                 else -> "请先连接 Shevery、开始工作并核对待处理订单"
@@ -45,7 +47,7 @@ class WorkSessionController(
     fun savePolicy(policy: Policy) {
         if (state.value.policySaving) return
         // Immediately invalidate pending decisions while persistence completes.
-        mutable.update { it.copy(automatic = false, policySaving = true, policySaveError = null) }
+        mutable.update { it.copy(automatic = false, autoAcceptEnabled = false, policySaving = true, policySaveError = null) }
         scope.launch {
             mutex.withLock {
                 val updated = policy.copy(version = state.value.policy.version + 1)
@@ -62,5 +64,13 @@ class WorkSessionController(
     fun notification(platform: Platform, text: String) {
         // Notifications only trigger status information; incomplete background offers never authorize clicks.
         if (state.value.working) mutable.update { it.copy(message = "${platform.label} 有新通知，请查看订单页面") }
+    }
+    fun releaseDelivery(message: String) {
+        mutable.update {
+            val next = it.copy(pending = false, deliveryPhase = DeliveryPhase.AVAILABLE)
+            val resume = next.autoAcceptEnabled && next.working && !next.policySaving &&
+                next.policy.valid() && bridge.status.value.serviceReady
+            next.copy(automatic = resume, message = if (resume) "$message，自动接单继续运行" else message)
+        }
     }
 }

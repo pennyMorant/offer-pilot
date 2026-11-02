@@ -39,13 +39,18 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
         scope.launch {
             runtime.state.collectLatest { state ->
                 val offer = state.latest
-                label.text = "Overud · ${if (state.automatic) "自动接单中" else "手动模式"}\n" +
+                val mode = when {
+                    state.automatic -> "自动接单中"
+                    state.autoAcceptEnabled -> "自动接单已暂停"
+                    else -> "手动模式"
+                }
+                label.text = "Overud · $mode\n" +
                     (offer?.let {
                         val amount = it.amountCents?.let { cents -> "$${"%.2f".format(cents / 100.0)}" } ?: "金额未知"
                         "${it.platform.label}  $amount\n${state.decision?.reasons?.firstOrNull() ?: "符合接单要求"}\n" +
                             destinationPresentation(state.destinationAssessment, Locale.getDefault()).title
                     } ?: "等待新报价")
-                pause.isEnabled = state.automatic
+                pause.isEnabled = state.autoAcceptEnabled
             }
         }
     }

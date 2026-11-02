@@ -6,6 +6,7 @@ import com.overud.data.repository.StatisticsSnapshot
 data class WorkState(
     val working: Boolean = false,
     val automatic: Boolean = false,
+    val autoAcceptEnabled: Boolean = false,
     val policy: Policy = Policy(),
     val latest: Offer? = null,
     val decision: Decision? = null,
@@ -17,4 +18,5 @@ data class WorkState(
     val policySaving: Boolean = false,
     val policySaveError: String? = null,
     val destinationAssessment: DestinationAssessment = DestinationAssessment(),
+    val deliveryPhase: DeliveryPhase = DeliveryPhase.AVAILABLE,
 )

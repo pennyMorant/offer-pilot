@@ -18,6 +18,8 @@ data class DashboardUiState(
     val policySaving: Boolean = false,
     val policySummaries: List<PlatformPolicySummary> = emptyList(),
     val destinationAssessment: DestinationAssessment = DestinationAssessment(),
+    val autoAcceptEnabled: Boolean = false,
+    val deliveryPhase: DeliveryPhase = DeliveryPhase.AVAILABLE,
 ) {
     companion object {
         fun from(work: WorkState, bridge: BridgeStatus) = DashboardUiState(
@@ -26,6 +28,8 @@ data class DashboardUiState(
             policySaving = work.policySaving,
             policySummaries = policySummaries(work.policy),
             destinationAssessment = work.destinationAssessment,
+            autoAcceptEnabled = work.autoAcceptEnabled,
+            deliveryPhase = work.deliveryPhase,
         )
     }
 }
