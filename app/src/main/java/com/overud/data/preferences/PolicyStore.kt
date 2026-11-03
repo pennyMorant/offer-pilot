@@ -22,6 +22,11 @@ class PolicyStore(context: Context) {
             minimumCents = prefs.getLong("min", 800),
             minimumCentsPerMile = prefs.getLong("mile", 200),
             minimumCentsPerHour = prefs.getLong("hour", 2500),
+            minimumContributionCents = prefs.getLong("minContribution", 500),
+            targetContributionCents = prefs.getLong("targetContribution", 800),
+            targetContributionCentsPerMile = prefs.getLong("targetContributionMile", 165),
+            targetContributionCentsPerHour = prefs.getLong("targetContributionHour", 2000),
+            minimumValueScore = prefs.getInt("minimumValueScore", 70),
             maximumMeters = prefs.getLong("distance", 16093),
             maximumSeconds = prefs.getLong("time", 2700),
             maximumPickupMeters = prefs.getLong("pickup", 0).takeIf { it > 0 },
@@ -44,6 +49,11 @@ class PolicyStore(context: Context) {
         val edit = prefs.edit().putLong("version", policy.version)
             .putLong("min", policy.minimumCents).putLong("mile", policy.minimumCentsPerMile)
             .putLong("hour", policy.minimumCentsPerHour).putLong("distance", policy.maximumMeters)
+            .putLong("minContribution", policy.minimumContributionCents)
+            .putLong("targetContribution", policy.targetContributionCents)
+            .putLong("targetContributionMile", policy.targetContributionCentsPerMile)
+            .putLong("targetContributionHour", policy.targetContributionCentsPerHour)
+            .putInt("minimumValueScore", policy.minimumValueScore)
             .putLong("time", policy.maximumSeconds).putLong("cost", policy.costCentsPerMile)
             .putString("hourlyBasis", policy.hourlyBasis.name)
             .putString("regionalRequirement", RegionalRuleCodec.encode(policy.regionalRequirement).toString())

@@ -4,12 +4,21 @@ import com.overud.model.HourlyBasis
 import com.overud.model.Platform
 import com.overud.model.RuleCondition
 
-enum class RuleField { MINIMUM, MILE, HOUR, DISTANCE, TIME, PICKUP, COST, EXCLUDED, MERCHANTS, REGION_PERCENT, REGION_SAMPLES }
+enum class RuleField {
+    MINIMUM, MILE, HOUR, MINIMUM_CONTRIBUTION,
+    TARGET_CONTRIBUTION, TARGET_CONTRIBUTION_MILE, TARGET_CONTRIBUTION_HOUR, MINIMUM_SCORE,
+    DISTANCE, TIME, PICKUP, COST, EXCLUDED, MERCHANTS, REGION_PERCENT, REGION_SAMPLES,
+}
 
 data class RulesUiState(
     val minimum: String,
     val mile: String,
     val hour: String,
+    val minimumContribution: String,
+    val targetContribution: String,
+    val targetContributionMile: String,
+    val targetContributionHour: String,
+    val minimumScore: String,
     val distance: String,
     val time: String,
     val pickup: String,

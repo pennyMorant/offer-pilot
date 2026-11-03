@@ -33,6 +33,8 @@ fun EarningsFields(
         val hourlyLabel = if (state.hourlyBasis == HourlyBasis.GROSS) "最低预计毛时薪" else "最低扣车辆成本后时薪"
         RuleConditionField(hourlyLabel, state.hour, "$/h", RuleCondition.MINIMUM_HOURLY,
             RuleField.HOUR, state, onField, onCondition)
+        RuleConditionField("最低单笔成本后贡献", state.minimumContribution, "$", RuleCondition.MINIMUM_CONTRIBUTION,
+            RuleField.MINIMUM_CONTRIBUTION, state, onField, onCondition)
         Text("成本后时薪按可信总里程、配置的每英里成本及报价总耗时计算；" +
             "不含送达后等待、回程、停车费和税费，不等于实际净时薪。",
             style = MaterialTheme.typography.bodySmall)

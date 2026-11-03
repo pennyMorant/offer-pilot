@@ -18,7 +18,10 @@ import com.overud.ui.components.*
     var section by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(state.error) {
         if (state.error != null) section = when (state.fieldErrors.keys.firstOrNull()) {
-            RuleField.MINIMUM, RuleField.MILE, RuleField.HOUR, RuleField.COST -> "最低收益"
+            RuleField.MINIMUM, RuleField.MILE, RuleField.HOUR, RuleField.COST,
+            RuleField.MINIMUM_CONTRIBUTION -> "最低收益"
+            RuleField.TARGET_CONTRIBUTION, RuleField.TARGET_CONTRIBUTION_MILE,
+            RuleField.TARGET_CONTRIBUTION_HOUR, RuleField.MINIMUM_SCORE -> "价值评分"
             RuleField.DISTANCE, RuleField.TIME, RuleField.PICKUP -> "距离与时间"
             RuleField.REGION_PERCENT, RuleField.REGION_SAMPLES -> "目的地区域"
             else -> section
@@ -40,6 +43,7 @@ import com.overud.ui.components.*
                     Text("此平台继承公共要求。关闭继承后可单独编辑。", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     item { RuleGroupRow("最低收益", state.incomeSummary()) { section = "最低收益" } }
+                    item { RuleGroupRow("价值评分", state.scoreSummary()) { section = "价值评分" } }
                     item { RuleGroupRow("距离与时间", state.routeSummary()) { section = "距离与时间" } }
                     item { RuleGroupRow("目的地区域", if (state.regionalEnabled) "优质占比 ${state.regionalGoodPercent}% · 至少 ${state.regionalSamples} 个样本" else "未启用") { section = "目的地区域" } }
                     item { RuleGroupRow("订单偏好", "叠单、追加单及排除条件") { section = "订单偏好" } }
@@ -56,6 +60,7 @@ import com.overud.ui.components.*
             else item {
                 when (section) {
                     "最低收益" -> EarningsFields(state, viewModel::edit, viewModel::condition, viewModel::hourlyBasis)
+                    "价值评分" -> ValueScoreFields(state, viewModel::edit)
                     "距离与时间" -> DistanceTimeFields(state, viewModel::edit, viewModel::condition)
                     "目的地区域" -> RegionalRequirementFields(state, viewModel::regional, viewModel::edit)
                     "订单偏好" -> PlatformPreferences(state, viewModel)

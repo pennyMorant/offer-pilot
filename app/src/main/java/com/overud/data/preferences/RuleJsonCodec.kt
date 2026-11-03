@@ -23,6 +23,11 @@ object RuleJsonCodec {
         put("min", rules.minimumCents)
         put("mile", rules.minimumCentsPerMile)
         put("hour", rules.minimumCentsPerHour)
+        put("minContribution", rules.minimumContributionCents)
+        put("targetContribution", rules.targetContributionCents)
+        put("targetContributionMile", rules.targetContributionCentsPerMile)
+        put("targetContributionHour", rules.targetContributionCentsPerHour)
+        put("minimumValueScore", rules.minimumValueScore)
         put("distance", rules.maximumMeters)
         put("time", rules.maximumSeconds)
         put("pickup", rules.maximumPickupMeters ?: JSONObject.NULL)
@@ -44,6 +49,11 @@ object RuleJsonCodec {
             minimumCents = json.getLong("min"),
             minimumCentsPerMile = json.getLong("mile"),
             minimumCentsPerHour = json.getLong("hour"),
+            minimumContributionCents = json.optLong("minContribution", 500),
+            targetContributionCents = json.optLong("targetContribution", 800),
+            targetContributionCentsPerMile = json.optLong("targetContributionMile", 165),
+            targetContributionCentsPerHour = json.optLong("targetContributionHour", 2000),
+            minimumValueScore = json.optInt("minimumValueScore", 70),
             maximumMeters = json.getLong("distance"),
             maximumSeconds = json.getLong("time"),
             maximumPickupMeters = if (json.isNull("pickup")) null else json.getLong("pickup"),

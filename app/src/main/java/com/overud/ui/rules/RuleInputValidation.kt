@@ -24,6 +24,15 @@ fun ruleInputErrors(input: RulesUiState): Map<RuleField, String> = buildMap {
     if (active(RuleCondition.MINIMUM_AMOUNT)) money(RuleField.MINIMUM, input.minimum)
     if (active(RuleCondition.MINIMUM_PER_MILE)) money(RuleField.MILE, input.mile)
     if (active(RuleCondition.MINIMUM_HOURLY)) money(RuleField.HOUR, input.hour)
+    if (active(RuleCondition.MINIMUM_CONTRIBUTION)) {
+        money(RuleField.MINIMUM_CONTRIBUTION, input.minimumContribution, true)
+    }
+    money(RuleField.TARGET_CONTRIBUTION, input.targetContribution)
+    money(RuleField.TARGET_CONTRIBUTION_MILE, input.targetContributionMile)
+    money(RuleField.TARGET_CONTRIBUTION_HOUR, input.targetContributionHour)
+    if (input.minimumScore.toIntOrNull()?.let { it in 1..100 } != true) {
+        put(RuleField.MINIMUM_SCORE, "请输入 1–100 的整数")
+    }
     money(RuleField.COST, input.cost, true)
     if (active(RuleCondition.MAXIMUM_DISTANCE)) distance(RuleField.DISTANCE, input.distance)
     if (active(RuleCondition.MAXIMUM_PICKUP)) distance(RuleField.PICKUP, input.pickup)

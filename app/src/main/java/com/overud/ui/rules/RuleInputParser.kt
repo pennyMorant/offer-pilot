@@ -16,6 +16,11 @@ object RuleInputParser {
             minimum = decimal(selected.minimumCents),
             mile = decimal(selected.minimumCentsPerMile),
             hour = decimal(selected.minimumCentsPerHour),
+            minimumContribution = decimal(selected.minimumContributionCents),
+            targetContribution = decimal(selected.targetContributionCents),
+            targetContributionMile = decimal(selected.targetContributionCentsPerMile),
+            targetContributionHour = decimal(selected.targetContributionCentsPerHour),
+            minimumScore = selected.minimumValueScore.toString(),
             distance = miles(selected.maximumMeters),
             time = (selected.maximumSeconds / 60).toString(),
             pickup = selected.maximumPickupMeters?.let(::miles).orEmpty(),
@@ -50,6 +55,9 @@ object RuleInputParser {
         val amount = if (active(RuleCondition.MINIMUM_AMOUNT)) cents(input.minimum) ?: return null else selected.minimumCents
         val mile = if (active(RuleCondition.MINIMUM_PER_MILE)) cents(input.mile) ?: return null else selected.minimumCentsPerMile
         val hour = if (active(RuleCondition.MINIMUM_HOURLY)) cents(input.hour) ?: return null else selected.minimumCentsPerHour
+        val minimumContribution = if (active(RuleCondition.MINIMUM_CONTRIBUTION)) {
+            cents(input.minimumContribution, allowZero = true) ?: return null
+        } else selected.minimumContributionCents
         val distance = if (!active(RuleCondition.MAXIMUM_DISTANCE) || input.distance == miles(selected.maximumMeters)) {
             selected.maximumMeters
         } else meters(input.distance) ?: return null
@@ -67,10 +75,15 @@ object RuleInputParser {
             minimumCents = amount,
             minimumCentsPerMile = mile,
             minimumCentsPerHour = hour,
+            minimumContributionCents = minimumContribution,
+            targetContributionCents = cents(input.targetContribution) ?: return null,
+            targetContributionCentsPerMile = cents(input.targetContributionMile) ?: return null,
+            targetContributionCentsPerHour = cents(input.targetContributionHour) ?: return null,
+            minimumValueScore = input.minimumScore.toIntOrNull()?.takeIf { it in 1..100 } ?: return null,
             maximumMeters = distance,
             maximumSeconds = duration,
             maximumPickupMeters = pickup,
-            costCentsPerMile = cents(input.cost) ?: return null,
+            costCentsPerMile = cents(input.cost, allowZero = true) ?: return null,
             hourlyBasis = input.hourlyBasis,
             regionalRequirement = regional,
             allowStacked = input.stacked,
@@ -87,9 +100,9 @@ object RuleInputParser {
             input.regionalSamples.toLongOrNull() ?: return null).takeIf(RegionalRequirement::valid)
     }
 
-    private fun cents(value: String): Long? = runCatching {
+    private fun cents(value: String, allowZero: Boolean = false): Long? = runCatching {
         val number = value.toBigDecimal()
-        require(number >= BigDecimal.ZERO && number <= BigDecimal("100000"))
+        require(number <= BigDecimal("100000") && if (allowZero) number >= BigDecimal.ZERO else number > BigDecimal.ZERO)
         number.multiply(BigDecimal(100)).setScale(0, RoundingMode.UNNECESSARY).longValueExact()
     }.getOrNull()
 

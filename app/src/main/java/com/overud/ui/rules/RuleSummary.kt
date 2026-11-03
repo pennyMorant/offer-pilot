@@ -10,6 +10,7 @@ fun RulesUiState.incomeSummary() = buildList {
         val basis = if (hourlyBasis == HourlyBasis.GROSS) "毛时薪" else "成本后时薪"
         add("$basis $$hour/h")
     }
+    if (RuleCondition.MINIMUM_CONTRIBUTION !in disabledConditions) add("单笔贡献 $$minimumContribution")
 }.joinToString(" · ").ifBlank { "未启用最低收益条件" }
 
 fun RulesUiState.routeSummary() = buildList {
@@ -17,3 +18,6 @@ fun RulesUiState.routeSummary() = buildList {
     if (RuleCondition.MAXIMUM_DURATION !in disabledConditions) add("最多 $time min")
     if (RuleCondition.MAXIMUM_PICKUP !in disabledConditions) add("取餐 $pickup mi 内")
 }.joinToString(" · ").ifBlank { "未启用距离与时间限制" }
+
+fun RulesUiState.scoreSummary() =
+    "最低 $minimumScore 分 · 目标 $$targetContributionHour/h · $$targetContributionMile/mi · 单笔 $$targetContribution"

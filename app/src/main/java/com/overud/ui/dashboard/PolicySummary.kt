@@ -18,6 +18,10 @@ fun policySummaries(policy: Policy): List<PlatformPolicySummary> = Platform.entr
                 val basis = if (rules.hourlyBasis == HourlyBasis.GROSS) "毛时薪" else "扣车辆成本后时薪"
                 add("$basis ≥ ${money(rules.minimumCentsPerHour)}/h")
             }
+            if (rules.enabled(RuleCondition.MINIMUM_CONTRIBUTION)) {
+                add("单笔贡献 ≥ ${money(rules.minimumContributionCents)}")
+            }
+            add("价值分 ≥ ${rules.minimumValueScore}")
             add("车辆成本 ${money(rules.costCentsPerMile)}/mi")
             val region = rules.regionalRequirement
             if (region.enabled) add("目的地历史优质比例 ≥ ${region.minimumGoodPercent}% · 有效样本 ≥ ${region.minimumClassified}")
