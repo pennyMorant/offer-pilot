@@ -119,11 +119,8 @@ data/
 │   │   ├── QualityQueries.java        [100] 共用统计投影
 │   │   ├── AcceptanceDao.java         [120] 接单恢复状态
 │   │   └── RegionDao.java             [120] 覆盖时间与清理
-│   ├── projection/
-│   │   └── QualitySummary.java        [120] 统计查询投影
-│   └── migration/
-│       ├── AggregateSchema.kt        [120] 汇总表定义
-│       └── DatabaseMigrations.kt     [150] 旧报价聚合后移除明细
+│   └── projection/
+│       └── QualitySummary.java        [120] 统计查询投影
 ├── repository/
 │   ├── StatisticsRepository.kt       [180] 贡献修正、去重、保留期
 │   ├── StatisticsSnapshot.kt         [100] 页面统计快照
@@ -198,7 +195,7 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 1. `OverudRoot.kt` 已拆分；工作台卡片、规则预览和公共组件独立，页面使用 ViewModel / UiState。
 2. `OverudRuntime.kt` 已移除；工作状态、采集、接单、区域记录与依赖装配独立。
 3. `Models.kt` 已拆分；收益计算与接单条件判断分开，两个平台使用独立解析入口与共享文本解析实现。
-4. data、bridge、capture、geo、overlay 已归档；数据库已改为汇总结构，提供 v1→v2 迁移代码。
+4. data、bridge、capture、geo、overlay 已归档；数据库已改为汇总结构。开发阶段版本不匹配时直接重建，不保留迁移目录。
 
 本轮没有扩张测试体系。以静态审核检查包引用、依赖方向和物理行数；这不等同于编译或设备运行结果。
 
@@ -227,7 +224,7 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - core/model/WaitingAssessment.kt、core/analytics/WaitingObservation.kt：等待证据和聚合输入，各上限 120 行。
 - core/analytics/WaitingEvaluator.kt：按时段选择等待证据，上限 200 行。
 - app/analytics/WaitingRecorder.kt：单个内存观测区间及中断处理，上限 200 行。
-- data/database/entity/RegionWaitingRecord.java、dao/WaitingDao.java、projection/WaitingSummary.java、migration/WaitingSchema.kt：小时汇总及 v2→v3 迁移，各上限 120 行。
+- data/database/entity/RegionWaitingRecord.java、dao/WaitingDao.java、projection/WaitingSummary.java：等待小时汇总，各上限 120 行。
 - data/repository/WaitingRepository.kt：等待累计事务和历史快照，上限 180 行。
 - ui/components/WaitingPresentation.kt：完成样本均值和中断数口径，上限 150 行。
 
@@ -237,7 +234,7 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 
 - core/analytics/DeliveryMeasurement.kt：观测版本与时长有效范围，上限 120 行。
 - app/analytics/DeliveryRecorder.kt：一个候选和当前配送的内存关联，完成/中断处理，上限 200 行。
-- data/database/entity/DeliveryAggregate.java、dao/DeliveryDao.java、projection/DeliverySummary.java、migration/DeliverySchema.kt：小时结果累计及 v3→v4 迁移，各上限 120 行。
+- data/database/entity/DeliveryAggregate.java、dao/DeliveryDao.java、projection/DeliverySummary.java：配送小时结果累计，各上限 120 行。
 - data/repository/DeliveryRepository.kt：完成/计时/配对独立分母的累计事务，上限 180 行。
 - ui/components/DeliveryCardState.kt：纯展示模型，上限 120 行；DeliveryPresentation.kt、DeliveryCard.kt：筛选分组、均值格式和展示，各上限 150 行。
 
@@ -356,7 +353,7 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - model/OfferService.kt、TextRegion.kt：订单类型及临时 OCR 行几何，各上限 120 行。
 - platform/UberOfferCard.kt、SpatialPageText.kt：实际卡片模板与空间阅读顺序，各上限 200 行。
 - capture/OcrPageText.kt：ML Kit 行到纯模型转换，上限 150 行；实时与选图共用。
-- data/database/migration/OfferServiceSchema.kt：v4→v5 累计表类型维度，上限 120 行。
+- 报价和配送累计表直接以当前 schema 保存订单类型；开发阶段不保留旧 schema 兼容代码。
 - 原有连接、去重、统计、目的地及 UI 文件继续遵守各自上限。不得因类型分组扩展逐单存储。
 
 具体接入依据与尚未运行的截图核对目标见 `shevery-uber-repair.md`。

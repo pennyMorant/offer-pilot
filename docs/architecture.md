@@ -210,11 +210,11 @@ Tr = 预计送达后到下一张可接报价的等待与移动时间
 
 Offer、字段来源、原始文本、位置样本和评估对象只在内存处理，不建立逐单报价、地址、截图、配送轨迹或结算明细表。汇总与覆盖时间默认保留 90 天，在启动和工作期间按日清理。
 
-质量区间分布、迁移策略及去重限制见 [汇总存储说明](aggregation-storage.md)。配送完成及报价耗时配对已按内存关联更新小时统计，见 [配送观测说明](delivery-observations.md)；实际收入尚未接入，不恢复明细表。
+质量区间分布、开发阶段重建策略及去重限制见 [汇总存储说明](aggregation-storage.md)。配送完成及报价耗时配对已按内存关联更新小时统计，见 [配送观测说明](delivery-observations.md)；实际收入尚未接入，不恢复明细表。
 
 ## 10. 技术与工程模块
 
-拟采用 Kotlin、Jetpack Compose、Coroutines/Flow、Room。OCR 候选为端侧 ML Kit；地图、地理编码、路线抽象为可替换接口，供应商与费用后续选择。Android 最低版本暂按 11 考虑，最终由设备验证决定；工具链版本在建工程时固定。
+采用 Kotlin、Jetpack Compose、Coroutines/Flow、Room 和端侧 ML Kit OCR；不引入地图 SDK。Android 最低版本为 Android 13 / API 33。
 
 先用一个 Android 工程按以下包边界组织，只有边界稳定或编译需要时再拆 Gradle 模块：
 
@@ -225,7 +225,7 @@ bridge/              Shevery/Shizuku 连接与有限权限操作
 platform/ubereats/   页面识别和报价解析
 platform/doordash/   页面识别和报价解析
 domain/              标准数据模型、去重、生命周期、价值规则
-data/                Room、仓储、迁移、留存和导出
+data/                Room、仓储、开发期重建策略和留存
 geo/                 定位、区域索引、地理编码与路线缓存
 analytics/           区域聚合、等待估计与模型评估
 ```
