@@ -11,6 +11,7 @@ object NodePageAssembler {
         val fallback = NodePageText(full)
         // A subtree must not hide history, completion or other contradictory page evidence.
         if (OfferParser.classify(platform, full).type != PlatformPageType.OFFER) return fallback
+        if (OfferParser.parse(platform, full, 0)?.isStacked == true) return fallback
         val actions = visible.filter { node -> node.enabled &&
             (AcceptanceActionPolicy.matchesInitialButton(platform, node.text) ||
                 AcceptanceActionPolicy.matchesInitialButton(platform, node.description)) }

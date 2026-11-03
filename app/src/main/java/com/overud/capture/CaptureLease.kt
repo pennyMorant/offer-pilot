@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class CaptureLease(private val session: WorkSessionController) {
     private val expired = AtomicBoolean(false)
     private val generation = session.workGeneration
+    fun current() = !expired.get() && session.workGeneration == generation && session.state.value.working && session.canInteract()
     fun valid(): Boolean {
         if (expired.get() || session.workGeneration != generation || !session.state.value.working) return false
         if (!session.canInteract()) {

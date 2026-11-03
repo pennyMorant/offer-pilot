@@ -68,13 +68,19 @@ class CapturePipeline(
                 return@withLock
             }
             val platform = Platform.fromPackage(snapshot.getString("package").orEmpty())
-                ?: run { clearQuote(); waiting.interrupt(); return@withLock }
+                ?: run {
+                    clearQuote(); waiting.interrupt()
+                    session.update { if (it.autoAcceptEnabled) it.copy(automatic = false, autoAcceptEnabled = false,
+                        message = "已离开支持的平台页面，自动接单已关闭") else it }
+                    return@withLock
+                }
             val text = snapshot.getString("text").orEmpty()
             val now = System.currentTimeMillis()
             regions.trackExposure(platform, now)
             session.update { it.copy(lastCaptureAt = now) }
             val nodePage = OfferParser.classify(platform, text)
             acceptance.observe(platform, nodePage, text, snapshot.getString("token").orEmpty())
+            if (!lease.valid()) { waiting.interrupt(); deliveries.invalidate(); return@withLock }
             if (text.isBlank() || nodePage.type in setOf(PlatformPageType.OFFLINE, PlatformPageType.HISTORY,
                     PlatformPageType.CANCELLED, PlatformPageType.AMBIGUOUS)) waiting.interrupt() else waiting.frame(platform)
             val nodeOffer = OfferParser.parse(platform, text, now)
@@ -85,15 +91,23 @@ class CapturePipeline(
                 recognizer.recognize(platform.packageName)
             } else null
             currentCoroutineContext().ensureActive()
+            if (ocr != null) {
+                val afterOcr = service.snapshot()
+                currentCoroutineContext().ensureActive()
+                if (afterOcr.containsKey("error") || afterOcr.getString("token") != snapshot.getString("token") ||
+                    afterOcr.getInt("windowId", -1) != snapshot.getInt("windowId", -1)) {
+                    clearQuote(); waiting.interrupt(); return@withLock
+                }
+            }
             if (bridge.service?.asBinder() != service.asBinder()) {
                 lease.expire("采集连接已变化，自动接单已关闭，请重新核对当前页面")
             }
             if (!lease.valid()) { waiting.interrupt(); deliveries.invalidate(); return@withLock }
             val observation = QuoteObservationResolver.resolve(platform, text, ocr, now)
-            session.update { if (it.working) it.copy(currentPage = observation.page) else it }
+            session.update { if (lease.current()) it.copy(currentPage = observation.page) else it }
             if (observation.sourceConflict) {
                 waiting.interrupt()
-                session.update { if (it.working) it.copy(message = sourceConflictMessage) else it }
+                session.update { if (lease.current()) it.copy(message = sourceConflictMessage) else it }
             }
             var offer = observation.offer
             if (offer != null) {
@@ -104,8 +118,9 @@ class CapturePipeline(
                 val decision = session.state.value.assessOffer(offer, now)
                 val changed = statistics.record(offer, regions.usableRegion())
                 val aggregate = if (changed) statistics.snapshot() else session.state.value.statistics
+                if (!lease.valid()) { waiting.interrupt(); deliveries.invalidate(); return@withLock }
                 session.update {
-                    if (it.working) {
+                    if (lease.current()) {
                         val sameDestination = it.latest?.id == offer.id && it.latest?.destination == offer.destination
                         val initial = DestinationAssessment(resolution = if (offer.destination.isNullOrBlank())
                             DestinationResolution.MISSING else DestinationResolution.RESOLVING)
