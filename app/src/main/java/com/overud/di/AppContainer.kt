@@ -32,6 +32,7 @@ class AppContainer(context: Context) {
         .addMigrations(DatabaseMigrations.TO_AGGREGATES, WaitingSchema.MIGRATION, DeliverySchema.MIGRATION).build()
     val bridge = SheveryBridge(context)
     val diagnosticReader = com.overud.bridge.NodeDiagnosticReader(bridge)
+    val deviceStatus = com.overud.device.DeviceStatusReader(context)
     val session = WorkSessionController(bridge, PolicyStore(context), scope, mutex, DeviceInteractionGuard(context))
     val voice = com.overud.speech.VoiceController(context, session)
     val importedImages = ImportedImageRecognizer(context)

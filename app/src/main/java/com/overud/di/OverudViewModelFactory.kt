@@ -19,6 +19,8 @@ class OverudViewModelFactory(private val container: AppContainer) : ViewModelPro
             ImageTestViewModel::class.java -> ImageTestViewModel(container.importedImages, container.session)
             com.overud.ui.diagnostics.NodeDiagnosticViewModel::class.java ->
                 com.overud.ui.diagnostics.NodeDiagnosticViewModel(container.session, container.diagnosticReader)
+            com.overud.ui.diagnostics.RuntimeDiagnosticsViewModel::class.java ->
+                com.overud.ui.diagnostics.RuntimeDiagnosticsViewModel(container.deviceStatus, container.session, container.bridge)
             else -> error("Unknown ViewModel: ${modelClass.name}")
         }
         return modelClass.cast(instance) ?: error("ViewModel type mismatch")

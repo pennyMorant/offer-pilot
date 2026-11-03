@@ -15,7 +15,7 @@ import com.overud.ui.components.*
 
 @Composable fun DashboardScreen(state: DashboardUiState, bridge: BridgeStatus, onWork: () -> Unit,
     onAutomatic: (Boolean) -> Unit, onAuthorize: () -> Unit, onRules: () -> Unit, onReplay: () -> Unit,
-    onResolve: () -> Unit, onImageTest: () -> Unit, onDiagnostics: () -> Unit) {
+    onResolve: () -> Unit, onImageTest: () -> Unit, onDiagnostics: () -> Unit, onRuntimeDiagnostics: () -> Unit) {
     LazyColumn(Modifier.widthIn(max = 760.dp).fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("overud", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
@@ -23,6 +23,7 @@ import com.overud.ui.components.*
         } }
         item { PageTitle("DRIVE WITH INTENTION", "每一程，都值得。", "看清订单价值，让接单更有把握。") }
         item { WorkSessionCard(state, onWork) }
+        item { OutlinedButton(onClick = onRuntimeDiagnostics, modifier = Modifier.fillMaxWidth()) { Text("运行状态与权限") } }
         if (!bridge.serviceReady) item {
             Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

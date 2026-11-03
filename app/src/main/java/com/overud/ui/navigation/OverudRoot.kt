@@ -31,6 +31,7 @@ import com.overud.ui.imagetest.ImageTestViewModel
     val voice: com.overud.ui.rules.VoiceViewModel = viewModel(factory = factory)
     val imageTest: ImageTestViewModel = viewModel(factory = factory)
     val diagnostics: com.overud.ui.diagnostics.NodeDiagnosticViewModel = viewModel(factory = factory)
+    val runtimeDiagnostics: com.overud.ui.diagnostics.RuntimeDiagnosticsViewModel = viewModel(factory = factory)
     val state by dashboard.state.collectAsStateWithLifecycle()
     val statisticsViewModel: StatisticsViewModel = viewModel(factory = factory)
     val regions: RegionsViewModel = viewModel(factory = factory)
@@ -41,6 +42,7 @@ import com.overud.ui.imagetest.ImageTestViewModel
     var replay by rememberSaveable { mutableStateOf(false) }
     var showImageTest by rememberSaveable { mutableStateOf(false) }
     var showDiagnostics by rememberSaveable { mutableStateOf(false) }
+    var showRuntimeDiagnostics by rememberSaveable { mutableStateOf(false) }
     var resolve by remember { mutableStateOf(false) }
     Scaffold(
         bottomBar = {
@@ -58,7 +60,7 @@ import com.overud.ui.imagetest.ImageTestViewModel
                 when (page) {
                     Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
                         { selected = Destination.RULES }, { replay = true }, { resolve = true }, { showImageTest = true },
-                        { showDiagnostics = true })
+                        { showDiagnostics = true }, { showRuntimeDiagnostics = true })
                     Destination.STATISTICS -> StatisticsScreen(statistics, statisticsViewModel::select)
                     Destination.REGIONS -> RegionsScreen(regionState, regions::select)
                     Destination.RULES -> RulesScreen(rules, onOverlayPermission, onNotificationPermission, onLocationPermission, voice)
@@ -69,6 +71,8 @@ import com.overud.ui.imagetest.ImageTestViewModel
     if (replay) RulePreviewDialog(rules) { replay = false }
     if (showImageTest) ImageTestDialog(imageTest) { showImageTest = false }
     if (showDiagnostics) com.overud.ui.diagnostics.NodeDiagnosticDialog(diagnostics) { showDiagnostics = false }
+    if (showRuntimeDiagnostics) com.overud.ui.diagnostics.RuntimeDiagnosticsDialog(runtimeDiagnostics,
+        onOverlayPermission, onNotificationPermission, onLocationPermission) { showRuntimeDiagnostics = false }
     if (resolve) AlertDialog(onDismissRequest = { resolve = false }, title = { Text("核对当前配送状态") },
         text = { Text("请先查看 Uber 和 DoorDash，确认当前没有正在进行的配送，再清除订单占用状态。此操作不会取消平台订单。") },
         confirmButton = { TextButton(onClick = { dashboard.resolvePending(); resolve = false }) { Text("确认当前无配送") } },
