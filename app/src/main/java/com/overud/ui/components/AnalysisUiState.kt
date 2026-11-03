@@ -11,6 +11,7 @@ data class AnalysisUiState(
     val observedCount: Long = 0,
     val overview: AnalysisOverview = AnalysisOverview(),
     val deliveries: List<DeliveryCardState> = emptyList(),
+    val opportunities: List<OpportunityCardState> = emptyList(),
 )
 
 fun analysisState(
@@ -21,9 +22,17 @@ fun analysisState(
     val groups = QualitySummaryReducer.group(rows, byRegion)
     val sorted = if (byRegion) groups.sortedByDescending { it.offerCount }
         else groups.sortedWith(compareBy({ it.weekday }, { it.localHour }, { it.platform }, { it.zoneId }, { it.qualityVersion }))
+    val exposures = snapshot.exposures.filter {
+        (selection.platform == null || it.platform == selection.platform.name) &&
+            (selection.weekday == null || it.localWeekday == selection.weekday) &&
+            it.localHour in selection.period.hours
+    }.groupBy { "${it.platform}|${it.regionKey}" }.mapValues { entry -> entry.value.sumOf { it.exposureMs } }
     return AnalysisUiState(selection, (snapshot.regions.map { it.regionKey } + deliveryHistory.map { it.regionKey }).distinct().sorted(),
         sorted.map { qualityPresentation(it, byRegion) }, rows.sumOf { it.offerCount },
         AnalysisOverview(rows.sumOf { it.goodCount + it.normalCount + it.lowCount }, rows.sumOf { it.goodCount },
             rows.sumOf { it.perMileCount }, rows.sumOf { it.perMileMilliSum }),
-        deliveryCards(deliveryHistory, selection, byRegion))
+        deliveryCards(deliveryHistory, selection, byRegion),
+        if (byRegion) sorted.map { summary ->
+            opportunityPresentation(summary, exposures["${summary.platform}|${summary.regionKey}"] ?: 0)
+        } else emptyList())
 }
