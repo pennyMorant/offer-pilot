@@ -41,7 +41,7 @@ class OfferTracker(private val store: TrackerCheckpointStore) {
 
     private fun identity(offer: Offer): String {
         val route = listOf(offer.currency, offer.merchant, offer.destination, offer.distanceMeters, offer.durationSeconds,
-            offer.isStacked, offer.isAddon)
+            offer.isStacked, offer.isAddon, offer.serviceKind, offer.pickupAddress)
         val fields = if (offer.distanceMeters == null && offer.durationSeconds == null &&
             offer.merchant == null && offer.destination == null) route + offer.amountCents else route
         return fingerprint(offer.platform, fields.joinToString("|"))
@@ -49,7 +49,8 @@ class OfferTracker(private val store: TrackerCheckpointStore) {
 
     private fun compatible(previous: Offer, next: Offer): Boolean {
         fun matches(a: Any?, b: Any?) = a == null || b == null || a == b
-        return previous.currency == next.currency && matches(previous.amountCents, next.amountCents) &&
+        return previous.serviceKind == next.serviceKind && matches(previous.pickupAddress, next.pickupAddress) &&
+            previous.currency == next.currency && matches(previous.amountCents, next.amountCents) &&
             matches(previous.merchant, next.merchant) && matches(previous.destination, next.destination) &&
             matches(previous.distanceMeters, next.distanceMeters) && matches(previous.durationSeconds, next.durationSeconds) &&
             previous.isStacked == next.isStacked && previous.isAddon == next.isAddon

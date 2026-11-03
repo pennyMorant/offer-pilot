@@ -22,11 +22,15 @@ import java.util.Date
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
         Column(Modifier.fillMaxWidth().padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(offer.platform.label, style = MaterialTheme.typography.labelLarge)
+                Text("${offer.platform.label} · ${offer.serviceKind.label}", style = MaterialTheme.typography.labelLarge)
                 Text(SimpleDateFormat("HH:mm", locale).format(Date(offer.observedAt)), style = MaterialTheme.typography.labelMedium)
             }
             Text(offerAmountPresentation(offer), style = MaterialTheme.typography.displayLarge)
             Text(offerRoutePresentation(offer), style = MaterialTheme.typography.titleMedium)
+            offer.merchant?.let { Text("商家：$it") }
+            offer.pickupAddress?.let { Text("取件地址：$it") }
+            offer.destination?.let { Text("目的地：$it") }
+            if (offer.includesTip == true) Text("报价含小费，未提供小费明细", style = MaterialTheme.typography.bodySmall)
             HorizontalDivider()
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 Column { Text("每英里报价", style = MaterialTheme.typography.labelMedium); Text(decision?.valuation?.centsPerMile?.let { money(it.toLong()) } ?: "—", style = MaterialTheme.typography.titleLarge) }

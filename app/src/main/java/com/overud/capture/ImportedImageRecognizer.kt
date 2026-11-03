@@ -32,7 +32,7 @@ class ImportedImageRecognizer(context: Context) {
                 // Await the ML task even if the caller closes the dialog, then release its bitmap.
                 suspendCoroutine { continuation ->
                     recognizer.process(InputImage.fromBitmap(bitmap, 0))
-                        .addOnSuccessListener { continuation.resume(it.text.take(30_000)) }
+                        .addOnSuccessListener { continuation.resume(it.orderedPageText()) }
                         .addOnFailureListener { continuation.resumeWithException(it) }
                 }
             } finally { recognizer.close() }

@@ -11,6 +11,7 @@ object EligibilityEvaluator {
         val reasons = buildList {
             if (!policy.valid()) add("接单规则无效，至少启用一项最低收益要求")
             if (offer.platform !in policy.enabledPlatforms) add("该平台未开启自动接单")
+            if (offer.serviceKind != OfferService.UNKNOWN && !offer.reliable) add("订单卡片字段未完整确认，保留手动接单")
             if (offer.currency != "USD") add("当前规则仅适用于 USD")
             if (!offer.reliable && offer.evidence?.amountVerified != true) add("报价金额或页面身份未确认")
             if (offer.evidence?.source == OfferSource.OCR) add("仅由截图识别，保留手动接单")

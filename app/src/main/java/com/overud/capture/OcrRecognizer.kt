@@ -17,7 +17,7 @@ class OcrRecognizer(private val bridge: SheveryBridge) {
         return try {
             suspendCoroutine { continuation ->
                 recognizer.process(InputImage.fromBitmap(bitmap, 0))
-                    .addOnSuccessListener { continuation.resume(it.text) }
+                    .addOnSuccessListener { continuation.resume(it.orderedPageText()) }
                     .addOnFailureListener { continuation.resume(null) }
             }
         } finally { bitmap.recycle() }

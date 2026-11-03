@@ -27,8 +27,11 @@ object NodePageAssembler {
                 val body = text(members)
                 val offer = OfferParser.parse(platform, body, 0)
                 if (offer?.reliable == true && !offer.isAddon && !offer.isStacked &&
-                    !offer.merchant.isNullOrBlank() && !offer.destination.isNullOrBlank()) {
+                    (!offer.merchant.isNullOrBlank() || !offer.pickupAddress.isNullOrBlank()) && !offer.destination.isNullOrBlank()) {
                     return NodePageText(body, ancestor)
+                }
+                if (fallback.ocrRoot == null && platform == Platform.UBER_EATS && UberOfferCard.hasAnchors(body)) {
+                    fallback = fallback.copy(ocrRoot = ancestor)
                 }
                 // Partial node evidence may locate an OCR region without replacing the full-page text.
                 if (fallback.ocrRoot == null && offer != null && !offer.isAddon && !offer.isStacked &&
@@ -53,6 +56,6 @@ object NodePageAssembler {
         return false
     }
 
-    private fun text(nodes: List<UiNodeSnapshot>) = nodes.flatMap { listOfNotNull(it.text, it.description) }
+    private fun text(nodes: List<UiNodeSnapshot>) = nodes.sortedWith(compareBy<UiNodeSnapshot> { it.bounds.top }.thenBy { it.bounds.left }).flatMap { listOfNotNull(it.text, it.description) }
         .filter(String::isNotBlank).distinct().joinToString("\n")
 }

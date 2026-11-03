@@ -27,7 +27,9 @@ object QuoteObservationResolver {
 
     private fun disagrees(a: Offer, b: Offer): Boolean {
         fun conflict(x: Any?, y: Any?) = x != null && y != null && x != y
-        return conflict(a.amountCents, b.amountCents) || conflict(a.distanceMeters, b.distanceMeters) ||
+        return (a.serviceKind != OfferService.UNKNOWN && b.serviceKind != OfferService.UNKNOWN && a.serviceKind != b.serviceKind) ||
+            conflict(normalize(a.pickupAddress), normalize(b.pickupAddress)) || conflict(a.includesTip, b.includesTip) ||
+            conflict(a.amountCents, b.amountCents) || conflict(a.distanceMeters, b.distanceMeters) ||
             conflict(a.durationSeconds, b.durationSeconds) || a.currency != b.currency || a.isAddon != b.isAddon || a.isStacked != b.isStacked ||
             conflict(normalize(a.destination), normalize(b.destination)) || conflict(normalize(a.merchant), normalize(b.merchant))
     }
