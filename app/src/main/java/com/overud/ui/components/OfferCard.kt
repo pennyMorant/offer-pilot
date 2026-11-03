@@ -44,6 +44,7 @@ import java.util.Date
                 }
                 val rating = valueRatingPresentation(decision?.valuation)
                 Text("评分耗时依据：${rating.timeBasis}", style = MaterialTheme.typography.bodySmall)
+                Text("评分分项（加权前）：${rating.breakdown}", style = MaterialTheme.typography.bodySmall)
                 decision?.reasons?.drop(1)?.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
                 VehicleCostSummary(decision?.valuation)
                 Prop22Summary(decision?.valuation?.prop22)

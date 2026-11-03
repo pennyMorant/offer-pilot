@@ -9,7 +9,7 @@ UI 使用 Jetpack Compose 与 **Material 3 Expressive 1.5.0-beta02**。界面提
 - Android 工程与独立 Kotlin 核心模块。
 - Shevery 授权、Binder 生命周期、UserService、UI 自动化节点采集与截图管道。
 - 目标平台白名单、保守报价解析及端侧 ML Kit OCR；OCR 单独识别的结果仅用于展示。
-- 报价金额、每英里报价、预计毛时薪、配置车辆成本后的贡献估计。
+- 报价金额、配置车辆成本后的贡献估计，以及可解释的订单价值分和可信度。
 - 自动接单总开关、平台开关；公共要求与 Uber Eats / DoorDash 独立要求，支持跟随公共设置。
 - 最低报价、每英里报价、毛时薪、总距离、耗时、取餐距离分别启停；至少保留一项最低收益要求。支持商家和目的地排除关键词。
 - 编辑不同范围时保留各自草稿，统一保存；保存期间暂停自动接单，成功后需主动重新开启。
@@ -85,6 +85,7 @@ docs/architecture.md          完整目标架构及自动接单设计
 - [代码目录与文件上限](docs/code-structure.md)
 - [分项提交与静态审核记录](docs/implementation-progress.md)
 - [汇总存储与质量口径](docs/aggregation-storage.md)
+- [订单价值评分](docs/value-scoring.md)
 - [目的地评估与配送状态](docs/destination-delivery.md)
 - [Material 3 版本说明](https://developer.android.com/jetpack/androidx/releases/compose-material3)
 - [Shevery](https://github.com/HmnDev-Tech/shevery)

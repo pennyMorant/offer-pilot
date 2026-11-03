@@ -13,6 +13,7 @@ data class ValueRatingUiState(
     val hourly: String,
     val perMile: String,
     val timeBasis: String,
+    val breakdown: String,
 ) {
     val compact: String
         get() = "价值分 $score · $grade · $confidence\n扣成本后 $hourly/h · $perMile/mi"
@@ -25,6 +26,9 @@ fun valueRatingPresentation(value: Valuation?): ValueRatingUiState = ValueRating
     hourly = estimatedMoney(value?.contributionCentsPerHour),
     perMile = estimatedMoney(value?.contributionCentsPerMile),
     timeBasis = value?.timeBasis.label(),
+    breakdown = value?.scoreComponents?.let {
+        "时薪 ${it.contributionHourly.toInt()} · 每英里 ${it.contributionPerMile.toInt()} · 单笔 ${it.contributionAmount.toInt()}"
+    } ?: "评分分项待确认",
 )
 
 private fun ValueGrade?.label() = when (this) {

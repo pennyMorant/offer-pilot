@@ -4,8 +4,8 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun QualityStandardNote() {
-    EmptyStateCard("质量标准 v1",
-        "优质：报价 ≥ $8、每英里 ≥ $2、预估毛时薪 ≥ $25，同时满足。" +
-        "低价值：报价 < $5、每英里 < $1、毛时薪 < $15，任一满足。" +
+    EmptyStateCard("历史质量标准 v2",
+        "优质：每英里报价 ≥ $2 且预估毛时薪 ≥ $25。" +
+        "低价值：每英里报价 < $1 或毛时薪 < $15。" +
         "其他完整样本归为普通，字段不足单列。标准不随自动接单开关改变。")
 }
