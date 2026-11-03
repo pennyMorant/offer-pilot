@@ -1,6 +1,6 @@
 # 2026-11-02 安装交付
 
-注意：以下是最后一次已编译的安装包。本轮源码新增局部 OCR（`297c860`，UserService v5），按用户要求未编译，因此此 APK 尚不包含该功能。
+注意：以下是最后一次已编译的安装包。后续源码新增局部 OCR（`297c860`）及临时节点诊断（`2be80b0` / `a3de2fc`，UserService v6），按用户要求未编译，因此此 APK 尚不包含这些功能。
 
 安装包：`app/build/outputs/apk/debug/overud-2026-11-02-f28dee2-debug.apk`
 

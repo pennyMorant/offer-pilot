@@ -335,3 +335,13 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - WindowReader 输出临时裁剪边界和结构指纹；OcrRecognizer 只接收同帧截图，来源始终标记 OCR。
 
 无证据不猜裁剪坐标，越界不静默修正；截图不落盘，不新增明细表。
+
+## 21. 临时节点诊断
+
+- bridge/WindowDiagnosticCodec.kt：手动节点传输及容量校验，上限 120 行。
+- bridge/NodeDiagnosticReader.kt：单个诊断读取及连接一致性，上限 120 行。
+- ui/diagnostics/NodeDiagnosticState.kt：单份内存状态，上限 120 行。
+- NodeDiagnosticViewModel.kt：倒计时、超时、工作代次与关闭清理，上限 180 行。
+- NodeDiagnosticDialog.kt、NodeRegionDiagram.kt：节点列表、文字显示开关和几何区域图，各上限 150 行。
+
+诊断读取不接入统计或自动点击；普通采集不传原始节点列表，关闭清空临时数据。
