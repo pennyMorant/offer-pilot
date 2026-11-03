@@ -61,8 +61,14 @@ class StatisticsRepository(private val database: OverudDatabase) {
     fun snapshot(): StatisticsSnapshot {
         val since = retentionStart()
         val dao = database.quality()
-        return StatisticsSnapshot(dao.totals(since), dao.timeSummaries(since), dao.regionSummaries(since), System.currentTimeMillis(),
-            revision = snapshotRevision.incrementAndGet())
+        return StatisticsSnapshot(
+            totals = dao.totals(since),
+            times = dao.timeSummaries(since),
+            regions = dao.regionSummaries(since),
+            exposures = database.regions().summaries(since),
+            refreshedAt = System.currentTimeMillis(),
+            revision = snapshotRevision.incrementAndGet(),
+        )
     }
 
     fun prune(): Boolean {
