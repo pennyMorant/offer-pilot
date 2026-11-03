@@ -40,10 +40,12 @@ import java.util.Date
                 color = MaterialTheme.colorScheme.primary)
             TextButton(onClick = { expanded = !expanded }) { Text(if (expanded) "收起详情" else "查看分析详情") }
             if (expanded) {
-            offer.merchant?.let { Text("商家：$it") }
-            offer.pickupAddress?.let { Text("取件地址：$it") }
-            offer.destination?.let { Text("目的地：$it") }
-            if (offer.includesTip == true) Text("报价含小费，未提供小费明细", style = MaterialTheme.typography.bodySmall)
+                offer.merchant?.let { Text("商家：$it") }
+                offer.pickupAddress?.let { Text("取件地址：$it") }
+                offer.destination?.let { Text("目的地：$it") }
+                if (offer.includesTip == true) {
+                    Text("报价含小费，未提供小费明细", style = MaterialTheme.typography.bodySmall)
+                }
                 decision?.reasons?.drop(1)?.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
                 VehicleCostSummary(decision?.valuation)
                 Prop22Summary(decision?.valuation?.prop22)

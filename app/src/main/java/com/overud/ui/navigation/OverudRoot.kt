@@ -58,11 +58,14 @@ import com.overud.ui.rules.RulesScreen
             }
         },
         bottomBar = {
-            NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
-                Destination.entries.forEach { destination ->
-                    NavigationBarItem(selected = selected == destination, onClick = { navigate { selected = destination; settings = false } },
-                        icon = { Text(destination.symbol, style = MaterialTheme.typography.titleLarge) },
-                        label = { Text(destination.label) })
+            if (!settings) {
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
+                    Destination.entries.forEach { destination ->
+                        NavigationBarItem(selected = selected == destination,
+                            onClick = { navigate { selected = destination; settings = false } },
+                            icon = { Text(destination.symbol, style = MaterialTheme.typography.titleLarge) },
+                            label = { Text(destination.label) })
+                    }
                 }
             }
         },
