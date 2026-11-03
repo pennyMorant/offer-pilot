@@ -2,18 +2,20 @@ package com.overud.ui.components
 
 import com.overud.data.database.projection.DeliverySummary
 import com.overud.model.Platform
+import com.overud.model.OfferService
 import java.util.Locale
 
 fun deliveryCards(history: List<DeliverySummary>, selected: AnalysisSelection, byRegion: Boolean): List<DeliveryCardState> {
     val rows = history.filter { row ->
         (selected.platform == null || row.platform == selected.platform.name) &&
+            (selected.serviceKind == null || row.serviceKind == selected.serviceKind.name) &&
             (selected.region == null || row.regionKey == selected.region) &&
             (selected.weekday == null || row.weekday == selected.weekday) && row.localHour in selected.period.hours
     }
     val ordered = if (byRegion) rows.sortedWith(compareBy({ it.regionKey }, { it.platform }, { it.zoneId }, { it.measurementVersion }))
         else rows.sortedWith(compareBy({ it.weekday }, { it.localHour }, { it.platform }, { it.zoneId }, { it.measurementVersion }))
     val groups = ordered.groupBy {
-        listOf(it.platform, if (byRegion) it.regionKey else "ALL",
+        listOf(it.platform, it.serviceKind, if (byRegion) it.regionKey else "ALL",
             if (byRegion) 0 else it.weekday, if (byRegion) 0 else it.localHour, it.zoneId, it.measurementVersion).joinToString("|")
     }
     return groups.map { (key, group) ->
@@ -25,6 +27,7 @@ fun deliveryCards(history: List<DeliverySummary>, selected: AnalysisSelection, b
         val title = if (byRegion) regionLabel(row.regionKey)
             else "${weekdayLabel(row.weekday)} ${row.localHour}:00–${row.localHour + 1}:00"
         val platform = Platform.entries.find { it.name == row.platform }?.label ?: row.platform
+        val service = OfferService.entries.find { it.name == row.serviceKind }?.label ?: row.serviceKind
         val duration = if (measured > 0) "平均观测耗时 ${minutes(group.sumOf { it.observedMillisSum }, measured)} 分钟"
             else "起点不明，暂无完整计时样本"
         val comparison = if (pairs > 0) {
@@ -33,7 +36,7 @@ fun deliveryCards(history: List<DeliverySummary>, selected: AnalysisSelection, b
             val longer = group.sumOf { it.longerThanQuoteCount }
             "配对样本 $pairs 次：报价平均 $quoted 分钟，观测平均 $observed 分钟；超过报价耗时 $longer 次"
         } else "暂无可与原报价配对比较的耗时样本"
-        DeliveryCardState("delivery|$key", title, "$platform · ${row.zoneId} · 观测口径 v${row.measurementVersion}",
+        DeliveryCardState("delivery|$key", title, "$platform · $service · ${row.zoneId} · 观测口径 v${row.measurementVersion}",
             "确认完成 $completed 次 · 中断观测 $interrupted 次 · 完整计时 $measured 次", duration, comparison)
     }
 }

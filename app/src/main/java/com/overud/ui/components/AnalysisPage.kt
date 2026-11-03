@@ -55,11 +55,8 @@ import androidx.compose.ui.unit.dp
             items(cards, key = { it.id }) { QualityRow(it) }
         } else {
             item { Text("配送耗时与报价对比", style = MaterialTheme.typography.titleMedium) }
-            if (state.selection.serviceKind != null) item { Text("配送观测尚未区分订单类型，请将类型筛选设为“全部类型”。") }
-            else {
-                if (state.deliveries.isEmpty()) item { Text("暂无完整配送观测，明确送达后会累计。") }
-                items(state.deliveries, key = { it.id }) { DeliveryCard(it) }
-            }
+            if (state.deliveries.isEmpty()) item { Text("暂无完整配送观测，明确送达后会累计。") }
+            items(state.deliveries, key = { it.id }) { DeliveryCard(it) }
         }
     }
     if (filters) ModalBottomSheet(onDismissRequest = { filters = false }) {

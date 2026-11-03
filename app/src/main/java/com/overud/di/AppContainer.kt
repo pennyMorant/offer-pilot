@@ -22,6 +22,7 @@ import com.overud.data.preferences.TrackerCheckpointStore
 import com.overud.data.database.migration.DatabaseMigrations
 import com.overud.data.database.migration.WaitingSchema
 import com.overud.data.database.migration.DeliverySchema
+import com.overud.data.database.migration.DeliveryServiceSchema
 import com.overud.data.repository.*
 import com.overud.work.WorkSessionController
 
@@ -30,7 +31,7 @@ class AppContainer(context: Context) {
     private val mutex = Mutex()
     private val database = Room.databaseBuilder(context, OverudDatabase::class.java, "overud.db")
         .addMigrations(DatabaseMigrations.TO_AGGREGATES, WaitingSchema.MIGRATION, DeliverySchema.MIGRATION,
-            com.overud.data.database.migration.OfferServiceSchema.MIGRATION).build()
+            com.overud.data.database.migration.OfferServiceSchema.MIGRATION, DeliveryServiceSchema.MIGRATION).build()
     val appContext = context.applicationContext
     val appearance = com.overud.data.preferences.AppearancePreferences(context)
     val bridge = SheveryBridge(context)

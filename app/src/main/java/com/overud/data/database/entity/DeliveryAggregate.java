@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey;
 public class DeliveryAggregate {
     @PrimaryKey @NonNull public String id = "";
     @NonNull public String platform = "";
+    @NonNull public String serviceKind = "UNKNOWN";
     @NonNull public String regionKey = "";
     @NonNull public String zoneId = "";
     public int weekday;

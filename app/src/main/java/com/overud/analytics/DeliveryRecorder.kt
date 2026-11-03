@@ -32,7 +32,8 @@ class DeliveryRecorder(
             knownTotal && !offer.isAddon && it in 1..DeliveryMeasurement.MAX_MILLIS / 1000
         }?.times(1000)
         candidate = Observation(offer.id,
-            AnalysisBucket.at(offer.platform, regions.usableRegion(), System.currentTimeMillis()),
+            AnalysisBucket.at(offer.platform, regions.usableRegion(), System.currentTimeMillis())
+                .copy(serviceKind = offer.serviceKind),
             SystemClock.elapsedRealtime(), quote, generation.get())
     }
 

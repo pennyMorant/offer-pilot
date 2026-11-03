@@ -2,6 +2,7 @@ package com.overud.data.database.projection;
 
 public class DeliverySummary {
     public String platform;
+    public String serviceKind;
     public String regionKey;
     public String zoneId;
     public int weekday;

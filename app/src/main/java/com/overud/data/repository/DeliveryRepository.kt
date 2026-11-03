@@ -9,11 +9,13 @@ class DeliveryRepository(private val database: OverudDatabase) {
     fun record(bucket: AnalysisBucket, completed: Boolean, observed: Long?, quoted: Long?) {
         val duration = observed?.takeIf { completed && it in 1..DeliveryMeasurement.MAX_MILLIS }
         val quote = quoted?.takeIf { duration != null && it in 1..DeliveryMeasurement.MAX_MILLIS }
-        val key = "delivery|${bucket.platform.name}|${bucket.region}|${bucket.hourStart}|${bucket.zoneId}|${DeliveryMeasurement.VERSION}"
+        val key = "delivery|${bucket.platform.name}|${bucket.serviceKind.name}|${bucket.region}|" +
+            "${bucket.hourStart}|${bucket.zoneId}|${DeliveryMeasurement.VERSION}"
         database.runInTransaction {
             val row = database.deliveries().find(key) ?: DeliveryAggregate().apply {
                 id = key
                 platform = bucket.platform.name
+                serviceKind = bucket.serviceKind.name
                 regionKey = bucket.region
                 zoneId = bucket.zoneId
                 weekday = bucket.weekday
