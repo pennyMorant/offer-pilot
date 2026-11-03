@@ -49,7 +49,9 @@ class OfferTracker(private val store: TrackerCheckpointStore) {
 
     private fun compatible(previous: Offer, next: Offer): Boolean {
         fun matches(a: Any?, b: Any?) = a == null || b == null || a == b
-        return previous.serviceKind == next.serviceKind && matches(previous.pickupAddress, next.pickupAddress) &&
+        val sameKind = previous.serviceKind == OfferService.UNKNOWN || next.serviceKind == OfferService.UNKNOWN ||
+            previous.serviceKind == next.serviceKind
+        return sameKind && matches(previous.pickupAddress, next.pickupAddress) &&
             previous.currency == next.currency && matches(previous.amountCents, next.amountCents) &&
             matches(previous.merchant, next.merchant) && matches(previous.destination, next.destination) &&
             matches(previous.distanceMeters, next.distanceMeters) && matches(previous.durationSeconds, next.durationSeconds) &&

@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalConfiguration
 import com.overud.model.*
+import kotlin.math.roundToLong
 import com.overud.platform.*
 import com.overud.valuation.*
 import com.overud.acceptance.*
@@ -33,8 +34,8 @@ import java.util.Date
             if (offer.includesTip == true) Text("报价含小费，未提供小费明细", style = MaterialTheme.typography.bodySmall)
             HorizontalDivider()
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                Column { Text("每英里报价", style = MaterialTheme.typography.labelMedium); Text(decision?.valuation?.centsPerMile?.let { money(it.toLong()) } ?: "—", style = MaterialTheme.typography.titleLarge) }
-                Column { Text("预计毛时薪", style = MaterialTheme.typography.labelMedium); Text(decision?.valuation?.grossCentsPerHour?.let { money(it.toLong()) } ?: "—", style = MaterialTheme.typography.titleLarge) }
+                Column { Text("每英里报价", style = MaterialTheme.typography.labelMedium); Text(decision?.valuation?.centsPerMile?.let { money(it.roundToLong()) } ?: "—", style = MaterialTheme.typography.titleLarge) }
+                Column { Text("预计毛时薪", style = MaterialTheme.typography.labelMedium); Text(decision?.valuation?.grossCentsPerHour?.let { money(it.roundToLong()) } ?: "—", style = MaterialTheme.typography.titleLarge) }
             }
             Text(decision?.reasons?.joinToString("；")?.ifEmpty { "满足所有接单要求" } ?: "等待分析", color = MaterialTheme.colorScheme.primary)
             VehicleCostSummary(decision?.valuation)

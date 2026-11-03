@@ -14,8 +14,8 @@ fun runtimeDiagnosticRows(work: WorkState, bridge: BridgeStatus, device: DeviceS
             "需先在手机启动 Shevery。${bridge.message}", DiagnosticAction.SHEVERY),
         RuntimeDiagnosticRow("Shevery 授权", if (bridge.authorized) "已授权" else "未授权",
             "用于节点读取与接单动作；授权仍由系统确认。", DiagnosticAction.SHEVERY),
-        RuntimeDiagnosticRow("特权采集进程", if (bridge.serviceReady) "已绑定" else "未绑定",
-            "开始工作后连接；绑定成功不代表平台页面已适配。"),
+        RuntimeDiagnosticRow("特权采集进程", if (bridge.serviceReady) "读取连接就绪" else "尚未就绪",
+            "开始工作后绑定并检查页面读取；就绪不代表每种平台页面都已适配。"),
         RuntimeDiagnosticRow("工作状态", when {
             !work.working -> "未开始工作"
             work.diagnosticActive -> "手动节点诊断中"

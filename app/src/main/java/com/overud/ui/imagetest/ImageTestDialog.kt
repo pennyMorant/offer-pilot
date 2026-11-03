@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.overud.model.*
+import kotlin.math.roundToLong
 import com.overud.ui.components.*
 
 @Composable fun ImageTestDialog(viewModel: ImageTestViewModel, onDismiss: () -> Unit) {
@@ -48,8 +49,8 @@ import com.overud.ui.components.*
                 else Text("商家：${offer.merchant ?: "未识别"}")
                 if (offer.includesTip == true) Text("报价含小费，小费明细未知")
                 Text("目的地：${offer.destination ?: "未识别"}")
-                Text("每英里：${state.decision?.valuation?.centsPerMile?.let { money(it.toLong()) } ?: "—"}")
-                Text("预计毛时薪：${state.decision?.valuation?.grossCentsPerHour?.let { money(it.toLong()) } ?: "—"}")
+                Text("每英里：${state.decision?.valuation?.centsPerMile?.let { money(it.roundToLong()) } ?: "—"}")
+                Text("预计毛时薪：${state.decision?.valuation?.grossCentsPerHour?.let { money(it.roundToLong()) } ?: "—"}")
                 VehicleCostSummary(state.decision?.valuation)
                 Prop22Summary(state.decision?.valuation?.prop22)
                 Text("接单判断", style = MaterialTheme.typography.titleSmall)
