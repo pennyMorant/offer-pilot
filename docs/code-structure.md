@@ -315,3 +315,14 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - ui/rules/VoiceViewModel.kt：语音设置和动作入口，上限 120 行；VoiceSettingsCard.kt：设置组件，上限 150 行。
 
 语音只消费现有 WorkState，不调用接单动作或写入统计。偏好单独保存，不修改自动接单意愿。
+
+## 19. 结构化窗口与采集唤醒
+
+- core/model/UiNodeSnapshot.kt：节点、边界与选择结果模型，上限 120 行。
+- core/platform/NodePageAssembler.kt：页面信号保留、报价容器筛选，上限 200 行。
+- app/bridge/WindowNodeMapper.kt：Android 节点到纯模型映射，上限 150 行。
+- app/bridge/WindowChangeRelay.kt：事件过滤和合并，上限 150 行；IWindowEvents.aidl 上限 120 行。
+- app/capture/DeviceInteractionGuard.kt、CaptureLease.kt：设备可交互检查与工作代次/超时保护，各上限 120 行。
+- CaptureScheduler 继续串行协调采集，上限 180 行；CapturePipeline 继续保持 200 行上限。
+
+节点树不落库，事件只传唤醒信号，不持有截图或订单历史。过期动作不开始点击，不能宣称撤回已提交系统的动作。
