@@ -23,11 +23,13 @@ enum class AnalysisPeriod(val label: String, val hours: Set<Int>) {
 
 data class AnalysisSelection(
     val platform: Platform? = null,
+    val serviceKind: com.overud.model.OfferService? = null,
     val region: String? = null,
     val weekday: Int? = null,
     val period: AnalysisPeriod = AnalysisPeriod.ALL,
 ) {
     fun matches(row: QualitySummary): Boolean =
+        (serviceKind == null || row.serviceKind == serviceKind.name) &&
         (platform == null || row.platform == platform.name) &&
         (region == null || row.regionKey == region) &&
         (weekday == null || row.weekday == weekday) && row.localHour in period.hours

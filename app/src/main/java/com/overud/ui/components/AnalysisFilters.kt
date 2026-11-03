@@ -21,6 +21,13 @@ fun AnalysisFilters(state: AnalysisUiState, onChange: (AnalysisSelection) -> Uni
                     onClick = { onChange(selection.copy(platform = platform)) }, label = { Text(platform.label) })
             }
         }
+        Text("订单类型", style = MaterialTheme.typography.labelLarge)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selection.serviceKind == null, onClick = { onChange(selection.copy(serviceKind = null)) }, label = { Text("全部") })
+            com.overud.model.OfferService.entries.forEach { kind ->
+                FilterChip(selection.serviceKind == kind, onClick = { onChange(selection.copy(serviceKind = kind)) }, label = { Text(kind.label) })
+            }
+        }
         Text("星期", style = MaterialTheme.typography.labelLarge)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = selection.weekday == null,
