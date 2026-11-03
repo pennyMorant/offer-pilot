@@ -13,4 +13,5 @@ data class NodeDiagnosticState(
     val pageSummary: String? = null,
     val showText: Boolean = false,
     val selectedNode: Int? = null,
+    val actionCandidates: List<Int> = emptyList(),
 )

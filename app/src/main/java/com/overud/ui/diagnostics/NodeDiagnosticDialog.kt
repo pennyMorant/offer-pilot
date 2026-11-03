@@ -38,6 +38,8 @@ import com.overud.ui.components.ToggleRow
                         item { NodeRegionDiagram(state) }
                         item { Text("报价容器：${state.selectedRoot.takeIf { it >= 0 } ?: "整页回退"}；" +
                             "OCR：${if (state.ocrBounds != null) "局部区域候选" else "未定位，整屏回退候选"}") }
+                        item { Text("动作标签候选：${state.actionCandidates.joinToString { "#$it" }.ifEmpty { "未找到" }}。" +
+                            "候选不代表可以执行，还需唯一按钮、父节点及完整订单复核。") }
                         item { ToggleRow("显示节点文字", "可能包含商家或地址，仅本次查看", state.showText,
                             onChange = viewModel::showText) }
                     }

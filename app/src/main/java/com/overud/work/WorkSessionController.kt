@@ -21,7 +21,7 @@ class WorkSessionController(
     fun diagnosticMode(enabled: Boolean) {
         if (state.value.diagnosticActive != enabled) generation.incrementAndGet()
         mutable.update { it.copy(diagnosticActive = enabled, automatic = false, autoAcceptEnabled = false,
-            latest = null, decision = null, destinationEvidence = null, destinationAssessment = DestinationAssessment(),
+            latest = null, decision = null, currentPage = null, destinationEvidence = null, destinationAssessment = DestinationAssessment(),
             message = if (enabled) "节点诊断中，正常采集与自动接单暂停" else "诊断已关闭，自动接单保持关闭") }
     }
     private val mutable = MutableStateFlow(WorkState(policy = store.read()))

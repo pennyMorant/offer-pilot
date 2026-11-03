@@ -7,6 +7,9 @@ import com.overud.bridge.WindowDiagnosticCodec
 import com.overud.model.NodeBounds
 import com.overud.model.Platform
 import com.overud.platform.OfferParser
+import com.overud.platform.AcceptanceActionPolicy
+import com.overud.platform.AcceptanceConfirmationPolicy
+import com.overud.model.PlatformPageType
 import com.overud.ui.components.platformPagePresentation
 import com.overud.work.WorkSessionController
 import kotlinx.coroutines.*
@@ -72,9 +75,18 @@ class NodeDiagnosticViewModel(
                 check(nodes.isNotEmpty()) { "当前页面没有可用节点" }
                 val bounds = snapshot.getIntArray("ocrBounds")?.takeIf { it.size == 4 }
                     ?.let { NodeBounds(it[0], it[1], it[2], it[3]) }
+                val page = OfferParser.classify(platform, snapshot.getString("text").orEmpty())
+                val candidates = nodes.filter { node ->
+                    node.visible && node.enabled && node.packageName == platform.packageName &&
+                        node.windowId == snapshot.getInt("windowId", -1) && listOf(node.text, node.description).any { label ->
+                            if (page.type == PlatformPageType.ACCEPT_CONFIRMATION)
+                                AcceptanceConfirmationPolicy.matchesButton(platform, label)
+                            else AcceptanceActionPolicy.matchesInitialButton(platform, label)
+                        }
+                }.map { it.index }
                 mutable.value = NodeDiagnosticState(nodes = nodes, selectedRoot = snapshot.getInt("selectedRoot", -1),
                     ocrBounds = bounds, message = "已抓取 ${nodes.size} 个节点；仅保留本次内存快照",
-                    pageSummary = platformPagePresentation(OfferParser.classify(platform, snapshot.getString("text").orEmpty())))
+                    pageSummary = platformPagePresentation(page), actionCandidates = candidates)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
