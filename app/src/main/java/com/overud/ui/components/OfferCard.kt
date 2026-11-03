@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalConfiguration
 import com.overud.model.*
-import kotlin.math.roundToLong
 import com.overud.platform.*
 import com.overud.valuation.*
 import com.overud.acceptance.*
@@ -32,10 +31,7 @@ import java.util.Date
             Text(offerRoutePresentation(offer), style = MaterialTheme.typography.titleMedium)
             offer.destination?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             HorizontalDivider()
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                Column { Text("每英里报价", style = MaterialTheme.typography.labelMedium); Text(decision?.valuation?.centsPerMile?.let { money(it.roundToLong()) } ?: "—", style = MaterialTheme.typography.titleLarge) }
-                Column { Text("预计毛时薪", style = MaterialTheme.typography.labelMedium); Text(decision?.valuation?.grossCentsPerHour?.let { money(it.roundToLong()) } ?: "—", style = MaterialTheme.typography.titleLarge) }
-            }
+            ValueRatingSummary(decision?.valuation)
             Text(decision?.reasons?.firstOrNull() ?: if (decision?.eligible == true) "满足接单要求" else "等待分析",
                 color = MaterialTheme.colorScheme.primary)
             TextButton(onClick = { expanded = !expanded }) { Text(if (expanded) "收起详情" else "查看分析详情") }
@@ -46,6 +42,8 @@ import java.util.Date
                 if (offer.includesTip == true) {
                     Text("报价含小费，未提供小费明细", style = MaterialTheme.typography.bodySmall)
                 }
+                val rating = valueRatingPresentation(decision?.valuation)
+                Text("评分耗时依据：${rating.timeBasis}", style = MaterialTheme.typography.bodySmall)
                 decision?.reasons?.drop(1)?.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
                 VehicleCostSummary(decision?.valuation)
                 Prop22Summary(decision?.valuation?.prop22)
