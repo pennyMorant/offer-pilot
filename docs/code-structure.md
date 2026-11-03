@@ -156,13 +156,9 @@ ui/
 │   ├── DashboardUiState.kt            [100]
 │   ├── WorkSessionCard.kt             [150]
 │   └── AutoAcceptCard.kt              [150]
-├── statistics/
-│   ├── StatisticsScreen.kt            [220]
-│   └── StatisticsViewModel.kt         [150]
-├── regions/
-│   ├── RegionsScreen.kt               [220]
-│   ├── RegionsViewModel.kt            [180]
-│   └── RegionCard.kt                  [150]
+├── analysis/
+│   ├── AnalysisScreen.kt              [220] 区域机会与时段趋势入口
+│   └── AnalysisViewModel.kt           [180] 共享筛选及两种聚合视图
 ├── rules/
 │   ├── RulesScreen.kt                 [220]
 │   ├── RulesViewModel.kt              [180] 草稿、校验、保存
@@ -210,7 +206,7 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 
 - core/analytics：AnalysisBucket、QualityEvaluator、QualitySample、MetricHistogram，各文件上限 150 行；纯模型文件仍按 120 行上限。
 - app/analytics/QualitySummaryReducer.kt：统计投影分组累计，上限 150 行。
-- ui/components：AnalysisSelection、AnalysisUiState、AnalysisFilters、RegionPicker、QualityCard、QualityCardState、QualityPresentation、QualityStandardNote；模型上限 120 行，组件/格式化上限 150 行。
+- ui/components：AnalysisSelection、AnalysisUiState、AnalysisFilters、RegionPicker、QualityCard、OpportunityRow、OpportunityPresentation、QualityStandardNote；模型上限 120 行，组件/格式化上限 150 行。
 - 不恢复逐单历史页面。地区和时段均使用统计快照，页面不直接访问数据库。
 
 ## 9. 目的地与配送状态职责
