@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 data class UnifiedAnalysisUiState(
-    val selection: AnalysisSelection = AnalysisSelection(),
     val regions: AnalysisUiState = AnalysisUiState(),
     val times: AnalysisUiState = AnalysisUiState(),
 )
@@ -48,7 +47,6 @@ class AnalysisViewModel(session: WorkSessionController) : ViewModel() {
         currentRegion: String?,
         selected: AnalysisSelection,
     ) = UnifiedAnalysisUiState(
-        selection = selected,
         regions = analysisState(snapshot, selected.copy(region = null), byRegion = true,
             deliveryHistory = deliveries, currentRegion = currentRegion),
         times = analysisState(snapshot, selected, byRegion = false, deliveryHistory = deliveries),
