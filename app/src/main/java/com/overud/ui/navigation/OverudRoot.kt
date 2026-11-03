@@ -16,10 +16,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.overud.ui.dashboard.DashboardViewModel
 import com.overud.ui.rules.RulesViewModel
 import com.overud.ui.dashboard.DashboardScreen
-import com.overud.ui.statistics.StatisticsViewModel
-import com.overud.ui.regions.RegionsViewModel
-import com.overud.ui.statistics.StatisticsScreen
-import com.overud.ui.regions.RegionsScreen
+import com.overud.ui.analysis.AnalysisScreen
+import com.overud.ui.analysis.AnalysisViewModel
 import com.overud.ui.rules.RulesScreen
 
 @Composable fun OverudRoot(factory: OverudViewModelFactory, onWork: () -> Unit, onOverlayPermission: () -> Unit, onNotificationPermission: () -> Unit, onLocationPermission: () -> Unit) {
@@ -28,10 +26,8 @@ import com.overud.ui.rules.RulesScreen
     val voice: com.overud.ui.rules.VoiceViewModel = viewModel(factory = factory)
     val runtimeDiagnostics: com.overud.ui.diagnostics.RuntimeDiagnosticsViewModel = viewModel(factory = factory)
     val state by dashboard.state.collectAsStateWithLifecycle()
-    val statisticsViewModel: StatisticsViewModel = viewModel(factory = factory)
-    val regions: RegionsViewModel = viewModel(factory = factory)
-    val statistics by statisticsViewModel.state.collectAsStateWithLifecycle()
-    val regionState by regions.state.collectAsStateWithLifecycle()
+    val analysisViewModel: AnalysisViewModel = viewModel(factory = factory)
+    val analysis by analysisViewModel.state.collectAsStateWithLifecycle()
     val ruleState by rules.state.collectAsStateWithLifecycle()
     val prop22State by rules.prop22.collectAsStateWithLifecycle()
     val dirty = remember(ruleState, prop22State) { rules.hasChanges() }
@@ -76,8 +72,7 @@ import com.overud.ui.rules.RulesScreen
                 when (page) {
                     Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
                         { navigate { selected = Destination.RULES } }, { resolve = true })
-                    Destination.STATISTICS -> StatisticsScreen(statistics, statisticsViewModel::select)
-                    Destination.REGIONS -> RegionsScreen(regionState, regions::select)
+                    Destination.ANALYSIS -> AnalysisScreen(analysis, analysisViewModel::select)
                     Destination.RULES -> RulesScreen(rules)
                 }
             }
