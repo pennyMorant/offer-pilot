@@ -9,7 +9,7 @@ import kotlin.math.roundToLong
 
 /** Fixed analysis standard, independent of auto-accept switches and user policy revisions. */
 object QualityEvaluator {
-    const val VERSION = 1
+    const val VERSION = 2
 
     fun extract(offer: Offer, previous: QualitySample? = null): QualitySample {
         val amount = offer.amountCents?.takeIf { it > 0 && offer.currency == "USD" }
@@ -27,8 +27,8 @@ object QualityEvaluator {
         } else null
         val quality = when {
             amount == null || perMile == null || perHour == null -> OrderQuality.UNKNOWN
-            amount >= 800 && perMile >= 200_000 && perHour >= 2_500_000 -> OrderQuality.GOOD
-            amount < 500 || perMile < 100_000 || perHour < 1_500_000 -> OrderQuality.LOW
+            perMile >= 200_000 && perHour >= 2_500_000 -> OrderQuality.GOOD
+            perMile < 100_000 || perHour < 1_500_000 -> OrderQuality.LOW
             else -> OrderQuality.NORMAL
         }
         val inherited = (observedDistance == null && previous?.distanceMeters != null) ||

@@ -4,6 +4,11 @@ data class AcceptanceRules(
     val minimumCents: Long = 800,
     val minimumCentsPerMile: Long = 200,
     val minimumCentsPerHour: Long = 2500,
+    val minimumContributionCents: Long = 500,
+    val targetContributionCents: Long = 800,
+    val targetContributionCentsPerMile: Long = 165,
+    val targetContributionCentsPerHour: Long = 2000,
+    val minimumValueScore: Int = 70,
     val maximumMeters: Long = 16093,
     val maximumSeconds: Long = 2700,
     val maximumPickupMeters: Long? = null,
@@ -23,8 +28,12 @@ data class AcceptanceRules(
             RuleCondition.MINIMUM_AMOUNT,
             RuleCondition.MINIMUM_PER_MILE,
             RuleCondition.MINIMUM_HOURLY,
+            RuleCondition.MINIMUM_CONTRIBUTION,
         )
         return minimumCents > 0 && minimumCentsPerMile > 0 && minimumCentsPerHour > 0 &&
+            minimumContributionCents >= 0 && targetContributionCents > 0 &&
+            targetContributionCentsPerMile > 0 && targetContributionCentsPerHour > 0 &&
+            minimumValueScore in 1..100 &&
             maximumMeters > 0 && maximumSeconds > 0 && costCentsPerMile >= 0 &&
             (maximumPickupMeters == null || maximumPickupMeters > 0) &&
             incomeConditions.any(::enabled) && regionalRequirement.valid()

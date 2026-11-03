@@ -5,16 +5,19 @@ import com.overud.model.*
 object EligibilityEvaluator {
     fun assess(
         offer: Offer, policy: Policy, now: Long, destinationEvidence: DestinationEvidence? = null,
+        calibration: DurationCalibration? = null,
     ): Decision {
         val rules = policy.effective(offer.platform).sharedRules()
-        val value = ValueEngine.calculate(offer, policy)
+        val value = ValueEngine.calculate(offer, policy, calibration)
         val reasons = buildList {
             if (!policy.valid()) add("接单规则无效，至少启用一项最低收益要求")
             if (offer.platform !in policy.enabledPlatforms) add("该平台未开启自动接单")
-            if (offer.serviceKind != OfferService.UNKNOWN && !offer.reliable) add("订单卡片字段未完整确认，保留手动接单")
             if (offer.currency != "USD") add("当前规则仅适用于 USD")
-            if (!offer.reliable && offer.evidence?.amountVerified != true) add("报价金额或页面身份未确认")
-            if (offer.evidence?.source == OfferSource.OCR) add("仅由截图识别，保留手动接单")
+            when (value.confidence) {
+                EvaluationConfidence.LOW -> add("报价仅由截图或不完整页面识别，保留手动接单")
+                EvaluationConfidence.UNKNOWN -> add("报价页面或核心经济字段未确认")
+                EvaluationConfidence.HIGH, EvaluationConfidence.MEDIUM -> Unit
+            }
             if (now < offer.observedAt || now - offer.observedAt > 10_000) add("报价已过期")
             if (offer.amountCents == null || offer.amountCents <= 0) add("缺少有效报价")
             else if (rules.enabled(RuleCondition.MINIMUM_AMOUNT) && offer.amountCents < rules.minimumCents) {
@@ -32,6 +35,14 @@ object EligibilityEvaluator {
                     add(if (afterCost) "扣车辆成本后时薪不达标" else "预计毛时薪不达标")
                 }
             }
+            if (rules.enabled(RuleCondition.MINIMUM_CONTRIBUTION)) {
+                val contribution = value.contributionCents
+                if (contribution == null) add("缺少可信报价或总里程，无法计算成本后贡献")
+                else if (contribution + 1e-8 < rules.minimumContributionCents) add("单笔成本后贡献低于最低要求")
+            }
+            val score = value.score
+            if (score == null) add("缺少可信金额、总里程或总耗时，无法完成价值评分")
+            else if (score < rules.minimumValueScore) add("订单经济价值评分低于 ${rules.minimumValueScore} 分")
             addAll(RegionalEligibilityEvaluator.reasons(offer, rules.regionalRequirement, destinationEvidence, now))
             addAll(routeLimits(offer, rules))
             if (offer.isStacked && !rules.allowStacked) add("未允许自动接叠单")
