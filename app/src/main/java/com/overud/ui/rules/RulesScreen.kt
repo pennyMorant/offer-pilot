@@ -17,6 +17,7 @@ fun RulesScreen(
     onOverlayPermission: () -> Unit,
     onNotificationPermission: () -> Unit,
     onLocationPermission: () -> Unit,
+    voice: VoiceViewModel,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val prop22 by viewModel.prop22.collectAsStateWithLifecycle()
@@ -55,6 +56,8 @@ fun RulesScreen(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
             ) { Text(if (state.saving) "正在保存…" else "保存全部接单要求") }
         }
+        item { SectionLabel("驾驶语音 · 即时生效") }
+        item { VoiceSettingsCard(voice) }
         item { SectionLabel("设备权限") }
         item { FilledTonalButton(onClick = onOverlayPermission, modifier = Modifier.fillMaxWidth()) { Text("设置悬浮窗权限") } }
         item { OutlinedButton(onClick = onNotificationPermission, modifier = Modifier.fillMaxWidth()) { Text("设置通知读取权限") } }

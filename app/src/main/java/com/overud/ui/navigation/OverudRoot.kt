@@ -28,6 +28,7 @@ import com.overud.ui.imagetest.ImageTestViewModel
 @Composable fun OverudRoot(factory: OverudViewModelFactory, onWork: () -> Unit, onOverlayPermission: () -> Unit, onNotificationPermission: () -> Unit, onLocationPermission: () -> Unit) {
     val dashboard: DashboardViewModel = viewModel(factory = factory)
     val rules: RulesViewModel = viewModel(factory = factory)
+    val voice: com.overud.ui.rules.VoiceViewModel = viewModel(factory = factory)
     val imageTest: ImageTestViewModel = viewModel(factory = factory)
     val state by dashboard.state.collectAsStateWithLifecycle()
     val statisticsViewModel: StatisticsViewModel = viewModel(factory = factory)
@@ -57,7 +58,7 @@ import com.overud.ui.imagetest.ImageTestViewModel
                         { selected = Destination.RULES }, { replay = true }, { resolve = true }, { showImageTest = true })
                     Destination.STATISTICS -> StatisticsScreen(statistics, statisticsViewModel::select)
                     Destination.REGIONS -> RegionsScreen(regionState, regions::select)
-                    Destination.RULES -> RulesScreen(rules, onOverlayPermission, onNotificationPermission, onLocationPermission)
+                    Destination.RULES -> RulesScreen(rules, onOverlayPermission, onNotificationPermission, onLocationPermission, voice)
                 }
             }
         }

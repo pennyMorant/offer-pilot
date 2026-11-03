@@ -13,6 +13,7 @@ class OverudViewModelFactory(private val container: AppContainer) : ViewModelPro
         val instance = when (modelClass) {
             DashboardViewModel::class.java -> DashboardViewModel(container.session, container.bridge, container.acceptance)
             RulesViewModel::class.java -> RulesViewModel(container.session)
+            com.overud.ui.rules.VoiceViewModel::class.java -> com.overud.ui.rules.VoiceViewModel(container.voice)
             StatisticsViewModel::class.java -> StatisticsViewModel(container.session)
             RegionsViewModel::class.java -> RegionsViewModel(container.session)
             ImageTestViewModel::class.java -> ImageTestViewModel(container.importedImages, container.session)
