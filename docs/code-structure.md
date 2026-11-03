@@ -364,3 +364,13 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - 原有连接、去重、统计、目的地及 UI 文件继续遵守各自上限。不得因类型分组扩展逐单存储。
 
 具体接入依据与尚未运行的截图核对目标见 `shevery-uber-repair.md`。
+
+## 24. 页面重设计与动态主题
+
+- 最低 API 33。data/preferences/AppearancePreferences.kt：偏好、主题模式与可观察状态，上限 120 行。
+- ui/settings/AppearanceViewModel.kt 上限 180 行；SettingsScreen.kt 上限 250 行。
+- ui/components/AnalysisPage.kt、AnalysisOverview.kt、QualityRow.kt：筛选、概览和紧凑分析展示，上限 150 行；其中纯状态模型仍遵守 120 行限制。
+- ui/rules/RuleInputValidation.kt、RuleSummary.kt：输入提示与摘要，上限 150 行。规则是否有效仍由既有解析器和 core 判断。
+- 图像测试、节点诊断、文本规则调试 UI 与专属 ViewModel 改放 `app/src/debug/java`，继承原文件上限。ImportedImageRecognizer、NodeDiagnosticReader 也迁到 debug。
+- `debug` 与 `release` 分别提供 DeveloperViewModels.kt（上限 120 行）、DeveloperTools.kt（上限 150 行）；公共源集禁止引用测试专属页面或 ViewModel。
+- 规则页不再承载外观、语音或权限设置。根导航统一处理未保存草稿离开提示。
