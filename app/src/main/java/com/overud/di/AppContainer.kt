@@ -19,10 +19,6 @@ import com.overud.capture.*
 import com.overud.data.database.OverudDatabase
 import com.overud.data.preferences.PolicyStore
 import com.overud.data.preferences.TrackerCheckpointStore
-import com.overud.data.database.migration.DatabaseMigrations
-import com.overud.data.database.migration.WaitingSchema
-import com.overud.data.database.migration.DeliverySchema
-import com.overud.data.database.migration.DeliveryServiceSchema
 import com.overud.data.repository.*
 import com.overud.work.WorkSessionController
 
@@ -30,8 +26,8 @@ class AppContainer(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
     private val database = Room.databaseBuilder(context, OverudDatabase::class.java, "overud.db")
-        .addMigrations(DatabaseMigrations.TO_AGGREGATES, WaitingSchema.MIGRATION, DeliverySchema.MIGRATION,
-            com.overud.data.database.migration.OfferServiceSchema.MIGRATION, DeliveryServiceSchema.MIGRATION).build()
+        .fallbackToDestructiveMigration()
+        .build()
     val appContext = context.applicationContext
     val appearance = com.overud.data.preferences.AppearancePreferences(context)
     val bridge = SheveryBridge(context)
