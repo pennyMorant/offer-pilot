@@ -6,6 +6,7 @@ import com.overud.data.database.entity.HourlyQualityRecord
 fun AnalysisBucket.emptyRecord() = HourlyQualityRecord().also {
     it.id = id
     it.platform = platform.name
+    it.serviceKind = serviceKind.name
     it.regionKey = region
     it.hourStart = hourStart
     it.zoneId = zoneId

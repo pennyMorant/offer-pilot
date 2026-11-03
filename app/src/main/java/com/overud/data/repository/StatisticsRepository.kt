@@ -21,9 +21,10 @@ class StatisticsRepository(private val database: OverudDatabase) {
         if (amount == null || amount <= 0) return false
         val previous = current[offer.platform]?.takeIf { it.token == offer.id }
         val original = previous?.bucket
-        val bucket = if (original == null) AnalysisBucket.at(offer.platform, region, offer.firstObservedAt)
+        val locatedBucket = if (original == null) AnalysisBucket.at(offer.platform, region, offer.firstObservedAt)
             else if (original.region == AnalysisBucket.UNKNOWN_REGION && region != null) original.copy(region = region)
             else original
+        val bucket = locatedBucket.copy(serviceKind = offer.serviceKind)
         val contribution = Contribution(offer.id, bucket, QualityEvaluator.extract(offer, previous?.sample))
         if (contribution == previous) return false
         val dao = database.quality()

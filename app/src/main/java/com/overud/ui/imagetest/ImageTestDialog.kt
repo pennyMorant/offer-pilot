@@ -43,7 +43,10 @@ import com.overud.ui.components.*
             state.offer?.let { offer ->
                 Text(offerAmountPresentation(offer), style = MaterialTheme.typography.headlineMedium)
                 Text(offerRoutePresentation(offer))
-                Text("商家：${offer.merchant ?: "未识别"}")
+                Text("订单类型：${offer.serviceKind.label}")
+                if (offer.serviceKind == OfferService.PACKAGE) Text("取件地址：${offer.pickupAddress ?: "未识别"}")
+                else Text("商家：${offer.merchant ?: "未识别"}")
+                if (offer.includesTip == true) Text("报价含小费，小费明细未知")
                 Text("目的地：${offer.destination ?: "未识别"}")
                 Text("每英里：${state.decision?.valuation?.centsPerMile?.let { money(it.toLong()) } ?: "—"}")
                 Text("预计毛时薪：${state.decision?.valuation?.grossCentsPerHour?.let { money(it.toLong()) } ?: "—"}")

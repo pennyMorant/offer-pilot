@@ -16,6 +16,7 @@ object DestinationEvaluator {
         history: List<RegionalQualityObservation>,
         zone: ZoneId = ZoneId.systemDefault(),
         waitingHistory: List<WaitingObservation> = emptyList(),
+        serviceKind: OfferService = OfferService.UNKNOWN,
     ): DestinationAssessment {
         val region = destination.regionKey
         val waiting = if (destination.status == DestinationResolution.RESOLVED && region != null)
@@ -23,7 +24,7 @@ object DestinationEvaluator {
         val base = DestinationAssessment(destination.status, region, destination.precision, arrivalAt,
             analysisZoneId = zone.id, waiting = waiting)
         if (destination.status != DestinationResolution.RESOLVED || region == null) return base
-        val compatible = history.filter { it.platform == platform && it.version == QualityEvaluator.VERSION && it.zoneId == zone.id }
+        val compatible = history.filter { it.platform == platform && it.serviceKind == serviceKind && it.version == QualityEvaluator.VERSION && it.zoneId == zone.id }
         val exactRegion = compatible.filter { it.region == region }
         val local = arrivalAt?.let { Instant.ofEpochMilli(it).atZone(zone) }
         val candidates = buildList {

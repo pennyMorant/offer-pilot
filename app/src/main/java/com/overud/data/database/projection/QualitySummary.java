@@ -3,6 +3,7 @@ package com.overud.data.database.projection;
 import androidx.annotation.NonNull;
 
 public class QualitySummary {
+    @NonNull public String serviceKind = "UNKNOWN";
     @NonNull public String platform = "";
     @NonNull public String regionKey = "";
     @NonNull public String zoneId = "";

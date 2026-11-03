@@ -13,6 +13,7 @@ data class RegionalQualityObservation(
     val good: Long,
     val normal: Long,
     val low: Long,
+    val serviceKind: com.overud.model.OfferService = com.overud.model.OfferService.UNKNOWN,
 ) {
     val classified get() = good + normal + low
 }

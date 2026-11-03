@@ -2,11 +2,13 @@ package com.overud.data.database.entity;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
+import androidx.room.ColumnInfo;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "hourly_quality")
 public class HourlyQualityRecord {
     @PrimaryKey @NonNull public String id = "";
+    @NonNull @ColumnInfo(defaultValue = "'UNKNOWN'") public String serviceKind = "UNKNOWN";
     @NonNull public String platform = "";
     @NonNull public String regionKey = "UNKNOWN";
     @NonNull public String zoneId = "UTC";

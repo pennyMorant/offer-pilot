@@ -10,11 +10,12 @@ fun qualityPresentation(summary: QualitySummary, byRegion: Boolean): QualityCard
     val platform = Platform.entries.find { it.name == summary.platform }?.label ?: summary.platform
     val title = if (byRegion) regionLabel(summary.regionKey)
         else "${weekdayLabel(summary.weekday)} ${summary.localHour}:00–${summary.localHour + 1}:00"
+    val kind = com.overud.model.OfferService.entries.find { it.name == summary.serviceKind }?.label ?: "类型未确认"
     val standard = if (summary.qualityVersion == 0) "旧数据 · 口径未知" else "质量标准 v${summary.qualityVersion}"
     val classified = summary.goodCount + summary.normalCount + summary.lowCount
     return QualityCardState(
-        id = "${summary.platform}|${summary.regionKey}|${summary.weekday}|${summary.localHour}|${summary.zoneId}|${summary.qualityVersion}",
-        title = title, subtitle = "$platform · ${summary.zoneId} · $standard",
+        id = "${summary.platform}|${summary.regionKey}|${summary.weekday}|${summary.localHour}|${summary.zoneId}|${summary.qualityVersion}|${summary.serviceKind}",
+        title = title, subtitle = "$platform · $kind · ${summary.zoneId} · $standard",
         total = summary.offerCount, good = summary.goodCount, normal = summary.normalCount,
         low = summary.lowCount, unknown = summary.unknownCount,
         averageAmount = averageMoney(summary.amountSum, summary.amountCount, 1),

@@ -6,7 +6,7 @@ import com.overud.data.database.dao.*;
 import androidx.room.Database;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {HourlyQualityRecord.class, StatisticsCheckpoint.class, AttemptRecord.class, ExposureRecord.class, RegionWaitingRecord.class, DeliveryAggregate.class}, version = 4, exportSchema = false)
+@Database(entities = {HourlyQualityRecord.class, StatisticsCheckpoint.class, AttemptRecord.class, ExposureRecord.class, RegionWaitingRecord.class, DeliveryAggregate.class}, version = 5, exportSchema = false)
 public abstract class OverudDatabase extends RoomDatabase {
     public abstract HourlyQualityDao quality();
     public abstract AcceptanceDao acceptance();

@@ -1,6 +1,7 @@
 package com.overud.analytics
 
 import com.overud.model.Platform
+import com.overud.model.OfferService
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
@@ -14,8 +15,9 @@ data class AnalysisBucket(
     val localHour: Int,
     val weekday: Int,
     val qualityVersion: Int = QualityEvaluator.VERSION,
+    val serviceKind: OfferService = OfferService.UNKNOWN,
 ) {
-    val id get() = "${platform.name}|$region|$hourStart|$zoneId|$qualityVersion"
+    val id get() = "${platform.name}|$region|$hourStart|$zoneId|$qualityVersion|${serviceKind.name}"
 
     companion object {
         const val UNKNOWN_REGION = "UNKNOWN"

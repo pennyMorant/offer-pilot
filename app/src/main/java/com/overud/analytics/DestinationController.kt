@@ -19,7 +19,7 @@ class DestinationController(
     private data class Input(
         val working: Boolean, val token: String?, val address: String?, val platform: Platform?,
         val duration: Long?, val minute: Long, val history: StatisticsSnapshot,
-        val waiting: List<WaitingObservation>, val tick: Long,
+        val waiting: List<WaitingObservation>, val tick: Long, val serviceKind: OfferService,
     )
     private val located = MutableStateFlow(Located(null, null, ResolvedDestination(DestinationResolution.MISSING)))
 
@@ -50,7 +50,8 @@ class DestinationController(
                 val offer = state.latest
                 Input(state.working, offer?.id, offer?.destination, offer?.platform,
                     trustedDuration(offer),
-                    (offer?.observedAt ?: 0) / 60000 * 60000, state.statistics, state.waitingHistory, (offer?.observedAt ?: 0) / 10000)
+                    (offer?.observedAt ?: 0) / 60000 * 60000, state.statistics, state.waitingHistory, (offer?.observedAt ?: 0) / 10000,
+                    offer?.serviceKind ?: OfferService.UNKNOWN)
             }.distinctUntilChanged()
             combine(located, inputs) { location, input -> location to input }.collect { (location, input) ->
                 val assessment = evaluate(location, input)
@@ -59,7 +60,8 @@ class DestinationController(
                 session.update { state ->
                     val current = state.latest
                     if (state.working == input.working && current?.id == input.token &&
-                        current?.destination == input.address && trustedDuration(current) == input.duration &&
+                        current?.destination == input.address && (current?.serviceKind ?: OfferService.UNKNOWN) == input.serviceKind &&
+                        trustedDuration(current) == input.duration &&
                         (current?.observedAt ?: 0) / 60000 * 60000 == input.minute &&
                         state.statistics.revision == input.history.revision) {
                         val updated = state.copy(destinationAssessment = assessment, destinationEvidence = evidence)
@@ -94,8 +96,10 @@ class DestinationController(
         val history = input.history.times.mapNotNull { row ->
             val source = Platform.entries.find { it.name == row.platform } ?: return@mapNotNull null
             RegionalQualityObservation(source, row.regionKey, row.zoneId, row.weekday, row.localHour,
-                row.qualityVersion, row.offerCount, row.goodCount, row.normalCount, row.lowCount)
+                row.qualityVersion, row.offerCount, row.goodCount, row.normalCount, row.lowCount,
+                OfferService.entries.find { it.name == row.serviceKind } ?: OfferService.UNKNOWN)
         }
-        return DestinationEvaluator.assess(location.result, platform, arrival, history, waitingHistory = input.waiting)
+        return DestinationEvaluator.assess(location.result, platform, arrival, history, waitingHistory = input.waiting,
+            serviceKind = input.serviceKind)
     }
 }
