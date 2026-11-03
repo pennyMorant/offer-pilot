@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Shevery native discovery; API_V23 remains for older Shizuku-compatible servers. -->
+    <uses-permission android:name="com.hamondev.shevery.permission.PRIVILEGED_API" />
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
     <queries>
         <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
