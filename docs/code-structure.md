@@ -170,7 +170,7 @@ ui/
 └── components/
     ├── OfferCard.kt                   [150]
     ├── EmptyStateCard.kt              [100]
-    ├── StatusChip.kt                  [80]
+    ├── OpportunityRow.kt              [150]
     ├── NumberField.kt                 [100]
     └── DisplayFormat.kt               [100]
 ```
