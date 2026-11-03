@@ -354,3 +354,13 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - RuntimeDiagnosticsDialog.kt：生命周期刷新、状态展示和用户触发设置跳转，上限 150 行。
 
 不增加数据库记录或权限声明，不自动修改系统设置，不将可选权限缺失合并成核心功能不可用。
+
+## 23. Shevery 原生接入与 Uber 卡片
+
+- model/OfferService.kt、TextRegion.kt：订单类型及临时 OCR 行几何，各上限 120 行。
+- platform/UberOfferCard.kt、SpatialPageText.kt：实际卡片模板与空间阅读顺序，各上限 200 行。
+- capture/OcrPageText.kt：ML Kit 行到纯模型转换，上限 150 行；实时与选图共用。
+- data/database/migration/OfferServiceSchema.kt：v4→v5 累计表类型维度，上限 120 行。
+- 原有连接、去重、统计、目的地及 UI 文件继续遵守各自上限。不得因类型分组扩展逐单存储。
+
+具体接入依据与尚未运行的截图核对目标见 `shevery-uber-repair.md`。
