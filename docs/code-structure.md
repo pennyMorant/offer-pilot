@@ -345,3 +345,12 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - NodeDiagnosticDialog.kt、NodeRegionDiagram.kt：节点列表、文字显示开关和几何区域图，各上限 150 行。
 
 诊断读取不接入统计或自动点击；普通采集不传原始节点列表，关闭清空临时数据。
+
+## 22. 运行状态与权限诊断
+
+- device/DeviceStatus.kt：只读设备状态，上限 120 行；DeviceStatusReader.kt：标准系统状态读取，上限 150 行。
+- ui/diagnostics/RuntimeDiagnosticRows.kt：状态解释和设置动作映射，上限 150 行。
+- RuntimeDiagnosticsViewModel.kt：状态合并、手动刷新与授权入口，上限 180 行。
+- RuntimeDiagnosticsDialog.kt：生命周期刷新、状态展示和用户触发设置跳转，上限 150 行。
+
+不增加数据库记录或权限声明，不自动修改系统设置，不将可选权限缺失合并成核心功能不可用。
