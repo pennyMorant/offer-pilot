@@ -15,9 +15,8 @@ object WindowDiagnosticCodec {
         putBoolean("visible", node.visible); putBoolean("enabled", node.enabled); putBoolean("clickable", node.clickable)
     } })
 
-    @Suppress("DEPRECATION")
     fun decode(snapshot: Bundle): List<UiNodeSnapshot> {
-        val entries = snapshot.getParcelableArrayList<Bundle>("nodes") ?: return emptyList()
+        val entries = snapshot.getParcelableArrayList("nodes", Bundle::class.java) ?: return emptyList()
         require(entries.size <= 450)
         var characters = 0
         return entries.mapIndexed { index, node ->
