@@ -10,6 +10,7 @@ public class QualitySummary {
     public int weekday;
     public int localHour;
     public int qualityVersion;
+    public long firstObservedHour;
     public long offerCount;
     public long goodCount;
     public long normalCount;

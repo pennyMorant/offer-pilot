@@ -16,6 +16,7 @@ object QualitySummaryReducer {
             weekday = if (byRegion) 0 else first.weekday
             localHour = if (byRegion) 0 else first.localHour
             qualityVersion = first.qualityVersion
+            firstObservedHour = group.minOf { it.firstObservedHour }
             for (row in group) {
                 offerCount += row.offerCount
                 goodCount += row.goodCount

@@ -7,5 +7,6 @@ public class ExposureSummary {
     @NonNull public String regionKey = "";
     public int localWeekday;
     public int localHour;
+    public long bucketStart;
     public long exposureMs;
 }

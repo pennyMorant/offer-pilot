@@ -23,10 +23,12 @@ fun analysisState(
     val groups = QualitySummaryReducer.group(rows, byRegion)
     val sorted = if (byRegion) groups.sortedByDescending { it.offerCount }
         else groups.sortedWith(compareBy({ it.weekday }, { it.localHour }, { it.platform }, { it.zoneId }, { it.qualityVersion }))
+    val qualityWindowStart = snapshot.times.filter { it.qualityVersion == com.overud.analytics.QualityEvaluator.VERSION }
+        .minOfOrNull { it.firstObservedHour } ?: Long.MAX_VALUE
     val exposures = snapshot.exposures.filter {
         (selection.platform == null || it.platform == selection.platform.name) &&
             (selection.weekday == null || it.localWeekday == selection.weekday) &&
-            it.localHour in selection.period.hours
+            it.localHour in selection.period.hours && it.bucketStart >= qualityWindowStart
     }.groupBy { "${it.platform}|${it.regionKey}" }.mapValues { entry -> entry.value.sumOf { it.exposureMs } }
     return AnalysisUiState(selection, (snapshot.regions.map { it.regionKey } + deliveryHistory.map { it.regionKey }).distinct().sorted(),
         sorted.map { qualityPresentation(it, byRegion) }, rows.sumOf { it.offerCount },
