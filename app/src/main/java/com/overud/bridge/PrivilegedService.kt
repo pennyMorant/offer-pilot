@@ -11,6 +11,7 @@ class PrivilegedService : IPrivilegedService.Stub() {
     private val acceptance = AcceptTargetResolver(connection, windows)
 
     override fun snapshot(): Bundle = windows.snapshot()
+    override fun diagnosticSnapshot(): Bundle = windows.snapshot(includeNodes = true)
     override fun registerWindowEvents(listener: IWindowEvents?) = connection.changes.register(listener)
     override fun screenshot(expectedFrame: Bundle): ParcelFileDescriptor? = screenshots.screenshot(expectedFrame)
     override fun accept(expectedToken: String, expectedPackage: String, deadlineElapsed: Long): String =

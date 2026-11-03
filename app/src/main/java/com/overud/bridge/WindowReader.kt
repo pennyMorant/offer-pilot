@@ -24,7 +24,7 @@ class WindowReader(private val connection: UiAutomationConnection) {
         return NodePageAssembler.assemble(platform, WindowNodeMapper.map(nodes)).text
     }
 
-    fun snapshot(): Bundle = try {
+    fun snapshot(includeNodes: Boolean = false): Bundle = try {
         val root = connection.get().rootInActiveWindow
         val pkg = root?.packageName?.toString().orEmpty()
         if (root == null || pkg !in supported) Bundle().apply { putString("package", pkg) }
@@ -44,6 +44,7 @@ class WindowReader(private val connection: UiAutomationConnection) {
                 putString("frameToken", fingerprint(platform, nodes.joinToString("\n")))
                 val crop = page.ocrRoot?.let { index -> nodes.firstOrNull { it.index == index }?.bounds }
                 if (crop != null) putIntArray("ocrBounds", intArrayOf(crop.left, crop.top, crop.right, crop.bottom))
+                if (includeNodes) putParcelableArrayList("nodes", WindowDiagnosticCodec.encode(nodes))
             }
         }
     } catch (e: Exception) { Bundle().apply { putString("error", e.cause?.message ?: e.message ?: e.javaClass.simpleName) } }

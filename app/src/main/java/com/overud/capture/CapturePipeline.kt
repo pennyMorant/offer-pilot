@@ -42,6 +42,7 @@ class CapturePipeline(
         try {
             deliveries.checkContinuity()
             if (!session.state.value.working) { waiting.interrupt(); return@withLock }
+            if (session.state.value.diagnosticActive) { waiting.interrupt(); deliveries.invalidate(); return@withLock }
             if (!session.canInteract()) {
                 lease.expire("设备已锁定或熄屏，自动接单已关闭；解锁后需手动开启")
                 waiting.interrupt(); deliveries.invalidate(); return@withLock

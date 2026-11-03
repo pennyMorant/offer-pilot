@@ -8,9 +8,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 class CaptureLease(private val session: WorkSessionController) {
     private val expired = AtomicBoolean(false)
     private val generation = session.workGeneration
-    fun current() = !expired.get() && session.workGeneration == generation && session.state.value.working && session.canInteract()
+    fun current() = !expired.get() && session.workGeneration == generation && session.state.value.working &&
+        !session.state.value.diagnosticActive && session.canInteract()
     fun valid(): Boolean {
-        if (expired.get() || session.workGeneration != generation || !session.state.value.working) return false
+        if (expired.get() || session.workGeneration != generation || !session.state.value.working ||
+            session.state.value.diagnosticActive) return false
         if (!session.canInteract()) {
             expire("设备已锁定或熄屏，自动接单已关闭；解锁后需手动开启")
             return false

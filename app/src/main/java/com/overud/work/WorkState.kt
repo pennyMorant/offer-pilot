@@ -7,6 +7,7 @@ import com.overud.data.repository.StatisticsSnapshot
 
 data class WorkState(
     val working: Boolean = false,
+    val diagnosticActive: Boolean = false,
     val automatic: Boolean = false,
     val autoAcceptEnabled: Boolean = false,
     val policy: Policy = Policy(),

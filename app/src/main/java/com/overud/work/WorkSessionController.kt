@@ -18,6 +18,12 @@ class WorkSessionController(
     private val generation = java.util.concurrent.atomic.AtomicLong()
     val workGeneration: Long get() = generation.get()
     fun canInteract() = interaction.allowed()
+    fun diagnosticMode(enabled: Boolean) {
+        if (state.value.diagnosticActive != enabled) generation.incrementAndGet()
+        mutable.update { it.copy(diagnosticActive = enabled, automatic = false, autoAcceptEnabled = false,
+            latest = null, decision = null, destinationEvidence = null, destinationAssessment = DestinationAssessment(),
+            message = if (enabled) "节点诊断中，正常采集与自动接单暂停" else "诊断已关闭，自动接单保持关闭") }
+    }
     private val mutable = MutableStateFlow(WorkState(policy = store.read()))
     val state = mutable.asStateFlow()
     init {
@@ -41,7 +47,7 @@ class WorkSessionController(
     }
     fun setAutomatic(enabled: Boolean) {
         mutable.update {
-            val allowed = enabled && canInteract() && it.working && it.policy.valid() && !it.policySaving &&
+            val allowed = enabled && !it.diagnosticActive && canInteract() && it.working && it.policy.valid() && !it.policySaving &&
                 bridge.status.value.serviceReady && !it.pending
             it.copy(automatic = allowed, autoAcceptEnabled = allowed, message = when {
                 !enabled -> "自动接单已关闭"

@@ -15,7 +15,7 @@ import com.overud.ui.components.*
 
 @Composable fun DashboardScreen(state: DashboardUiState, bridge: BridgeStatus, onWork: () -> Unit,
     onAutomatic: (Boolean) -> Unit, onAuthorize: () -> Unit, onRules: () -> Unit, onReplay: () -> Unit,
-    onResolve: () -> Unit, onImageTest: () -> Unit) {
+    onResolve: () -> Unit, onImageTest: () -> Unit, onDiagnostics: () -> Unit) {
     LazyColumn(Modifier.widthIn(max = 760.dp).fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("overud", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
@@ -34,6 +34,7 @@ import com.overud.ui.components.*
         }
         item { AutoAcceptCard(state, onAutomatic, onRules, onResolve) }
         item { OutlinedButton(onClick = onImageTest, modifier = Modifier.fillMaxWidth()) { Text("选择订单图片测试") } }
+        item { OutlinedButton(onClick = onDiagnostics, modifier = Modifier.fillMaxWidth()) { Text("临时节点诊断") } }
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("最新报价", style = MaterialTheme.typography.titleLarge)
             TextButton(onClick = onReplay) { Text("规则预览") }
