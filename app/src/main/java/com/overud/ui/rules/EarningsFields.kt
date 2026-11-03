@@ -29,7 +29,7 @@ fun EarningsFields(
             }
         }
         NumberField("配置车辆成本", state.cost, "$/mi",
-            { onField(RuleField.COST, it) }, enabled = !state.saving)
+            { onField(RuleField.COST, it) }, enabled = !state.saving, error = state.fieldErrors[RuleField.COST])
         val hourlyLabel = if (state.hourlyBasis == HourlyBasis.GROSS) "最低预计毛时薪" else "最低扣车辆成本后时薪"
         RuleConditionField(hourlyLabel, state.hour, "$/h", RuleCondition.MINIMUM_HOURLY,
             RuleField.HOUR, state, onField, onCondition)

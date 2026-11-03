@@ -28,7 +28,7 @@ fun RuleConditionField(
                 Switch(checked = active, onCheckedChange = { onCondition(condition, it) }, enabled = !state.saving)
             }
             if (active) {
-                NumberField(title, value, unit, { onField(field, it) }, enabled = !state.saving)
+                NumberField(title, value, unit, { onField(field, it) }, enabled = !state.saving, error = state.fieldErrors[field])
             } else {
                 Text("此条件不参与接单判断", style = MaterialTheme.typography.bodySmall)
             }

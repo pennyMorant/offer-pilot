@@ -16,6 +16,14 @@ import com.overud.ui.components.*
 @Composable fun RulesScreen(viewModel: RulesViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var section by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(state.error) {
+        if (state.error != null) section = when (state.fieldErrors.keys.firstOrNull()) {
+            RuleField.MINIMUM, RuleField.MILE, RuleField.HOUR, RuleField.COST -> "最低收益"
+            RuleField.DISTANCE, RuleField.TIME, RuleField.PICKUP -> "距离与时间"
+            RuleField.REGION_PERCENT, RuleField.REGION_SAMPLES -> "目的地区域"
+            else -> section
+        }
+    }
     BackHandler(section != null) { section = null }
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize()) {
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(20.dp),
@@ -26,12 +34,13 @@ import com.overud.ui.components.*
                 Text(section.orEmpty(), style = MaterialTheme.typography.titleLarge)
             }
             if (section == null) {
+                item { Text(if (viewModel.hasChanges()) "当前草稿" else "已保存要求", style = MaterialTheme.typography.titleMedium) }
                 item { RuleGroupRow("平台与范围", state.platforms.joinToString { it.label }) { section = "平台与范围" } }
                 if (state.scope != null && state.inheritShared) item {
                     Text("此平台继承公共要求。关闭继承后可单独编辑。", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
-                    item { RuleGroupRow("最低收益", "金额 ${state.minimum} · 每英里 ${state.mile} · 时薪 ${state.hour}") { section = "最低收益" } }
-                    item { RuleGroupRow("距离与时间", "里程 ${state.distance} mi · 耗时 ${state.time} min") { section = "距离与时间" } }
+                    item { RuleGroupRow("最低收益", state.incomeSummary()) { section = "最低收益" } }
+                    item { RuleGroupRow("距离与时间", state.routeSummary()) { section = "距离与时间" } }
                     item { RuleGroupRow("目的地区域", if (state.regionalEnabled) "优质占比 ${state.regionalGoodPercent}% · 至少 ${state.regionalSamples} 个样本" else "未启用") { section = "目的地区域" } }
                     item { RuleGroupRow("订单偏好", "叠单、追加单及排除条件") { section = "订单偏好" } }
                 }

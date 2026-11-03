@@ -11,7 +11,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 
-@Composable fun NumberField(label: String, value: String, unit: String, onChange: (String) -> Unit, enabled: Boolean = true) {
+@Composable fun NumberField(label: String, value: String, unit: String, onChange: (String) -> Unit, enabled: Boolean = true, error: String? = null) {
     OutlinedTextField(value = value, onValueChange = onChange, label = { Text(label) }, suffix = { Text(unit) },
+        isError = error != null, supportingText = if (error != null) { { Text(error) } } else null,
         enabled = enabled, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium)
 }

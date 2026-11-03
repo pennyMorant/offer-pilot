@@ -24,6 +24,7 @@ data class RulesUiState(
     val inheritShared: Boolean = false,
     val saving: Boolean = false,
     val error: String? = null,
+    val fieldErrors: Map<RuleField, String> = emptyMap(),
     val hourlyBasis: HourlyBasis = HourlyBasis.GROSS,
     val regionalEnabled: Boolean = false,
     val regionalGoodPercent: String = "50",

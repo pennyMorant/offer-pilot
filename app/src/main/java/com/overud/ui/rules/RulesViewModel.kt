@@ -33,8 +33,8 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
 
     fun hasChanges(): Boolean {
         val policy = session.state.value.policy
-        fun changed(draft: RulesUiState) = draft.copy(error = null, saving = false) !=
-            RuleInputParser.fromPolicy(policy, draft.scope).copy(error = null, saving = false)
+        fun changed(draft: RulesUiState) = draft.copy(error = null, saving = false, fieldErrors = emptyMap()) !=
+            RuleInputParser.fromPolicy(policy, draft.scope).copy(error = null, saving = false, fieldErrors = emptyMap())
         return changed(state.value) || drafts.filterKeys { it != state.value.scope }.values.any(::changed) ||
             prop22.value != Prop22Input.from(policy.prop22)
     }
@@ -83,7 +83,7 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
                 RuleField.MERCHANTS -> it.copy(excludedMerchants = value)
                 RuleField.REGION_PERCENT -> it.copy(regionalGoodPercent = value)
                 RuleField.REGION_SAMPLES -> it.copy(regionalSamples = value)
-            }.copy(error = null)
+            }.copy(error = null).let { updated -> updated.copy(fieldErrors = ruleInputErrors(updated)) }
         }
     }
     fun platform(platform: Platform, enabled: Boolean) {
@@ -110,7 +110,8 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
             val draft = drafts[scope] ?: continue
             val updated = RuleInputParser.toPolicy(draft, policy)
             if (updated == null) {
-                mutable.update { it.copy(error = "${scope?.label ?: "公共要求"}输入无效，请检查数值范围并至少启用一项最低收益要求") }
+                mutable.value = draft.copy(platforms = state.value.platforms, fieldErrors = ruleInputErrors(draft),
+                    error = "${scope?.label ?: "公共要求"}输入无效，请检查数值范围并至少启用一项最低收益要求")
                 return
             }
             policy = updated

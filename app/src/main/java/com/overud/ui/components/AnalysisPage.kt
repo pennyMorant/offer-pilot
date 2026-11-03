@@ -18,11 +18,12 @@ import androidx.compose.ui.unit.dp
     var explanation by remember { mutableStateOf(false) }
     var delivery by rememberSaveable { mutableStateOf(false) }
     var sort by rememberSaveable { mutableStateOf("样本量") }
-    val cards = if (!byRegion) state.cards else when (sort) {
+    val ordered = if (!byRegion) state.cards else when (sort) {
         "报价质量" -> state.cards.sortedByDescending { it.goodRate ?: -1 }
         "里程效率" -> state.cards.sortedByDescending { if (it.mileSamples >= 10) it.mileValue else -1.0 }
         else -> state.cards.sortedByDescending { it.total }
     }
+    val cards = if (byRegion) ordered.filter { it.knownRegion } + ordered.filterNot { it.knownRegion } else ordered
     LazyColumn(Modifier.widthIn(max = 760.dp).fillMaxSize(), contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
@@ -48,7 +49,7 @@ import androidx.compose.ui.unit.dp
                         FilterChip(sort == label, onClick = { sort = label }, label = { Text(label) })
                     }
                 }
-                Text("不足 10 个有效样本的指标不参与质量或效率排名。", style = MaterialTheme.typography.bodySmall)
+                Text("不足 10 个有效样本的指标不参与质量或效率排名；未知地区单独列在末尾。", style = MaterialTheme.typography.bodySmall)
             } else item { Text("时段对比", style = MaterialTheme.typography.titleMedium) }
             if (cards.isEmpty()) item { Text("当前范围暂无报价样本。工作期间识别的报价会自动累计。") }
             items(cards, key = { it.id }) { QualityRow(it) }
