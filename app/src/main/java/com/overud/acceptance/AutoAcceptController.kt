@@ -108,9 +108,14 @@ class AutoAcceptController(
                 android.os.SystemClock.elapsedRealtime() + 2000) ?: "service_disconnected"
             if (result == "dispatched") {
                 repository.update(offer.id, "outcome_unknown", "点击已发送，等待平台确认")
-                session.update { it.copy(automatic = false, pending = true, message = "接单动作已发出，正在核对平台结果") }
-                if (service != null) confirmation.start(offer, token, reviewed.policyVersion, service)
-                awaitConfirmation()
+                session.update { it.copy(automatic = false, pending = true,
+                    message = if (it.working && it.deliveryPhase == DeliveryPhase.AWAITING_CONFIRMATION)
+                        "接单动作已发出，正在核对平台结果" else it.message) }
+                val awaiting = session.state.value
+                if (awaiting.working && awaiting.deliveryPhase == DeliveryPhase.AWAITING_CONFIRMATION) {
+                    if (service != null && awaiting.autoAcceptEnabled) confirmation.start(offer, token, reviewed.policyVersion, service)
+                    awaitConfirmation()
+                }
             } else {
                 deliveries.discardCandidate()
                 repository.update(offer.id, "aborted", result)

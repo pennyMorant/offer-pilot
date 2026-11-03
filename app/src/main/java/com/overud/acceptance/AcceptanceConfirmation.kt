@@ -50,7 +50,8 @@ class AcceptanceConfirmation(
             val result = context.service.confirmAcceptance(context.token, token, page.platform.packageName,
                 SystemClock.elapsedRealtime() + 2000)
             if (result == "dispatched") {
-                session.update { it.copy(message = "已确认同一报价，正在等待平台接单结果") }
+                session.update { if (it.working && it.deliveryPhase == DeliveryPhase.AWAITING_CONFIRMATION)
+                    it.copy(message = "已确认同一报价，正在等待平台接单结果") else it }
             } else uncertain("确认动作未完成，请核对平台状态：$result")
         } catch (_: Exception) {
             uncertain("确认动作结果未知，请核对平台配送状态")
