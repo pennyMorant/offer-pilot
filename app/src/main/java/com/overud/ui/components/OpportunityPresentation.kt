@@ -5,11 +5,13 @@ import com.overud.analytics.QualityEvaluator
 import com.overud.data.database.projection.QualitySummary
 import com.overud.model.OfferService
 import com.overud.model.Platform
+import com.overud.region.RegionCell
 import java.util.Locale
+import kotlin.math.*
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-fun opportunityPresentation(summary: QualitySummary, exposureMs: Long): OpportunityCardState {
+fun opportunityPresentation(summary: QualitySummary, exposureMs: Long, currentRegion: String?): OpportunityCardState {
     val classified = summary.goodCount + summary.normalCount + summary.lowCount
     val hours = exposureMs / 3_600_000.0
     val goodRate = if (classified >= 10) summary.goodCount.toDouble() / classified else null
@@ -28,6 +30,12 @@ fun opportunityPresentation(summary: QualitySummary, exposureMs: Long): Opportun
     }
     val platform = Platform.entries.find { it.name == summary.platform }?.label ?: summary.platform
     val service = OfferService.entries.find { it.name == summary.serviceKind }?.label ?: "类型未确认"
+    val distance = cellDistanceMiles(currentRegion, summary.regionKey)
+    val proximity = when {
+        currentRegion == summary.regionKey -> "当前区域"
+        distance != null -> String.format(Locale.getDefault(), "距当前约 %.1f mi（直线）", distance)
+        else -> "当前位置未知"
+    }
     return OpportunityCardState(
         id = "opportunity|${summary.platform}|${summary.serviceKind}|${summary.regionKey}|" +
             "${summary.zoneId}|${summary.qualityVersion}",
@@ -42,6 +50,8 @@ fun opportunityPresentation(summary: QualitySummary, exposureMs: Long): Opportun
         confidence = confidence,
         advice = advice(score),
         knownRegion = summary.regionKey != AnalysisBucket.UNKNOWN_REGION,
+        proximity = proximity,
+        distanceMiles = distance,
     )
 }
 
@@ -64,3 +74,14 @@ private fun average(sum: Long, count: Long): Double? =
     if (count > 0) sum.toDouble() / count / 1000 else null
 
 private fun hoursText(value: Double) = String.format(Locale.getDefault(), "%.1f", value)
+
+private fun cellDistanceMiles(current: String?, target: String): Double? {
+    val first = current?.let(RegionCell::parse) ?: return null
+    val second = RegionCell.parse(target) ?: return null
+    val lat1 = Math.toRadians(first.centerLatitude)
+    val lat2 = Math.toRadians(second.centerLatitude)
+    val deltaLat = lat2 - lat1
+    val deltaLon = Math.toRadians(second.centerLongitude - first.centerLongitude)
+    val a = sin(deltaLat / 2).pow(2) + cos(lat1) * cos(lat2) * sin(deltaLon / 2).pow(2)
+    return 3958.8 * 2 * asin(sqrt(a.coerceIn(0.0, 1.0)))
+}

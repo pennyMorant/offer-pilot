@@ -13,4 +13,6 @@ data class OpportunityCardState(
     val confidence: String,
     val advice: String,
     val knownRegion: Boolean,
+    val proximity: String,
+    val distanceMiles: Double?,
 )

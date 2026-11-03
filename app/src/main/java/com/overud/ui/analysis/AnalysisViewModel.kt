@@ -21,14 +21,21 @@ data class UnifiedAnalysisUiState(
 
 class AnalysisViewModel(session: WorkSessionController) : ViewModel() {
     private val selection = MutableStateFlow(AnalysisSelection())
-    private val source = session.state.map { it.statistics to it.deliveryHistory }.distinctUntilChanged()
+    private data class Source(
+        val statistics: com.overud.data.repository.StatisticsSnapshot,
+        val deliveries: List<com.overud.data.database.projection.DeliverySummary>,
+        val currentRegion: String?,
+    )
+    private val source = session.state.map { Source(it.statistics, it.deliveryHistory, it.currentRegion) }
+        .distinctUntilChanged()
 
     val state = combine(source, selection) { snapshot, selected ->
-        buildState(snapshot.first, snapshot.second, selected)
+        buildState(snapshot.statistics, snapshot.deliveries, snapshot.currentRegion, selected)
     }.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5_000),
-        buildState(session.state.value.statistics, session.state.value.deliveryHistory, selection.value),
+        buildState(session.state.value.statistics, session.state.value.deliveryHistory,
+            session.state.value.currentRegion, selection.value),
     )
 
     fun select(value: AnalysisSelection) {
@@ -38,11 +45,12 @@ class AnalysisViewModel(session: WorkSessionController) : ViewModel() {
     private fun buildState(
         snapshot: com.overud.data.repository.StatisticsSnapshot,
         deliveries: List<com.overud.data.database.projection.DeliverySummary>,
+        currentRegion: String?,
         selected: AnalysisSelection,
     ) = UnifiedAnalysisUiState(
         selection = selected,
         regions = analysisState(snapshot, selected.copy(region = null), byRegion = true,
-            deliveryHistory = deliveries),
+            deliveryHistory = deliveries, currentRegion = currentRegion),
         times = analysisState(snapshot, selected, byRegion = false, deliveryHistory = deliveries),
     )
 }

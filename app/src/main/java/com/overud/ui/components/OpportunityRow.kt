@@ -41,6 +41,8 @@ fun OpportunityRow(state: OpportunityCardState) {
             state.offersPerHour?.let { String.format(Locale.getDefault(), "每小时 %.1f 张", it) },
             state.confidence,
         ).joinToString(" · "))
+        Text(state.proximity, style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary)
         Text(state.advice, style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
@@ -58,6 +60,7 @@ fun OpportunityRow(state: OpportunityCardState) {
                     ?: "观察时间不足 1 小时")
                 Text("毛报价均值 ${state.averageMile}/mi · ${state.averageHour}/h")
                 Text(state.samples, style = MaterialTheme.typography.bodySmall)
+                Text(state.proximity)
                 Text(state.advice)
                 Text("指数描述历史观察，不是下一单概率；前往成本和实时供需尚未计入。",
                     style = MaterialTheme.typography.bodySmall)

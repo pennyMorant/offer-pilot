@@ -17,6 +17,7 @@ data class AnalysisUiState(
 fun analysisState(
     snapshot: StatisticsSnapshot, selection: AnalysisSelection, byRegion: Boolean,
     deliveryHistory: List<DeliverySummary> = emptyList(),
+    currentRegion: String? = null,
 ): AnalysisUiState {
     val rows = snapshot.times.filter(selection::matches)
     val groups = QualitySummaryReducer.group(rows, byRegion)
@@ -33,6 +34,6 @@ fun analysisState(
             rows.sumOf { it.perMileCount }, rows.sumOf { it.perMileMilliSum }),
         deliveryCards(deliveryHistory, selection, byRegion),
         if (byRegion) sorted.map { summary ->
-            opportunityPresentation(summary, exposures["${summary.platform}|${summary.regionKey}"] ?: 0)
+            opportunityPresentation(summary, exposures["${summary.platform}|${summary.regionKey}"] ?: 0, currentRegion)
         } else emptyList())
 }

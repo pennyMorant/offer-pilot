@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
     val opportunities = when (sort) {
         "报价质量" -> state.opportunities.sortedByDescending { it.goodRate ?: -1 }
         "报价频率" -> state.opportunities.sortedByDescending { it.offersPerHour ?: -1.0 }
+        "附近优先" -> state.opportunities.sortedBy { it.distanceMiles ?: Double.MAX_VALUE }
         else -> state.opportunities.sortedByDescending { it.score ?: -1 }
     }
     val ranked = opportunities.filter { it.knownRegion && it.score != null }
@@ -47,7 +48,7 @@ import androidx.compose.ui.unit.dp
             if (byRegion) item {
                 Text("区域机会", style = MaterialTheme.typography.titleMedium)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("机会指数", "报价质量", "报价频率").forEach { label ->
+                    listOf("机会指数", "报价质量", "报价频率", "附近优先").forEach { label ->
                         FilterChip(sort == label, onClick = { sort = label }, label = { Text(label) })
                     }
                 }
