@@ -7,7 +7,7 @@ android {
     compileSdk = 37
     defaultConfig {
         applicationId = "com.overud"
-        minSdk = 30
+        minSdk = 33
         targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"

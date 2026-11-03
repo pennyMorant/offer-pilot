@@ -1,5 +1,8 @@
 package com.overud.ui.theme
 
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
+import com.overud.data.preferences.*
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -28,10 +31,21 @@ private val Dark = darkColorScheme(
     surfaceContainerLow = Color(0xFF181F14), surfaceContainerHigh = Color(0xFF283022),
 )
 
+fun AppearanceSettings.isDark(systemDark: Boolean) = when (mode) {
+    ThemeMode.SYSTEM -> systemDark
+    ThemeMode.LIGHT -> false
+    ThemeMode.DARK -> true
+}
+
+fun appearanceColors(context: Context, settings: AppearanceSettings, dark: Boolean): ColorScheme =
+    if (settings.dynamic) {
+        if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else if (dark) Dark else Light
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable fun OverudTheme(content: @Composable () -> Unit) {
+@Composable fun OverudTheme(settings: AppearanceSettings = AppearanceSettings(), content: @Composable () -> Unit) {
     MaterialExpressiveTheme(
-        colorScheme = if (isSystemInDarkTheme()) Dark else Light,
+        colorScheme = appearanceColors(LocalContext.current, settings, settings.isDark(isSystemInDarkTheme())),
         motionScheme = MotionScheme.expressive(),
         shapes = Shapes(small = RoundedCornerShape(12.dp), medium = RoundedCornerShape(20.dp),
             large = RoundedCornerShape(28.dp), extraLarge = RoundedCornerShape(36.dp)),

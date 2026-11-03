@@ -31,6 +31,7 @@ class AppContainer(context: Context) {
     private val database = Room.databaseBuilder(context, OverudDatabase::class.java, "overud.db")
         .addMigrations(DatabaseMigrations.TO_AGGREGATES, WaitingSchema.MIGRATION, DeliverySchema.MIGRATION,
             com.overud.data.database.migration.OfferServiceSchema.MIGRATION).build()
+    val appearance = com.overud.data.preferences.AppearancePreferences(context)
     val bridge = SheveryBridge(context)
     val diagnosticReader = com.overud.bridge.NodeDiagnosticReader(bridge)
     val deviceStatus = com.overud.device.DeviceStatusReader(context)

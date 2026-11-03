@@ -2,11 +2,15 @@ package com.overud
 
 import android.Manifest
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.SystemBarStyle
+import androidx.compose.runtime.*
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.overud.ui.theme.isDark
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import com.overud.capture.WorkService
@@ -23,12 +27,20 @@ class MainActivity : ComponentActivity() {
         val runtime = (application as OverudApp).container
         val factory = OverudViewModelFactory(runtime)
         setContent {
-            OverudTheme {
+            val appearance by runtime.appearance.state.collectAsStateWithLifecycle()
+            val dark = appearance.isDark(isSystemInDarkTheme())
+            SideEffect {
+                enableEdgeToEdge(
+                    statusBarStyle = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT) { dark },
+                    navigationBarStyle = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT) { dark },
+                )
+            }
+            OverudTheme(appearance) {
                 OverudRoot(factory,
                     onWork = {
                         if (runtime.state.value.working) stopService(Intent(this, WorkService::class.java))
                         else {
-                            if (Build.VERSION.SDK_INT >= 33) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                             startForegroundService(Intent(this, WorkService::class.java))
                         }
                     },

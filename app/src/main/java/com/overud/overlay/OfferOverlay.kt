@@ -16,6 +16,10 @@ import com.overud.ui.components.platformPagePresentation
 import com.overud.ui.components.offerAmountPresentation
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import androidx.compose.ui.graphics.toArgb
+import com.overud.ui.theme.appearanceColors
+import com.overud.ui.theme.isDark
 import com.overud.ui.components.destinationPresentation
 import java.util.Locale
 
@@ -30,10 +34,10 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
         fun dp(v: Int) = (v * density).toInt()
         val panel = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(10), dp(16), dp(8))
-            background = GradientDrawable().apply { setColor(0xFFF0F5E8.toInt()); cornerRadius = dp(24).toFloat() }
+            background = GradientDrawable().apply { cornerRadius = dp(24).toFloat() }
             elevation = dp(8).toFloat()
         }
-        val label = TextView(context).apply { setTextColor(0xFF20351A.toInt()); textSize = 14f }
+        val label = TextView(context).apply { textSize = 14f }
         val pause = Button(context).apply { text = "暂停自动接单"; setOnClickListener { runtime.setAutomatic(false) } }
         panel.addView(label); panel.addView(pause)
         val params = WindowManager.LayoutParams(dp(255), WindowManager.LayoutParams.WRAP_CONTENT,
@@ -41,7 +45,15 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
             PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.END; y = dp(90); x = dp(12) }
         runCatching { manager.addView(panel, params); view = panel }.onFailure { scope.cancel() }
         scope.launch {
-            runtime.state.collectLatest { state ->
+            combine(runtime.state, runtime.appearance.state) { state, appearance -> state to appearance }
+                .collectLatest { (state, appearance) ->
+                val systemDark = context.resources.configuration.uiMode and
+                    android.content.res.Configuration.UI_MODE_NIGHT_MASK == android.content.res.Configuration.UI_MODE_NIGHT_YES
+                val colors = appearanceColors(context, appearance, appearance.isDark(systemDark))
+                (panel.background as GradientDrawable).setColor(colors.surfaceContainer.toArgb())
+                label.setTextColor(colors.onSurface.toArgb())
+                pause.backgroundTintList = android.content.res.ColorStateList.valueOf(colors.primaryContainer.toArgb())
+                pause.setTextColor(colors.onPrimaryContainer.toArgb())
                 val offer = state.latest
                 val mode = when {
                     state.automatic -> "自动接单中"
