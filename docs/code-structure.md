@@ -296,3 +296,13 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - ui/imagetest/ImageTestDialog.kt：选图器、平台选择、字段与 OCR 原文展示，上限 150 行。
 
 仅从工作台进入，不新增持久化数据或测试记录。关闭清空，结果不获得自动点击资格。
+
+## 17. Prop 22 估算
+
+- core/model/Prop22Policy.kt、Prop22Estimate.kt：假设配置与结果，各上限 120 行。
+- core/valuation/Prop22Estimator.kt：2026 费率、可信总量及单单情景补差，上限 200 行。
+- data/preferences/Prop22Preferences.kt：全局参数读写与损坏回退，上限 120 行。
+- ui/rules/Prop22Input.kt：草稿与校验，上限 120 行；Prop22Fields.kt：设置组件，上限 150 行。
+- ui/components/Prop22Presentation.kt、Prop22Summary.kt：共用说明与展示，各上限 150 行。
+
+估算不写统计、不改变自动接单条件；不假装知道实际小费或平台结算周期应收额。

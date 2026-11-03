@@ -1,12 +1,12 @@
 # 2026-11-02 安装交付
 
-安装包：`app/build/outputs/apk/debug/overud-2026-11-02-ea4afac-debug.apk`
+安装包：`app/build/outputs/apk/debug/overud-2026-11-02-2eb4a81-debug.apk`
 
 构建命令：`./gradlew :app:assembleDebug`，结果 `BUILD SUCCESSFUL`。
 
-SHA-256：`4c243c0cb8c43197dead1cc0bc7ddf362b09ab213576d1e2ff07abc169a75823`
+SHA-256：`df2ca0b35d6e30a5e1683cabf5c9a9fc9b015b167be8e2ad8b89896b08df2e73`
 
-本次核心代码提交：`ea4afac`（包含手动图片测试及此前的一次性多步确认）。APK 为 Debug 签名安装包，最低 Android 11。没有执行自动测试、模拟器或真实平台订单操作。
+本次核心代码提交：`2eb4a81`（包含 Prop 22 估算、手动图片测试及一次性多步确认）。APK 为 Debug 签名安装包，最低 Android 11。没有执行自动测试、模拟器或真实平台订单操作。
 
 ## 手机使用
 
@@ -35,3 +35,8 @@ SHA-256：`4c243c0cb8c43197dead1cc0bc7ddf362b09ab213576d1e2ff07abc169a75823`
 显示页面类型、报价字段、估值、已保存规则的未通过原因和可复制的 OCR 原文。图片来源保留 OCR 限制，永不触发真实接单；不查询目的地区域、不写入统计、不保存图片或原文。关闭窗口清除结果，取消选图保留原结果。大图按最长边 3072 像素缩放并处理图像方向；OCR 与现有实时流程使用相同的 Latin 模型，不能据此承诺中文截图覆盖率。
 
 本轮编译成功，尚未用用户真实截图验证识别效果。
+
+
+## Prop 22 估算
+
+在规则页启用 Prop 22，填写取餐地适用最低时薪、机动车与假设小费比例，保存后识别报价即可查看估算。默认关闭，不自动判断城市；本次提供 2026 标准。真实补差按平台周期核算，并非每单保证到账。见 `prop22-estimates.md`。
