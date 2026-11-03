@@ -1,12 +1,12 @@
 # 2026-11-02 安装交付
 
-安装包：`app/build/outputs/apk/debug/overud-2026-11-02-2eb4a81-debug.apk`
+安装包：`app/build/outputs/apk/debug/overud-2026-11-02-705b6f6-debug.apk`
 
 构建命令：`./gradlew :app:assembleDebug`，结果 `BUILD SUCCESSFUL`。
 
-SHA-256：`df2ca0b35d6e30a5e1683cabf5c9a9fc9b015b167be8e2ad8b89896b08df2e73`
+SHA-256：`7d2e07ebf29a486b7c8cee5f02b41524ecbe3e63ee61d1a94b1c266a512c80e4`
 
-本次核心代码提交：`2eb4a81`（包含 Prop 22 估算、手动图片测试及一次性多步确认）。APK 为 Debug 签名安装包，最低 Android 11。没有执行自动测试、模拟器或真实平台订单操作。
+本次核心代码提交：`705b6f6`（包含驾驶语音、通知栏关闭语音、Prop 22 估算和手动图片测试）。APK 为 Debug 签名安装包，最低 Android 11。没有执行自动测试、模拟器或真实平台订单操作。
 
 ## 手机使用
 
@@ -40,3 +40,10 @@ SHA-256：`df2ca0b35d6e30a5e1683cabf5c9a9fc9b015b167be8e2ad8b89896b08df2e73`
 ## Prop 22 估算
 
 在规则页启用 Prop 22，填写取餐地适用最低时薪、机动车与假设小费比例，保存后识别报价即可查看估算。默认关闭，不自动判断城市；本次提供 2026 标准。真实补差按平台周期核算，并非每单保证到账。见 `prop22-estimates.md`。
+
+
+## 驾驶语音
+
+规则页开启“驾驶语音播报”，先在停车时点击“试听中文”。需要系统已安装离线中文语音，缺失时由设置页入口进入系统安装。开始工作后自动播报实时订单，通知栏“关闭语音”可立即静音并保存关闭状态，不结束订单监听。没有申请麦克风权限。
+
+当前 APK 编译成功，未在手机验证中文音色、导航共存或蓝牙路由。详见 `voice-announcements.md`。

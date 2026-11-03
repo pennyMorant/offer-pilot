@@ -306,3 +306,12 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - ui/components/Prop22Presentation.kt、Prop22Summary.kt：共用说明与展示，各上限 150 行。
 
 估算不写统计、不改变自动接单条件；不假装知道实际小费或平台结算周期应收额。
+
+## 18. 驾驶语音
+
+- speech/SpeechEngine.kt：中文离线 TTS 初始化、音频焦点、播放和释放，上限 180 行。
+- speech/VoiceController.kt：全局语音设置、实时状态订阅、短期去重与试听，上限 180 行。
+- speech/OrderAnnouncement.kt：播报文案及可信字段选择，上限 150 行。
+- ui/rules/VoiceViewModel.kt：语音设置和动作入口，上限 120 行；VoiceSettingsCard.kt：设置组件，上限 150 行。
+
+语音只消费现有 WorkState，不调用接单动作或写入统计。偏好单独保存，不修改自动接单意愿。
