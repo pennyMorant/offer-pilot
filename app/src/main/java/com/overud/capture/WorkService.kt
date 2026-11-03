@@ -44,7 +44,7 @@ class WorkService : Service() {
             runtime.startWork()
             overlay = OfferOverlay(this, runtime).also { it.show() }
             location = WorkLocationTracker(this, runtime.regions).also { it.start() }
-            scheduler = CaptureScheduler(runtime.pipeline).also { it.start() }
+            scheduler = CaptureScheduler(runtime.pipeline, runtime.bridge.windowEvents).also { it.start() }
         }
         return START_NOT_STICKY
     }

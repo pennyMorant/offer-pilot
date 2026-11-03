@@ -7,19 +7,35 @@ import android.content.pm.PackageManager
 import android.os.IBinder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.*
 import rikka.shizuku.Shizuku
 
 class SheveryBridge(context: Context) {
     private val mutable = MutableStateFlow(BridgeStatus())
     val status = mutable.asStateFlow()
+    private val eventFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val windowEvents = eventFlow.asSharedFlow()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     @Volatile var service: IPrivilegedService? = null
         private set
     private val args = Shizuku.UserServiceArgs(ComponentName(context.packageName, PrivilegedService::class.java.name))
-        .daemon(false).processNameSuffix("capture").debuggable(false).version(2)
+        .daemon(false).processNameSuffix("capture").debuggable(false).version(3)
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             service = IPrivilegedService.Stub.asInterface(binder)
             mutable.value = BridgeStatus(true, true, true, "Shevery 采集服务已连接")
+            val connected = service
+            scope.launch {
+                runCatching { connected?.registerWindowEvents(object : IWindowEvents.Stub() {
+                    override fun onWindowChanged(sequence: Long) {
+                        if (service?.asBinder() == binder) eventFlow.tryEmit(Unit)
+                    }
+                }) }
+                if (service?.asBinder() == binder) eventFlow.tryEmit(Unit)
+            }
         }
         override fun onServiceDisconnected(name: ComponentName) {
             service = null

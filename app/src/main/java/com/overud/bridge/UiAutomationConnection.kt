@@ -6,6 +6,7 @@ import android.accessibilityservice.AccessibilityServiceInfo
 
 class UiAutomationConnection {
     private val thread = HandlerThread("overud-automation").apply { start() }
+    val changes = WindowChangeRelay(thread.looper)
     private var automation: UiAutomation? = null
     @Synchronized fun get(): UiAutomation {
         automation?.let { return it }
@@ -15,12 +16,18 @@ class UiAutomationConnection {
             .newInstance(thread.looper, connection)
         // Do not suppress accessibility services that the user already has enabled.
         UiAutomation::class.java.getMethod("connect", Int::class.javaPrimitiveType).invoke(ui, 1)
-        ui.serviceInfo = ui.serviceInfo.apply { flags = flags or AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS }
+        ui.serviceInfo = ui.serviceInfo.apply {
+            flags = flags or AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
+            eventTypes = WindowChangeRelay.EVENT_TYPES
+            notificationTimeout = 100
+        }
+        ui.setOnAccessibilityEventListener(changes::onEvent)
         automation = ui
         return ui
     }
 
     fun close() {
+        changes.close()
         runCatching { automation?.let { UiAutomation::class.java.getMethod("disconnect").invoke(it) } }
         thread.quitSafely()
     }
