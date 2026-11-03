@@ -326,3 +326,12 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - CaptureScheduler 继续串行协调采集，上限 180 行；CapturePipeline 继续保持 200 行上限。
 
 节点树不落库，事件只传唤醒信号，不持有截图或订单历史。过期动作不开始点击，不能宣称撤回已提交系统的动作。
+
+## 20. 报价区域 OCR
+
+- NodePageText 增加独立 OCR 容器索引，仍按模型 120 行上限；NodePageAssembler 维持 200 行上限。
+- bridge/ScreenshotFrame.kt：截图请求与节点快照身份核对，上限 120 行。
+- ScreenshotReader.kt：同帧检查、默认显示屏裁剪、有界管道与位图释放，维持 120 行上限。
+- WindowReader 输出临时裁剪边界和结构指纹；OcrRecognizer 只接收同帧截图，来源始终标记 OCR。
+
+无证据不猜裁剪坐标，越界不静默修正；截图不落盘，不新增明细表。
