@@ -13,7 +13,11 @@ class WorkSessionController(
     private val store: PolicyStore,
     private val scope: CoroutineScope,
     private val mutex: Mutex,
+    private val interaction: com.overud.capture.DeviceInteractionGuard,
 ) {
+    private val generation = java.util.concurrent.atomic.AtomicLong()
+    val workGeneration: Long get() = generation.get()
+    fun canInteract() = interaction.allowed()
     private val mutable = MutableStateFlow(WorkState(policy = store.read()))
     val state = mutable.asStateFlow()
     init {
@@ -25,17 +29,19 @@ class WorkSessionController(
     }
     fun update(transform: (WorkState) -> WorkState) = mutable.update(transform)
     fun startWork() {
+        generation.incrementAndGet()
         bridge.bind()
         mutable.update { it.copy(working = true, automatic = false, autoAcceptEnabled = false, message = "正在监听订单页面") }
     }
     fun stopWork() {
+        generation.incrementAndGet()
         mutable.update { it.copy(working = false, automatic = false, autoAcceptEnabled = false, latest = null, decision = null, currentPage = null,
             destinationAssessment = DestinationAssessment(), destinationEvidence = null, message = "工作已结束") }
         bridge.unbind()
     }
     fun setAutomatic(enabled: Boolean) {
         mutable.update {
-            val allowed = enabled && it.working && it.policy.valid() && !it.policySaving &&
+            val allowed = enabled && canInteract() && it.working && it.policy.valid() && !it.policySaving &&
                 bridge.status.value.serviceReady && !it.pending
             it.copy(automatic = allowed, autoAcceptEnabled = allowed, message = when {
                 !enabled -> "自动接单已关闭"

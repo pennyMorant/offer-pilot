@@ -73,7 +73,7 @@ class AutoAcceptController(
     fun maybeAccept(offer: Offer, decision: Decision, token: String) {
         val before = session.state.value
         val reviewed = before.assessOffer(offer, System.currentTimeMillis())
-        if (!before.automatic || !before.working || before.pending || before.policySaving || !decision.eligible || !reviewed.eligible || token.isBlank() ||
+        if (!session.canInteract() || !before.automatic || !before.working || before.pending || before.policySaving || !decision.eligible || !reviewed.eligible || token.isBlank() ||
             token != fingerprint(offer.platform, offer.rawText)) return
         if (repository.hasUnresolved()) {
             session.update { it.copy(pending = true, automatic = false, autoAcceptEnabled = false,
@@ -94,7 +94,7 @@ class AutoAcceptController(
             // Persist before IPC. A process failure can never cause a blind retry.
             session.update { it.copy(pending = true, automatic = false, deliveryPhase = DeliveryPhase.AWAITING_CONFIRMATION) }
             val dispatch = session.state.value
-            if (!dispatch.autoAcceptEnabled || !dispatch.working || dispatch.policySaving ||
+            if (!session.canInteract() || !dispatch.autoAcceptEnabled || !dispatch.working || dispatch.policySaving ||
                 dispatch.policy.version != reviewed.policyVersion || !dispatch.assessOffer(offer, System.currentTimeMillis()).eligible) {
                 repository.update(offer.id, "aborted", "automatic_mode_changed")
                 gate.releaseBeforeDispatch()
@@ -104,7 +104,8 @@ class AutoAcceptController(
             gate.dispatched()
             deliveries.dispatch(offer)
             val service = bridge.service
-            val result = service?.accept(token, offer.platform.packageName) ?: "service_disconnected"
+            val result = service?.accept(token, offer.platform.packageName,
+                android.os.SystemClock.elapsedRealtime() + 2000) ?: "service_disconnected"
             if (result == "dispatched") {
                 repository.update(offer.id, "outcome_unknown", "点击已发送，等待平台确认")
                 session.update { it.copy(automatic = false, pending = true, message = "接单动作已发出，正在核对平台结果") }

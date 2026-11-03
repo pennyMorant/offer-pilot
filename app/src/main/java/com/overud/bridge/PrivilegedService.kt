@@ -13,9 +13,10 @@ class PrivilegedService : IPrivilegedService.Stub() {
     override fun snapshot(): Bundle = windows.snapshot()
     override fun registerWindowEvents(listener: IWindowEvents?) = connection.changes.register(listener)
     override fun screenshot(expectedPackage: String): ParcelFileDescriptor? = screenshots.screenshot(expectedPackage)
-    override fun accept(expectedToken: String, expectedPackage: String): String = acceptance.accept(expectedToken, expectedPackage)
-    override fun confirmAcceptance(originalToken: String, expectedToken: String, expectedPackage: String): String =
-        acceptance.confirm(originalToken, expectedToken, expectedPackage)
+    override fun accept(expectedToken: String, expectedPackage: String, deadlineElapsed: Long): String =
+        acceptance.accept(expectedToken, expectedPackage, deadlineElapsed)
+    override fun confirmAcceptance(originalToken: String, expectedToken: String, expectedPackage: String, deadlineElapsed: Long): String =
+        acceptance.confirm(originalToken, expectedToken, expectedPackage, deadlineElapsed)
     override fun destroy() {
         connection.close()
         kotlin.system.exitProcess(0)

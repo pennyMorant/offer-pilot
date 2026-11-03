@@ -28,7 +28,7 @@ class AcceptanceConfirmation(
     fun observe(page: PlatformPage, text: String, token: String) {
         val context = pending ?: return
         val state = session.state.value
-        if (!state.working || !state.autoAcceptEnabled || state.policySaving ||
+        if (!session.canInteract() || !state.working || !state.autoAcceptEnabled || state.policySaving ||
             state.policy.version != context.policyVersion || !state.pending ||
             state.deliveryPhase != DeliveryPhase.AWAITING_CONFIRMATION ||
             bridge.service?.asBinder() != context.service.asBinder() ||
@@ -45,9 +45,10 @@ class AcceptanceConfirmation(
         }
         try {
             val latest = session.state.value
-            if (!latest.working || !latest.autoAcceptEnabled || latest.policySaving ||
+            if (!session.canInteract() || !latest.working || !latest.autoAcceptEnabled || latest.policySaving ||
                 latest.policy.version != context.policyVersion) return
-            val result = context.service.confirmAcceptance(context.token, token, page.platform.packageName)
+            val result = context.service.confirmAcceptance(context.token, token, page.platform.packageName,
+                SystemClock.elapsedRealtime() + 2000)
             if (result == "dispatched") {
                 session.update { it.copy(message = "已确认同一报价，正在等待平台接单结果") }
             } else uncertain("确认动作未完成，请核对平台状态：$result")

@@ -16,22 +16,23 @@ class AcceptTargetResolver(
     private data class Pending(val token: String, val offer: Offer, val startedAt: Long)
     private var pending: Pending? = null
 
-    @Synchronized fun accept(expectedToken: String, expectedPackage: String): String {
+    @Synchronized fun accept(expectedToken: String, expectedPackage: String, deadlineElapsed: Long): String {
         pending = null
-        return click(expectedToken, expectedPackage)
+        return click(expectedToken, expectedPackage, deadlineElapsed)
     }
 
-    @Synchronized fun confirm(originalToken: String, expectedToken: String, expectedPackage: String): String {
+    @Synchronized fun confirm(originalToken: String, expectedToken: String, expectedPackage: String, deadlineElapsed: Long): String {
         val context = pending ?: return "confirmation_context_missing"
         pending = null // Consume before any action; an uncertain result must never be retried.
         if (context.token != originalToken || context.offer.platform.packageName != expectedPackage ||
             SystemClock.elapsedRealtime() - context.startedAt !in 0 until AcceptanceConfirmationPolicy.WINDOW_MILLIS) {
             return "confirmation_context_expired"
         }
-        return click(expectedToken, expectedPackage, context)
+        return click(expectedToken, expectedPackage, deadlineElapsed, context)
     }
 
-    private fun click(expectedToken: String, expectedPackage: String, confirmation: Pending? = null): String {
+    private fun click(expectedToken: String, expectedPackage: String, deadlineElapsed: Long, confirmation: Pending? = null): String {
+        if (deadlineElapsed - SystemClock.elapsedRealtime() !in 1..2000) return "action_expired"
         val platform = Platform.fromPackage(expectedPackage) ?: return "unsupported"
         val root = connection.get().rootInActiveWindow ?: return "no_window"
         if (root.packageName?.toString() != expectedPackage) return "window_changed"
@@ -68,6 +69,7 @@ class AcceptTargetResolver(
                     AcceptanceConfirmationPolicy.WINDOW_MILLIS) return "confirmation_context_expired"
                 val initial = if (confirmation == null) OfferParser.parse(platform, body, System.currentTimeMillis()) else null
                 val startedAt = SystemClock.elapsedRealtime()
+                if (startedAt >= deadlineElapsed) return "action_expired"
                 val dispatched = current.performAction(AccessibilityNodeInfo.ACTION_CLICK)
                 if (dispatched && initial != null) pending = Pending(expectedToken, initial, startedAt)
                 return if (dispatched) "dispatched" else "click_failed"

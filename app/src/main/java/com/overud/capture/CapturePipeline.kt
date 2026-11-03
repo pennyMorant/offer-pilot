@@ -29,10 +29,23 @@ class CapturePipeline(
 ) {
     private var lastOcrAt = 0L
     private val sourceConflictMessage = "节点与截图识别不一致，本帧不接单、不计入报价统计"
-    suspend fun poll() = mutex.withLock {
+    suspend fun poll() = coroutineScope {
+        val lease = CaptureLease(session)
+        val watchdog = launch(Dispatchers.Default) {
+            delay(5000)
+            lease.expire("采集或接单调用超时，自动接单已关闭，请核对平台状态")
+        }
+        try { collect(lease) } finally { watchdog.cancel() }
+    }
+
+    private suspend fun collect(lease: CaptureLease) = mutex.withLock {
         try {
             deliveries.checkContinuity()
             if (!session.state.value.working) { waiting.interrupt(); return@withLock }
+            if (!session.canInteract()) {
+                lease.expire("设备已锁定或熄屏，自动接单已关闭；解锁后需手动开启")
+                waiting.interrupt(); deliveries.invalidate(); return@withLock
+            }
             if (statistics.prune()) {
                 session.update { it.copy(statistics = statistics.snapshot()) }
                 waiting.refresh()
@@ -42,6 +55,11 @@ class CapturePipeline(
                 clearQuote(); waiting.interrupt(); deliveries.invalidate(); return@withLock
             }
             val snapshot = service.snapshot()
+            currentCoroutineContext().ensureActive()
+            if (bridge.service?.asBinder() != service.asBinder()) {
+                lease.expire("采集连接已变化，自动接单已关闭，请重新核对当前页面")
+            }
+            if (!lease.valid()) { waiting.interrupt(); deliveries.invalidate(); return@withLock }
             snapshot.getString("error")?.let { error ->
                 clearQuote()
                 deliveries.invalidate()
@@ -67,6 +85,10 @@ class CapturePipeline(
                 recognizer.recognize(platform.packageName)
             } else null
             currentCoroutineContext().ensureActive()
+            if (bridge.service?.asBinder() != service.asBinder()) {
+                lease.expire("采集连接已变化，自动接单已关闭，请重新核对当前页面")
+            }
+            if (!lease.valid()) { waiting.interrupt(); deliveries.invalidate(); return@withLock }
             val observation = QuoteObservationResolver.resolve(platform, text, ocr, now)
             session.update { if (it.working) it.copy(currentPage = observation.page) else it }
             if (observation.sourceConflict) {
@@ -93,12 +115,13 @@ class CapturePipeline(
                             destinationEvidence = if (sameDestination) it.destinationEvidence else null)
                     } else it.copy(statistics = aggregate)
                 }
-                acceptance.maybeAccept(offer, decision, snapshot.getString("token").orEmpty())
+                if (lease.valid()) acceptance.maybeAccept(offer, decision, snapshot.getString("token").orEmpty())
             } else {
                 tracker.absent(platform, now)
                 clearQuote(observation.page)
             }
         } catch (e: Exception) {
+            currentCoroutineContext().ensureActive()
             if (e is CancellationException) { deliveries.invalidate(); waiting.invalidate(); throw e }
             clearQuote()
             deliveries.invalidate()

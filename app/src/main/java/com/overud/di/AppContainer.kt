@@ -31,7 +31,7 @@ class AppContainer(context: Context) {
     private val database = Room.databaseBuilder(context, OverudDatabase::class.java, "overud.db")
         .addMigrations(DatabaseMigrations.TO_AGGREGATES, WaitingSchema.MIGRATION, DeliverySchema.MIGRATION).build()
     val bridge = SheveryBridge(context)
-    val session = WorkSessionController(bridge, PolicyStore(context), scope, mutex)
+    val session = WorkSessionController(bridge, PolicyStore(context), scope, mutex, DeviceInteractionGuard(context))
     val voice = com.overud.speech.VoiceController(context, session)
     val importedImages = ImportedImageRecognizer(context)
     val state = session.state
