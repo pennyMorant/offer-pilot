@@ -40,6 +40,10 @@ class WindowReader(private val connection: UiAutomationConnection) {
                 putInt("nodeCount", nodes.size)
                 putInt("selectedRoot", page.selectedRoot ?: -1)
                 putInt("windowId", root.windowId)
+                putInt("displayId", root.window?.displayId ?: -1)
+                putString("frameToken", fingerprint(platform, nodes.joinToString("\n")))
+                val crop = page.ocrRoot?.let { index -> nodes.firstOrNull { it.index == index }?.bounds }
+                if (crop != null) putIntArray("ocrBounds", intArrayOf(crop.left, crop.top, crop.right, crop.bottom))
             }
         }
     } catch (e: Exception) { Bundle().apply { putString("error", e.cause?.message ?: e.message ?: e.javaClass.simpleName) } }

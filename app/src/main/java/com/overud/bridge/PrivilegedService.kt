@@ -7,12 +7,12 @@ import android.os.ParcelFileDescriptor
 class PrivilegedService : IPrivilegedService.Stub() {
     private val connection = UiAutomationConnection()
     private val windows = WindowReader(connection)
-    private val screenshots = ScreenshotReader(connection)
+    private val screenshots = ScreenshotReader(connection, windows)
     private val acceptance = AcceptTargetResolver(connection, windows)
 
     override fun snapshot(): Bundle = windows.snapshot()
     override fun registerWindowEvents(listener: IWindowEvents?) = connection.changes.register(listener)
-    override fun screenshot(expectedPackage: String): ParcelFileDescriptor? = screenshots.screenshot(expectedPackage)
+    override fun screenshot(expectedFrame: Bundle): ParcelFileDescriptor? = screenshots.screenshot(expectedFrame)
     override fun accept(expectedToken: String, expectedPackage: String, deadlineElapsed: Long): String =
         acceptance.accept(expectedToken, expectedPackage, deadlineElapsed)
     override fun confirmAcceptance(originalToken: String, expectedToken: String, expectedPackage: String, deadlineElapsed: Long): String =

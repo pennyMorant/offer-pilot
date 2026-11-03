@@ -21,4 +21,4 @@ data class UiNodeSnapshot(
     val clickable: Boolean,
 )
 
-data class NodePageText(val text: String, val selectedRoot: Int? = null)
+data class NodePageText(val text: String, val selectedRoot: Int? = null, val ocrRoot: Int? = selectedRoot)

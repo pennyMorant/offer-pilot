@@ -17,7 +17,8 @@ class UiAutomationConnection {
         // Do not suppress accessibility services that the user already has enabled.
         UiAutomation::class.java.getMethod("connect", Int::class.javaPrimitiveType).invoke(ui, 1)
         ui.serviceInfo = ui.serviceInfo.apply {
-            flags = flags or AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
+            flags = flags or AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
+                AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
             eventTypes = WindowChangeRelay.EVENT_TYPES
             notificationTimeout = 100
         }

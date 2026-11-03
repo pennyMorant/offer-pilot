@@ -8,7 +8,7 @@ object NodePageAssembler {
         val visible = nodes.filter { it.visible && it.packageName == platform.packageName &&
             it.windowId == root.windowId && it.bounds.valid }
         val full = text(visible)
-        val fallback = NodePageText(full)
+        var fallback = NodePageText(full)
         // A subtree must not hide history, completion or other contradictory page evidence.
         if (OfferParser.classify(platform, full).type != PlatformPageType.OFFER) return fallback
         if (OfferParser.parse(platform, full, 0)?.isStacked == true) return fallback
@@ -22,12 +22,19 @@ object NodePageAssembler {
             val container = byIndex[ancestor] ?: return fallback
             if (container.parentIndex < 0) return fallback
             val members = visible.filter { descendant(it, ancestor, byIndex) }
-            if (members.isNotEmpty() && members.all { container.bounds.contains(it.bounds) }) {
+            if (container.visible && root.bounds.contains(container.bounds) &&
+                members.isNotEmpty() && members.all { container.bounds.contains(it.bounds) }) {
                 val body = text(members)
                 val offer = OfferParser.parse(platform, body, 0)
                 if (offer?.reliable == true && !offer.isAddon && !offer.isStacked &&
                     !offer.merchant.isNullOrBlank() && !offer.destination.isNullOrBlank()) {
                     return NodePageText(body, ancestor)
+                }
+                // Partial node evidence may locate an OCR region without replacing the full-page text.
+                if (fallback.ocrRoot == null && offer != null && !offer.isAddon && !offer.isStacked &&
+                    offer.evidence?.amountVerified == true && (offer.hasVerifiedDistance() || offer.hasVerifiedDuration()) &&
+                    (!offer.merchant.isNullOrBlank() || !offer.destination.isNullOrBlank())) {
+                    fallback = fallback.copy(ocrRoot = ancestor)
                 }
             }
             ancestor = container.parentIndex

@@ -88,14 +88,13 @@ class CapturePipeline(
             val needsOcr = nodeOffer == null || (!nodeOffer.reliable && nodeDecision?.eligible != true)
             val ocr = if (nodePage.allowsOcrFallback && needsOcr && now - lastOcrAt > 4000) {
                 lastOcrAt = now
-                recognizer.recognize(platform.packageName)
+                recognizer.recognize(snapshot)
             } else null
             currentCoroutineContext().ensureActive()
             if (ocr != null) {
                 val afterOcr = service.snapshot()
                 currentCoroutineContext().ensureActive()
-                if (afterOcr.containsKey("error") || afterOcr.getString("token") != snapshot.getString("token") ||
-                    afterOcr.getInt("windowId", -1) != snapshot.getInt("windowId", -1)) {
+                if (!com.overud.bridge.ScreenshotFrame.matches(snapshot, afterOcr)) {
                     clearQuote(); waiting.interrupt(); return@withLock
                 }
             }

@@ -1,6 +1,7 @@
 package com.overud.capture
 
 import android.graphics.BitmapFactory
+import android.os.Bundle
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -10,8 +11,8 @@ import kotlin.coroutines.suspendCoroutine
 
 class OcrRecognizer(private val bridge: SheveryBridge) {
     private val recognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
-    suspend fun recognize(pkg: String): String? {
-        val descriptor = bridge.service?.screenshot(pkg) ?: return null
+    suspend fun recognize(frame: Bundle): String? {
+        val descriptor = bridge.service?.screenshot(frame) ?: return null
         val bitmap = android.os.ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { BitmapFactory.decodeStream(it) } ?: return null
         return try {
             suspendCoroutine { continuation ->

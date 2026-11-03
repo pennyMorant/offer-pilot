@@ -22,7 +22,7 @@ class SheveryBridge(context: Context) {
     @Volatile var service: IPrivilegedService? = null
         private set
     private val args = Shizuku.UserServiceArgs(ComponentName(context.packageName, PrivilegedService::class.java.name))
-        .daemon(false).processNameSuffix("capture").debuggable(false).version(4)
+        .daemon(false).processNameSuffix("capture").debuggable(false).version(5)
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             service = IPrivilegedService.Stub.asInterface(binder)
