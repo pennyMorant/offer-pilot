@@ -21,34 +21,46 @@ import com.overud.ui.regions.RegionsViewModel
 import com.overud.ui.statistics.StatisticsScreen
 import com.overud.ui.regions.RegionsScreen
 import com.overud.ui.rules.RulesScreen
-import com.overud.ui.rules.RulePreviewDialog
-import com.overud.ui.imagetest.ImageTestDialog
-import com.overud.ui.imagetest.ImageTestViewModel
 
 @Composable fun OverudRoot(factory: OverudViewModelFactory, onWork: () -> Unit, onOverlayPermission: () -> Unit, onNotificationPermission: () -> Unit, onLocationPermission: () -> Unit) {
     val dashboard: DashboardViewModel = viewModel(factory = factory)
     val rules: RulesViewModel = viewModel(factory = factory)
     val voice: com.overud.ui.rules.VoiceViewModel = viewModel(factory = factory)
-    val imageTest: ImageTestViewModel = viewModel(factory = factory)
-    val diagnostics: com.overud.ui.diagnostics.NodeDiagnosticViewModel = viewModel(factory = factory)
     val runtimeDiagnostics: com.overud.ui.diagnostics.RuntimeDiagnosticsViewModel = viewModel(factory = factory)
     val state by dashboard.state.collectAsStateWithLifecycle()
     val statisticsViewModel: StatisticsViewModel = viewModel(factory = factory)
     val regions: RegionsViewModel = viewModel(factory = factory)
     val statistics by statisticsViewModel.state.collectAsStateWithLifecycle()
     val regionState by regions.state.collectAsStateWithLifecycle()
+    val ruleState by rules.state.collectAsStateWithLifecycle()
+    val prop22State by rules.prop22.collectAsStateWithLifecycle()
+    val dirty = remember(ruleState, prop22State) { rules.hasChanges() }
     val bridge = state.connection
     var selected by rememberSaveable { mutableStateOf(Destination.DASHBOARD) }
-    var replay by rememberSaveable { mutableStateOf(false) }
-    var showImageTest by rememberSaveable { mutableStateOf(false) }
-    var showDiagnostics by rememberSaveable { mutableStateOf(false) }
+    var settings by rememberSaveable { mutableStateOf(false) }
+    var pendingNavigation by remember { mutableStateOf<(() -> Unit)?>(null) }
+    fun navigate(action: () -> Unit) {
+        if (rules.state.value.saving) return
+        if (rules.hasChanges()) pendingNavigation = action else action()
+    }
+    androidx.activity.compose.BackHandler(enabled = settings || dirty) {
+        navigate { settings = false; selected = Destination.DASHBOARD }
+    }
     var showRuntimeDiagnostics by rememberSaveable { mutableStateOf(false) }
     var resolve by remember { mutableStateOf(false) }
     Scaffold(
+        topBar = {
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                if (settings) TextButton(onClick = { navigate { settings = false } }) { Text("返回") }
+                Text(if (settings) "设置" else selected.label, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
+                if (!settings) TextButton(onClick = { navigate { settings = true } }) { Text("设置 ⚙") }
+            }
+        },
         bottomBar = {
             NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
                 Destination.entries.forEach { destination ->
-                    NavigationBarItem(selected = selected == destination, onClick = { selected = destination },
+                    NavigationBarItem(selected = selected == destination, onClick = { navigate { selected = destination; settings = false } },
                         icon = { Text(destination.symbol, style = MaterialTheme.typography.titleLarge) },
                         label = { Text(destination.label) })
                 }
@@ -56,21 +68,29 @@ import com.overud.ui.imagetest.ImageTestViewModel
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
-            AnimatedContent(selected, label = "navigation") { page ->
+            if (settings) com.overud.ui.settings.SettingsScreen(factory, rules, voice) { showRuntimeDiagnostics = true }
+            else AnimatedContent(selected, label = "navigation") { page ->
                 when (page) {
                     Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
-                        { selected = Destination.RULES }, { replay = true }, { resolve = true }, { showImageTest = true },
-                        { showDiagnostics = true }, { showRuntimeDiagnostics = true })
+                        { navigate { selected = Destination.RULES } }, { resolve = true })
                     Destination.STATISTICS -> StatisticsScreen(statistics, statisticsViewModel::select)
                     Destination.REGIONS -> RegionsScreen(regionState, regions::select)
-                    Destination.RULES -> RulesScreen(rules, onOverlayPermission, onNotificationPermission, onLocationPermission, voice)
+                    Destination.RULES -> RulesScreen(rules)
                 }
             }
         }
     }
-    if (replay) RulePreviewDialog(rules) { replay = false }
-    if (showImageTest) ImageTestDialog(imageTest) { showImageTest = false }
-    if (showDiagnostics) com.overud.ui.diagnostics.NodeDiagnosticDialog(diagnostics) { showDiagnostics = false }
+    if (pendingNavigation != null) AlertDialog(onDismissRequest = { pendingNavigation = null },
+        title = { Text("还有未保存的修改") }, text = { Text("继续编辑并保存，或放弃修改后离开。") },
+        confirmButton = { TextButton(onClick = { pendingNavigation = null }) { Text("继续编辑") } },
+        dismissButton = { TextButton(onClick = {
+            if (!rules.state.value.saving) {
+                rules.discardChanges()
+                val action = pendingNavigation
+                pendingNavigation = null
+                action?.invoke()
+            }
+        }) { Text("放弃并离开") } })
     if (showRuntimeDiagnostics) com.overud.ui.diagnostics.RuntimeDiagnosticsDialog(runtimeDiagnostics,
         onOverlayPermission, onNotificationPermission, onLocationPermission) { showRuntimeDiagnostics = false }
     if (resolve) AlertDialog(onDismissRequest = { resolve = false }, title = { Text("核对当前配送状态") },

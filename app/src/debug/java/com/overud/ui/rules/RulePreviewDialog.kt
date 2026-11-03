@@ -12,7 +12,7 @@ import com.overud.model.Platform
 import com.overud.ui.components.VehicleCostSummary
 import com.overud.ui.components.Prop22Summary
 
-@Composable fun RulePreviewDialog(viewModel: RulesViewModel, onDismiss: () -> Unit) {
+@Composable fun RulePreviewDialog(viewModel: RulePreviewViewModel, onDismiss: () -> Unit) {
     val preview by viewModel.preview.collectAsStateWithLifecycle()
     AlertDialog(onDismissRequest = onDismiss, title = { Text("规则预览") }, text = {
         Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {

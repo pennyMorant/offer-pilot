@@ -3,9 +3,6 @@ package com.overud.ui.rules
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.overud.model.*
-import com.overud.platform.OfferParser
-import com.overud.valuation.EligibilityEvaluator
-import com.overud.ui.components.platformPagePresentation
 import com.overud.work.WorkSessionController
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -15,8 +12,6 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
     val state = mutable.asStateFlow()
     private val drafts = mutableMapOf<Platform?, RulesUiState>()
     private var loadedVersion = -1L
-    private val mutablePreview = MutableStateFlow(RulePreviewState())
-    val preview = mutablePreview.asStateFlow()
     private val mutableProp22 = MutableStateFlow(Prop22Input.from(session.state.value.policy.prop22))
     val prop22 = mutableProp22.asStateFlow()
 
@@ -30,11 +25,25 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
                         drafts.clear()
                         mutable.value = RuleInputParser.fromPolicy(policy, scope)
                         mutableProp22.value = Prop22Input.from(policy.prop22)
-                        updatePreview()
                     }
                     mutable.update { it.copy(saving = saving, error = error ?: it.error) }
                 }
         }
+    }
+
+    fun hasChanges(): Boolean {
+        val policy = session.state.value.policy
+        fun changed(draft: RulesUiState) = draft.copy(error = null, saving = false) !=
+            RuleInputParser.fromPolicy(policy, draft.scope).copy(error = null, saving = false)
+        return changed(state.value) || drafts.filterKeys { it != state.value.scope }.values.any(::changed) ||
+            prop22.value != Prop22Input.from(policy.prop22)
+    }
+
+    fun discardChanges() {
+        if (state.value.saving) return
+        drafts.clear()
+        mutable.value = RuleInputParser.fromPolicy(session.state.value.policy, state.value.scope)
+        mutableProp22.value = Prop22Input.from(session.state.value.policy.prop22)
     }
 
     fun selectScope(scope: Platform?) {
@@ -108,14 +117,6 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
         }
         if (policy.valid()) session.savePolicy(policy)
         else mutable.update { it.copy(error = "请至少开启一个平台，并检查所有接单要求") }
-    }
-    fun updatePreview(text: String = preview.value.text, platform: Platform = preview.value.platform) {
-        val offer = OfferParser.parse(platform, text, System.currentTimeMillis())
-        val decision = offer?.let { EligibilityEvaluator.assess(it, session.state.value.policy, it.observedAt) }
-        val explanation = decision?.reasons?.joinToString("；")?.ifEmpty { "符合当前全部接单要求" }
-            ?: "无法识别报价，请包含接单按钮文字和金额"
-        mutablePreview.value = RulePreviewState(text, platform, explanation, decision?.valuation,
-            platformPagePresentation(OfferParser.classify(platform, text)))
     }
     fun updateProp22(input: Prop22Input) {
         if (state.value.saving) return

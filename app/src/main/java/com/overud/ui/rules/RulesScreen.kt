@@ -1,67 +1,70 @@
 package com.overud.ui.rules
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.overud.model.Platform
 import com.overud.ui.components.*
 
-@Composable
-fun RulesScreen(
-    viewModel: RulesViewModel,
-    onOverlayPermission: () -> Unit,
-    onNotificationPermission: () -> Unit,
-    onLocationPermission: () -> Unit,
-    voice: VoiceViewModel,
-) {
+@Composable fun RulesScreen(viewModel: RulesViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val prop22 by viewModel.prop22.collectAsStateWithLifecycle()
-    LazyColumn(
-        modifier = Modifier.widthIn(max = 760.dp).fillMaxSize(),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item { PageTitle("YOUR DRIVE, YOUR RULES", "接什么单，你来定。", "开启的条件全部满足才接单；至少保留一项最低收益要求。") }
-        item { SectionLabel("编辑范围") }
-        item { RuleScopeSelector(state, viewModel::selectScope, viewModel::inheritShared) }
-        item { SectionLabel("自动接单平台") }
-        items(Platform.entries) { platform ->
-            ToggleRow(platform.label, "开启后按该平台的已保存要求执行", platform in state.platforms,
-                enabled = !state.saving) { viewModel.platform(platform, it) }
+    var section by rememberSaveable { mutableStateOf<String?>(null) }
+    BackHandler(section != null) { section = null }
+    Column(Modifier.widthIn(max = 760.dp).fillMaxSize()) {
+        LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item { RuleScopeSelector(state, viewModel::selectScope, viewModel::inheritShared) }
+            if (section != null) item {
+                TextButton(onClick = { section = null }) { Text("返回规则概览") }
+                Text(section.orEmpty(), style = MaterialTheme.typography.titleLarge)
+            }
+            if (section == null) {
+                item { RuleGroupRow("平台与范围", state.platforms.joinToString { it.label }) { section = "平台与范围" } }
+                if (state.scope != null && state.inheritShared) item {
+                    Text("此平台继承公共要求。关闭继承后可单独编辑。", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    item { RuleGroupRow("最低收益", "金额 ${state.minimum} · 每英里 ${state.mile} · 时薪 ${state.hour}") { section = "最低收益" } }
+                    item { RuleGroupRow("距离与时间", "里程 ${state.distance} mi · 耗时 ${state.time} min") { section = "距离与时间" } }
+                    item { RuleGroupRow("目的地区域", if (state.regionalEnabled) "优质占比 ${state.regionalGoodPercent}% · 至少 ${state.regionalSamples} 个样本" else "未启用") { section = "目的地区域" } }
+                    item { RuleGroupRow("订单偏好", "叠单、追加单及排除条件") { section = "订单偏好" } }
+                }
+                item { Text("以上为当前草稿。开启的条件须同时满足；保存后自动接单保持关闭。",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            } else if (section == "平台与范围") {
+                item { Column { Platform.entries.forEach { platform ->
+                    ToggleRow(platform.label, "使用已保存要求", platform in state.platforms, enabled = !state.saving) {
+                        viewModel.platform(platform, it)
+                    }
+                } } }
+            } else if (state.scope != null && state.inheritShared) item { Text("此平台跟随公共要求，请切换至公共要求编辑。") }
+            else item {
+                when (section) {
+                    "最低收益" -> EarningsFields(state, viewModel::edit, viewModel::condition, viewModel::hourlyBasis)
+                    "距离与时间" -> DistanceTimeFields(state, viewModel::edit, viewModel::condition)
+                    "目的地区域" -> RegionalRequirementFields(state, viewModel::regional, viewModel::edit)
+                    "订单偏好" -> PlatformPreferences(state, viewModel)
+                }
+            }
         }
-        if (state.scope != null && state.inheritShared) {
-            item { EmptyStateCard("此平台跟随公共要求", "公共要求保存后会同时应用于所有跟随它的平台。") }
-        } else {
-            item { SectionLabel("最低收益 · USD") }
-            item { EarningsFields(state, viewModel::edit, viewModel::condition, viewModel::hourlyBasis) }
-            item { SectionLabel("距离与时间") }
-            item { DistanceTimeFields(state, viewModel::edit, viewModel::condition) }
-            item { SectionLabel("目的地区域要求") }
-            item { RegionalRequirementFields(state, viewModel::regional, viewModel::edit) }
-            item { SectionLabel("额外偏好") }
-            item { PlatformPreferences(state, viewModel) }
+        Surface(tonalElevation = 3.dp) {
+            Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                Text(if (viewModel.hasChanges()) "有未保存修改" else "已保存", style = MaterialTheme.typography.labelMedium)
+                Button(onClick = viewModel::save, enabled = !state.saving && viewModel.hasChanges(),
+                    modifier = Modifier.fillMaxWidth()) { Text(if (state.saving) "正在保存…" else "保存接单要求") }
+            }
         }
-        item { SectionLabel("Prop 22 额外收入估算 · 全局设置") }
-        item { Prop22Fields(prop22, state.saving, viewModel::updateProp22) }
-        item {
-            state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            Button(
-                onClick = viewModel::save,
-                enabled = !state.saving,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-            ) { Text(if (state.saving) "正在保存…" else "保存全部接单要求") }
-        }
-        item { SectionLabel("驾驶语音 · 即时生效") }
-        item { VoiceSettingsCard(voice) }
-        item { SectionLabel("设备权限") }
-        item { FilledTonalButton(onClick = onOverlayPermission, modifier = Modifier.fillMaxWidth()) { Text("设置悬浮窗权限") } }
-        item { OutlinedButton(onClick = onNotificationPermission, modifier = Modifier.fillMaxWidth()) { Text("设置通知读取权限") } }
-        item { OutlinedButton(onClick = onLocationPermission, modifier = Modifier.fillMaxWidth()) { Text("授权位置记录（下次开始工作生效）") } }
-        item { Text("Overud 0.1.0 · Material 3 Expressive", style = MaterialTheme.typography.labelMedium) }
     }
+}
+
+@Composable private fun RuleGroupRow(title: String, detail: String, onClick: () -> Unit) {
+    ListItem(headlineContent = { Text(title) }, supportingContent = { Text(detail) }, trailingContent = { Text("›") },
+        modifier = Modifier.clickable(onClick = onClick))
 }

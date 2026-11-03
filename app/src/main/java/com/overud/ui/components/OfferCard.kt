@@ -5,6 +5,7 @@ package com.overud.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -19,28 +20,35 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 @Composable fun OfferCard(offer: Offer, decision: Decision?, destination: DestinationAssessment) {
+    var expanded by rememberSaveable(offer.id) { mutableStateOf(false) }
     val locale = LocalConfiguration.current.locales[0]
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-        Column(Modifier.fillMaxWidth().padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("${offer.platform.label} · ${offer.serviceKind.label}", style = MaterialTheme.typography.labelLarge)
                 Text(SimpleDateFormat("HH:mm", locale).format(Date(offer.observedAt)), style = MaterialTheme.typography.labelMedium)
             }
-            Text(offerAmountPresentation(offer), style = MaterialTheme.typography.displayLarge)
+            Text(offerAmountPresentation(offer), style = MaterialTheme.typography.headlineLarge)
             Text(offerRoutePresentation(offer), style = MaterialTheme.typography.titleMedium)
-            offer.merchant?.let { Text("商家：$it") }
-            offer.pickupAddress?.let { Text("取件地址：$it") }
-            offer.destination?.let { Text("目的地：$it") }
-            if (offer.includesTip == true) Text("报价含小费，未提供小费明细", style = MaterialTheme.typography.bodySmall)
+            offer.destination?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             HorizontalDivider()
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 Column { Text("每英里报价", style = MaterialTheme.typography.labelMedium); Text(decision?.valuation?.centsPerMile?.let { money(it.roundToLong()) } ?: "—", style = MaterialTheme.typography.titleLarge) }
                 Column { Text("预计毛时薪", style = MaterialTheme.typography.labelMedium); Text(decision?.valuation?.grossCentsPerHour?.let { money(it.roundToLong()) } ?: "—", style = MaterialTheme.typography.titleLarge) }
             }
-            Text(decision?.reasons?.joinToString("；")?.ifEmpty { "满足所有接单要求" } ?: "等待分析", color = MaterialTheme.colorScheme.primary)
-            VehicleCostSummary(decision?.valuation)
-            Prop22Summary(decision?.valuation?.prop22)
-            DestinationSummary(destination)
+            Text(decision?.reasons?.firstOrNull() ?: if (decision?.eligible == true) "满足接单要求" else "等待分析",
+                color = MaterialTheme.colorScheme.primary)
+            TextButton(onClick = { expanded = !expanded }) { Text(if (expanded) "收起详情" else "查看分析详情") }
+            if (expanded) {
+            offer.merchant?.let { Text("商家：$it") }
+            offer.pickupAddress?.let { Text("取件地址：$it") }
+            offer.destination?.let { Text("目的地：$it") }
+            if (offer.includesTip == true) Text("报价含小费，未提供小费明细", style = MaterialTheme.typography.bodySmall)
+                decision?.reasons?.drop(1)?.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                VehicleCostSummary(decision?.valuation)
+                Prop22Summary(decision?.valuation?.prop22)
+                DestinationSummary(destination)
+            }
         }
     }
 }

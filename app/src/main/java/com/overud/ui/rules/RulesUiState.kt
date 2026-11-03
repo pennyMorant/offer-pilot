@@ -1,6 +1,5 @@
 package com.overud.ui.rules
 
-import com.overud.model.Valuation
 import com.overud.model.HourlyBasis
 import com.overud.model.Platform
 import com.overud.model.RuleCondition
@@ -29,12 +28,4 @@ data class RulesUiState(
     val regionalEnabled: Boolean = false,
     val regionalGoodPercent: String = "50",
     val regionalSamples: String = "20",
-)
-
-data class RulePreviewState(
-    val text: String = "Accept\n$12.00\nTotal 5 mi 25 min\nMerchant: Restaurant\nDestination: Downtown",
-    val platform: Platform = Platform.UBER_EATS,
-    val explanation: String = "",
-    val valuation: Valuation? = null,
-    val pageSummary: String? = null,
 )

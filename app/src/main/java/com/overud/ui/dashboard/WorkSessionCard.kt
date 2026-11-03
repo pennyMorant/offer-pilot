@@ -21,20 +21,18 @@ fun WorkSessionCard(state: DashboardUiState, onWork: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = background),
         shape = MaterialTheme.shapes.extraLarge,
     ) {
-        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = if (state.working) "工作进行中" else "准备好出发了吗？",
+                    text = if (state.working) "工作进行中" else "尚未开始工作",
                     style = MaterialTheme.typography.titleLarge,
                 )
-                if (state.working) LoadingIndicator(Modifier.size(34.dp))
             }
             Text(state.message, style = MaterialTheme.typography.bodyLarge)
-            state.currentPageLabel?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             Button(
                 onClick = onWork,
                 enabled = state.working || state.connection.authorized,

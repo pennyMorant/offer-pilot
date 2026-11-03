@@ -31,13 +31,12 @@ class AppContainer(context: Context) {
     private val database = Room.databaseBuilder(context, OverudDatabase::class.java, "overud.db")
         .addMigrations(DatabaseMigrations.TO_AGGREGATES, WaitingSchema.MIGRATION, DeliverySchema.MIGRATION,
             com.overud.data.database.migration.OfferServiceSchema.MIGRATION).build()
+    val appContext = context.applicationContext
     val appearance = com.overud.data.preferences.AppearancePreferences(context)
     val bridge = SheveryBridge(context)
-    val diagnosticReader = com.overud.bridge.NodeDiagnosticReader(bridge)
     val deviceStatus = com.overud.device.DeviceStatusReader(context)
     val session = WorkSessionController(bridge, PolicyStore(context), scope, mutex, DeviceInteractionGuard(context))
     val voice = com.overud.speech.VoiceController(context, session)
-    val importedImages = ImportedImageRecognizer(context)
     val state = session.state
     private val statistics = StatisticsRepository(database)
     val regions = RegionRecorder(session, RegionRepository(database))

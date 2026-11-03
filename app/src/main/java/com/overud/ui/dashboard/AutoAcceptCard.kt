@@ -15,11 +15,11 @@ fun AutoAcceptCard(
     onRules: () -> Unit,
     onResolve: () -> Unit,
 ) {
-    Card {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Surface(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("自动接单", style = MaterialTheme.typography.titleLarge)
+                    Text("自动接单", style = MaterialTheme.typography.titleMedium)
                     Text(
                         text = when {
                             state.policySaving -> "正在保存规则，自动接单暂停"
@@ -37,14 +37,6 @@ fun AutoAcceptCard(
                     enabled = state.autoAcceptEnabled || (state.working && state.connection.serviceReady &&
                         !state.pending && !state.policySaving),
                 )
-            }
-            HorizontalDivider()
-            state.policySummaries.forEach { summary ->
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(summary.label, style = MaterialTheme.typography.titleSmall)
-                    Text(summary.details, style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary)
-                }
             }
             TextButton(onClick = onRules) { Text("调整接单要求 →") }
             if (state.pending) {
