@@ -33,31 +33,43 @@ class SpeechEngine(private val context: Context) {
         if (tts != null) return
         val request = ++generation
         mutableStatus.value = "正在初始化中文语音"
-        tts = TextToSpeech(context.applicationContext) { code -> handler.post {
-            if (request != generation) return@post
-            val engine = tts ?: return@post
-            if (code != TextToSpeech.SUCCESS) {
-                mutableStatus.value = "语音引擎不可用，请检查系统文字转语音设置"
-                return@post
-            }
-            val language = engine.setLanguage(Locale.SIMPLIFIED_CHINESE)
-            val voice = engine.voices?.firstOrNull { it.locale.language == "zh" && !it.isNetworkConnectionRequired &&
-                TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED !in it.features.orEmpty() }
-            if (language < 0 || voice == null || engine.setVoice(voice) != TextToSpeech.SUCCESS) {
-                mutableStatus.value = "请在系统文字转语音设置中安装离线中文语音，再点击试听重试"
-                return@post
-            }
-            engine.setAudioAttributes(attributes)
-            engine.setSpeechRate(1.05f)
-            engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                override fun onStart(id: String?) = Unit
-                override fun onDone(id: String?) { finish(id, "中文语音就绪") }
-                @Deprecated("Required platform callback")
-                override fun onError(id: String?) { finish(id, "播报失败，请检查系统语音引擎") }
-            })
-            mutableReady.value = true
-            mutableStatus.value = "离线中文语音就绪"
-        } }
+        tts = runCatching {
+            TextToSpeech(context.applicationContext) { code -> handler.post {
+                if (request != generation) return@post
+                runCatching { configureEngine(code) }.onFailure {
+                    mutableReady.value = false
+                    mutableStatus.value = "语音初始化失败，请检查系统设置后试听重试"
+                }
+            } }
+        }.getOrElse {
+            mutableStatus.value = "无法连接系统语音引擎"
+            null
+        }
+    }
+
+    private fun configureEngine(code: Int) {
+        val engine = tts ?: return
+        if (code != TextToSpeech.SUCCESS) {
+            mutableStatus.value = "语音引擎不可用，请检查系统文字转语音设置"
+            return
+        }
+        val language = engine.setLanguage(Locale.SIMPLIFIED_CHINESE)
+        val voice = engine.voices?.firstOrNull { it.locale.language == "zh" && !it.isNetworkConnectionRequired &&
+            TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED !in it.features.orEmpty() }
+        if (language < 0 || voice == null || engine.setVoice(voice) != TextToSpeech.SUCCESS) {
+            mutableStatus.value = "请在系统文字转语音设置中安装离线中文语音，再点击试听重试"
+            return
+        }
+        engine.setAudioAttributes(attributes)
+        engine.setSpeechRate(1.05f)
+        engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(id: String?) = Unit
+            override fun onDone(id: String?) { finish(id, "中文语音就绪") }
+            @Deprecated("Required platform callback")
+            override fun onError(id: String?) { finish(id, "播报失败，请检查系统语音引擎") }
+        })
+        mutableReady.value = true
+        mutableStatus.value = "离线中文语音就绪"
     }
 
     fun speak(text: String): Boolean {
@@ -98,7 +110,7 @@ class SpeechEngine(private val context: Context) {
     private fun finish(id: String?, message: String) { handler.post {
         if (id == null || id != current) return@post
         current = null
-        audio.abandonAudioFocusRequest(focus)
+        runCatching { audio.abandonAudioFocusRequest(focus) }
         mutableStatus.value = message
     } }
 }

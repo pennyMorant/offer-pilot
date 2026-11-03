@@ -21,6 +21,7 @@ class VoiceController(context: Context, private val session: WorkSessionControll
     private var phase = DeliveryPhase.AVAILABLE
     private var wasWorking = false
     private var previewPending = false
+    private var announcedOffer: String? = null
 
     init {
         scope.launch {
@@ -33,6 +34,7 @@ class VoiceController(context: Context, private val session: WorkSessionControll
                     }
                     if (!work.working || !voice.enabled) {
                         if (wasWorking) engine.stop()
+                        announcedOffer = null
                         if (!work.working) spoken.clear()
                         wasWorking = work.working && voice.enabled
                         phase = work.deliveryPhase
@@ -41,11 +43,23 @@ class VoiceController(context: Context, private val session: WorkSessionControll
                     wasWorking = true
                     engine.prepare()
                     if (!ready) return@collect
+                    if (announcedOffer != null && work.latest?.id != announcedOffer) {
+                        engine.stop()
+                        announcedOffer = null
+                    }
                     if (work.deliveryPhase != phase) {
                         phase = work.deliveryPhase
                         when (phase) {
-                            DeliveryPhase.ACTIVE -> { engine.speak("已识别进行中的配送，自动接单暂停。"); return@collect }
-                            DeliveryPhase.UNCERTAIN -> { engine.speak("接单结果待核对，请在方便时查看平台。"); return@collect }
+                            DeliveryPhase.ACTIVE -> {
+                                announcedOffer = null
+                                engine.speak("已识别进行中的配送，自动接单暂停。")
+                                return@collect
+                            }
+                            DeliveryPhase.UNCERTAIN -> {
+                                announcedOffer = null
+                                engine.speak("接单结果待核对，请在方便时查看平台。")
+                                return@collect
+                            }
                             else -> Unit
                         }
                     }
@@ -57,7 +71,7 @@ class VoiceController(context: Context, private val session: WorkSessionControll
                     val text = OrderAnnouncement.text(work, voice.includeProp22) ?: return@collect
                     spoken += offer.id
                     if (spoken.size > 256) spoken.remove(spoken.first())
-                    engine.speak(text)
+                    if (engine.speak(text)) announcedOffer = offer.id
                 }
         }
     }

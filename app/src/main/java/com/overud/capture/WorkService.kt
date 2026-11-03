@@ -41,8 +41,8 @@ class WorkService : Service() {
     }
     override fun onDestroy() {
         scheduler?.close(); overlay?.close(); location?.stop()
-        (application as OverudApp).container.voice.endWork()
         (application as OverudApp).container.stopWork()
+        (application as OverudApp).container.voice.endWork()
         super.onDestroy()
     }
 }
