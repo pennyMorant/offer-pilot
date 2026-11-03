@@ -26,7 +26,7 @@ class AppContainer(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
     private val database = Room.databaseBuilder(context, OverudDatabase::class.java, "overud.db")
-        .fallbackToDestructiveMigration()
+        .fallbackToDestructiveMigration(true)
         .build()
     val appContext = context.applicationContext
     val appearance = com.overud.data.preferences.AppearancePreferences(context)
