@@ -21,6 +21,8 @@ internal class OverlayViews(
     val rightBadge: TextView,
     val heroRow: LinearLayout,
     val amountText: TextView,
+    val heroRouteText: TextView,
+    val metricsRow: LinearLayout,
     val perMileTile: TextView,
     val hourlyTile: TextView,
     val verdictTile: TextView,
@@ -84,15 +86,24 @@ internal fun buildOverlayViews(
     }
 
     val amountText = TextView(context).apply {
-        textSize = 23f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; maxLines = 1
+        textSize = 24f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; maxLines = 1
     }
-    val perMileTile = tile()
-    val hourlyTile = tile()
-    val verdictTile = tile()
+    val heroRouteText = TextView(context).apply {
+        textSize = 15.5f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; maxLines = 1; gravity = Gravity.END
+    }
     val heroRow = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
-        setPadding(0, dp(7), 0, dp(6))
-        addView(amountText)
+        setPadding(0, dp(6), 0, dp(5))
+        addView(amountText, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        addView(heroRouteText)
+    }
+
+    val perMileTile = tile().apply { (layoutParams as LinearLayout.LayoutParams).marginStart = 0 }
+    val hourlyTile = tile()
+    val verdictTile = tile()
+    val metricsRow = LinearLayout(context).apply {
+        orientation = LinearLayout.HORIZONTAL
+        setPadding(0, 0, 0, dp(6))
         addView(perMileTile); addView(hourlyTile); addView(verdictTile)
     }
 
@@ -131,11 +142,11 @@ internal fun buildOverlayViews(
         orientation = LinearLayout.HORIZONTAL; addView(pauseBtn); addView(declineBtn); addView(switchBtn)
     }
 
-    root.addView(topRow); root.addView(heroRow); root.addView(tagsText)
+    root.addView(topRow); root.addView(heroRow); root.addView(metricsRow); root.addView(tagsText)
     root.addView(routeText); root.addView(infoBox); root.addView(actionsRow)
     return OverlayViews(
-        root, cardBg, topRow, leftBadge, cameraGap, rightBadge, heroRow, amountText,
-        perMileTile, hourlyTile, verdictTile, tagsText, routeText, infoBox, verdictText, extraText,
+        root, cardBg, topRow, leftBadge, cameraGap, rightBadge, heroRow, amountText, heroRouteText,
+        metricsRow, perMileTile, hourlyTile, verdictTile, tagsText, routeText, infoBox, verdictText, extraText,
         actionsRow, pauseBtn, declineBtn, switchBtn,
     )
 }
@@ -150,6 +161,7 @@ internal fun applyIslandColors(v: OverlayViews, colors: ColorScheme, alert: Bool
     v.cardBg.setStroke(if (alert) strokePx * 2 else 0, if (alert) colors.error.toArgb() else Color.TRANSPARENT)
     val fgColor = Color.WHITE
     v.amountText.setTextColor(if (alert) colors.error.toArgb() else fgColor)
+    v.heroRouteText.setTextColor(if (alert) colors.error.toArgb() else Color.rgb(232, 236, 242))
     v.tagsText.setTextColor(if (alert) colors.error.toArgb() else colors.tertiary.toArgb())
     v.routeText.setTextColor(Color.rgb(228, 232, 238))
     (v.infoBox.background as? GradientDrawable)?.setColor(Color.rgb(18, 20, 24))

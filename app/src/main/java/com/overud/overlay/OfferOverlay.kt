@@ -118,15 +118,17 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         )
                         v.leftBadge.text = "${offer.platform.label}$scoreText"
                         val mi = offer.distanceMeters?.takeIf { offer.hasVerifiedDistance() }?.let {
-                            String.format(Locale.US, "%.1fmi", it / ValueEngine.METERS_PER_MILE)
+                            String.format(Locale.US, "%.1f mi", it / ValueEngine.METERS_PER_MILE)
                         } ?: "—"
-                        val min = offer.durationSeconds?.takeIf { offer.hasVerifiedDuration() }?.let { "${it / 60}m" } ?: "—"
-                        v.rightBadge.stylePill(Color.TRANSPARENT, Color.rgb(210, 215, 222))
-                        v.rightBadge.text = if (isExpandedOffer) "$min · $mi" else offerAmountPresentation(offer)
+                        val min = offer.durationSeconds?.takeIf { offer.hasVerifiedDuration() }?.let { "${it / 60} min" } ?: "—"
+                        v.rightBadge.stylePill(Color.TRANSPARENT, Color.rgb(176, 182, 190))
+                        v.rightBadge.text = if (isExpandedOffer) modeDot else offerAmountPresentation(offer)
 
                         v.heroRow.visibility = if (isExpandedOffer) View.VISIBLE else View.GONE
+                        v.metricsRow.visibility = if (isExpandedOffer) View.VISIBLE else View.GONE
                         val valuation = state.decision?.valuation
                         v.amountText.text = offerAmountPresentation(offer)
+                        v.heroRouteText.text = "$min · $mi"
                         v.perMileTile.text = "${valuation?.centsPerMile?.let { money(it.roundToLong()) } ?: "—"}/mi"
                         val hr = valuation?.contributionCentsPerHour ?: valuation?.grossCentsPerHour
                         v.hourlyTile.text = "${hr?.let { money(it.roundToLong()) } ?: "—"}/h"
@@ -158,6 +160,7 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         v.extraText.text = extraLine
                     } else {
                         v.heroRow.visibility = View.GONE
+                        v.metricsRow.visibility = View.GONE
                         v.tagsText.visibility = View.GONE
                         v.routeText.visibility = View.GONE
                         v.infoBox.visibility = View.GONE
