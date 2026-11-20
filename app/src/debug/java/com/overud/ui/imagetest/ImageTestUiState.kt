@@ -12,4 +12,5 @@ data class ImageTestUiState(
     val page: PlatformPage? = null,
     val offer: Offer? = null,
     val decision: Decision? = null,
+    val preferredZones: Set<String> = emptySet(),
 )

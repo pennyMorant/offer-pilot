@@ -67,7 +67,13 @@ class ImageTestViewModel(
             OfferParser.parse(current.platform, current.text, now, OfferSource.OCR)
         }
         val page = OfferParser.classify(current.platform, current.text, OfferSource.OCR)
-        val decision = offer?.let { EligibilityEvaluator.assess(it, session.state.value.policy, now) }
-        mutable.value = current.copy(offer = offer, page = page, decision = decision)
+        val policy = session.state.value.policy
+        val decision = offer?.let { EligibilityEvaluator.assess(it, policy, now) }
+        mutable.value = current.copy(
+            offer = offer,
+            page = page,
+            decision = decision,
+            preferredZones = policy.effective(current.platform).preferredZones,
+        )
     }
 }
