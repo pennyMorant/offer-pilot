@@ -17,4 +17,6 @@ class DashboardViewModel(
     fun setAutomatic(enabled: Boolean) = session.setAutomatic(enabled)
     fun authorize() = bridge.authorize()
     fun resolvePending() = acceptance.resolvePending()
+    fun applyScene(scene: com.overud.model.DrivingScene) =
+        session.savePolicy(scene.applyTo(session.state.value.policy))
 }

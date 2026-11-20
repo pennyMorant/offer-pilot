@@ -26,6 +26,14 @@ import java.util.Date
                 Text(SimpleDateFormat("HH:mm", locale).format(Date(offer.observedAt)), style = MaterialTheme.typography.labelMedium)
             }
             Text(offerAmountPresentation(offer), style = MaterialTheme.typography.headlineLarge)
+            val advice = StrategyAdvisor.advise(offer, decision)
+            if (advice.tags.isNotEmpty()) {
+                Text(
+                    advice.tags.joinToString(" · "),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (advice.fakePreferred) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary,
+                )
+            }
             Text(offerRoutePresentation(offer), style = MaterialTheme.typography.titleMedium)
             offer.destination?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             HorizontalDivider()
