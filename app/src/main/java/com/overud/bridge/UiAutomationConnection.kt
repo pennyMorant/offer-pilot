@@ -27,9 +27,16 @@ class UiAutomationConnection {
         return ui
     }
 
+    /** Disconnect and drop the cached UiAutomation handle so the next call rebuilds cleanly. */
+    @Synchronized fun reset() {
+        val old = automation
+        automation = null
+        if (old != null) runCatching { UiAutomation::class.java.getMethod("disconnect").invoke(old) }
+    }
+
     fun close() {
         changes.close()
-        runCatching { automation?.let { UiAutomation::class.java.getMethod("disconnect").invoke(it) } }
+        reset()
         thread.quitSafely()
     }
 }

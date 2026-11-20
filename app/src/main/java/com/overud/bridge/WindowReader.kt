@@ -1,19 +1,48 @@
 package com.overud.bridge
 
 import android.os.Bundle
+import android.os.DeadObjectException
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 import com.overud.model.Platform
-import com.overud.platform.fingerprint
 import com.overud.platform.NodePageAssembler
+import com.overud.platform.fingerprint
 
 class WindowReader(private val connection: UiAutomationConnection) {
     private val supported = Platform.entries.map { it.packageName }.toSet()
+
+    /** Multi-window scan: prefers top visible Uber/DoorDash window even when overlays are present. */
+    fun findTargetRoot(expectedPackage: String? = null): AccessibilityNodeInfo? {
+        val ui = connection.get()
+        val windows = runCatching { ui.windows }.getOrNull().orEmpty()
+        val target = windows
+            .filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION || it.type == AccessibilityWindowInfo.TYPE_SPLIT_SCREEN_DIVIDER }
+            .sortedByDescending { it.layer }
+            .firstNotNullOfOrNull { win ->
+                val root = runCatching { win.root }.getOrNull() ?: return@firstNotNullOfOrNull null
+                val pkg = root.packageName?.toString().orEmpty()
+                val matches = if (expectedPackage != null) pkg == expectedPackage else pkg in supported
+                if (matches) root else null
+            }
+        if (target != null) return target
+        val active = ui.rootInActiveWindow ?: return null
+        val pkg = active.packageName?.toString().orEmpty()
+        val matches = if (expectedPackage != null) pkg == expectedPackage else pkg in supported
+        return if (matches) active else null
+    }
+
+    /** Safe bounded traversal: skips invisible subtrees and caps gracefully instead of crashing. */
     fun flatten(root: AccessibilityNodeInfo): List<AccessibilityNodeInfo> {
         val result = mutableListOf<AccessibilityNodeInfo>()
         fun visit(node: AccessibilityNodeInfo, depth: Int) {
-            check(depth <= 35 && result.size < 450 && node.childCount <= 100) { "window_node_limit" }
+            if (depth > MAX_DEPTH || result.size >= MAX_NODES) return
+            if (depth > 0 && !node.isVisibleToUser) return
             result += node
-            repeat(node.childCount.coerceAtMost(100)) { node.getChild(it)?.let { visit(it, depth + 1) } }
+            val count = node.childCount.coerceAtMost(MAX_CHILDREN)
+            for (i in 0 until count) {
+                if (result.size >= MAX_NODES) return
+                node.getChild(i)?.let { visit(it, depth + 1) }
+            }
         }
         visit(root, 0)
         return result
@@ -25,28 +54,41 @@ class WindowReader(private val connection: UiAutomationConnection) {
     }
 
     fun snapshot(includeNodes: Boolean = false): Bundle = try {
-        val root = connection.get().rootInActiveWindow
+        val root = findTargetRoot()
         val pkg = root?.packageName?.toString().orEmpty()
-        if (root == null || pkg !in supported) Bundle().apply { putString("package", pkg) }
-        else {
+        if (root == null || pkg !in supported) {
+            val activePkg = runCatching { connection.get().rootInActiveWindow?.packageName?.toString().orEmpty() }.getOrDefault("")
+            Bundle().apply { putString("package", activePkg) }
+        } else {
             val nodes = WindowNodeMapper.map(flatten(root))
             val platform = Platform.fromPackage(pkg)!!
             val page = NodePageAssembler.assemble(platform, nodes)
             val body = page.text
             Bundle().apply {
                 putString("package", pkg); putString("text", body)
-                putString("token", fingerprint(Platform.fromPackage(pkg)!!, body))
+                putString("token", fingerprint(platform, body))
                 putLong("capturedAt", System.currentTimeMillis())
                 putInt("nodeCount", nodes.size)
                 putInt("selectedRoot", page.selectedRoot ?: -1)
                 putInt("windowId", root.windowId)
-                putInt("displayId", root.window?.displayId ?: -1)
-                putString("frameToken", fingerprint(platform, nodes.joinToString("\n")))
+                putInt("displayId", root.window?.displayId ?: 0)
+                // Stable window identity (does not churn every second on offer countdown timers).
+                putString("frameToken", fingerprint(platform, "$pkg|${root.windowId}|${root.window?.displayId ?: 0}"))
                 val crop = page.ocrRoot?.let { index -> nodes.firstOrNull { it.index == index }?.bounds }
                 if (crop != null) putIntArray("ocrBounds", intArrayOf(crop.left, crop.top, crop.right, crop.bottom))
                 if (includeNodes) putParcelableArrayList("nodes", WindowDiagnosticCodec.encode(nodes))
             }
         }
-    } catch (e: Exception) { Bundle().apply { putString("error", e.cause?.message ?: e.message ?: e.javaClass.simpleName) } }
+    } catch (e: Exception) {
+        if (e is IllegalStateException || e is DeadObjectException || e.cause is DeadObjectException) {
+            connection.reset()
+        }
+        Bundle().apply { putString("error", e.cause?.message ?: e.message ?: e.javaClass.simpleName) }
+    }
 
+    companion object {
+        private const val MAX_DEPTH = 45
+        private const val MAX_NODES = 800
+        private const val MAX_CHILDREN = 120
+    }
 }
