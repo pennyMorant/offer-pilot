@@ -28,7 +28,7 @@ object ValueEngine {
         val contributionPerMile = if (miles != null && contribution != null) contribution / miles else null
         val contributionPerHour = if (seconds != null && contribution != null) contribution * 3600.0 / seconds else null
 
-        val weakDeadhead = destinationEvidence?.outlook == RegionalOutlook.WEAK && miles != null && miles > 6.0
+        val weakDeadhead = destinationEvidence?.assessment?.outlook == RegionalOutlook.WEAK && miles != null && miles > 6.0
         val evalMiles = if (weakDeadhead) miles!! * 1.35 else miles
         val evalSeconds = if (weakDeadhead && seconds != null) (seconds * 1.30).toLong() else seconds
         val evalCost = if (evalMiles != null && effective.costCentsPerMile >= 0) evalMiles * effective.costCentsPerMile else null
@@ -96,7 +96,7 @@ object ValueEngine {
     ): Int {
         var penalty = 0
         if (weakDeadhead) notes += "弱区长途含回程折算"
-        else if (destinationEvidence?.outlook == RegionalOutlook.GOOD) notes += "目的地历史优质区"
+        else if (destinationEvidence?.assessment?.outlook == RegionalOutlook.GOOD) notes += "目的地历史优质区"
         if (perHour != null && perHour < rules.targetContributionCentsPerHour * 0.55) {
             penalty += 12
             notes += "有效时薪偏低(-12)"
