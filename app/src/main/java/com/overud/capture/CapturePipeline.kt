@@ -71,14 +71,25 @@ class CapturePipeline(
             val platform = Platform.fromPackage(snapshot.getString("package").orEmpty())
                 ?: run {
                     clearQuote(); waiting.interrupt()
-                    session.update { if (it.autoAcceptEnabled) it.copy(automatic = false, autoAcceptEnabled = false,
-                        message = "已离开支持的平台页面，自动接单已关闭") else it }
+                    session.update {
+                        if (it.autoAcceptEnabled && it.automatic) it.copy(automatic = false,
+                            message = "已切离平台页面，自动接单待命；切回平台后自动恢复")
+                        else it
+                    }
                     return@withLock
                 }
             val text = snapshot.getString("text").orEmpty()
             val now = System.currentTimeMillis()
             regions.trackExposure(platform, now)
-            session.update { it.copy(lastCaptureAt = now) }
+            session.update {
+                val resume = it.autoAcceptEnabled && !it.automatic && !it.pending &&
+                    it.deliveryPhase == DeliveryPhase.AVAILABLE && !it.policySaving && it.policy.valid()
+                it.copy(
+                    lastCaptureAt = now,
+                    automatic = if (resume) true else it.automatic,
+                    message = if (resume) "已返回 ${platform.label}，自动接单已恢复" else it.message,
+                )
+            }
             val nodePage = OfferParser.classify(platform, text)
             acceptance.observe(platform, nodePage, text, snapshot.getString("token").orEmpty())
             if (!lease.valid()) { waiting.interrupt(); deliveries.invalidate(); return@withLock }
@@ -87,7 +98,7 @@ class CapturePipeline(
             val nodeOffer = OfferParser.parse(platform, text, now)
             val nodeDecision = nodeOffer?.let { session.state.value.assessOffer(it, now) }
             val needsOcr = nodeOffer == null || (!nodeOffer.reliable && nodeDecision?.eligible != true)
-            val ocr = if (nodePage.allowsOcrFallback && needsOcr && now - lastOcrAt > 4000) {
+            val ocr = if (nodePage.allowsOcrFallback && needsOcr && now - lastOcrAt > 1500) {
                 lastOcrAt = now
                 recognizer.recognize(snapshot)
             } else null
