@@ -1,11 +1,14 @@
 package com.overud.capture
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
@@ -27,15 +30,18 @@ class ImportedImageRecognizer(context: Context) {
             }
         }
         try {
-            val recognizer = TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
-            try {
-                // Await the ML task even if the caller closes the dialog, then release its bitmap.
-                suspendCoroutine { continuation ->
-                    recognizer.process(InputImage.fromBitmap(bitmap, 0))
-                        .addOnSuccessListener { continuation.resume(it.toOcrPageResult()) }
-                        .addOnFailureListener { continuation.resumeWithException(it) }
-                }
-            } finally { recognizer.close() }
+            val latin = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+            val primary = try { runRecognizer(latin, bitmap) } finally { latin.close() }
+            if (!OcrRecognizer.needsChineseFallback(primary.text)) return@withContext primary
+            val chinese = TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
+            try { runRecognizer(chinese, bitmap) } finally { chinese.close() }
         } finally { bitmap.recycle() }
     }
+
+    private suspend fun runRecognizer(client: TextRecognizer, bitmap: Bitmap): OcrPageResult =
+        suspendCoroutine { continuation ->
+            client.process(InputImage.fromBitmap(bitmap, 0))
+                .addOnSuccessListener { continuation.resume(it.toOcrPageResult()) }
+                .addOnFailureListener { continuation.resumeWithException(it) }
+        }
 }
