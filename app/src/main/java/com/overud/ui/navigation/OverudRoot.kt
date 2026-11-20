@@ -2,31 +2,46 @@
 
 package com.overud.ui.navigation
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.overud.di.OverudViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.overud.ui.dashboard.DashboardViewModel
-import com.overud.ui.rules.RulesViewModel
-import com.overud.ui.dashboard.DashboardScreen
+import com.overud.di.OverudViewModelFactory
 import com.overud.ui.analysis.AnalysisScreen
 import com.overud.ui.analysis.AnalysisViewModel
+import com.overud.ui.dashboard.DashboardScreen
+import com.overud.ui.dashboard.DashboardViewModel
+import com.overud.ui.diagnostics.RuntimeDiagnosticsDialog
+import com.overud.ui.diagnostics.RuntimeDiagnosticsViewModel
 import com.overud.ui.rules.RulesScreen
+import com.overud.ui.rules.RulesViewModel
+import com.overud.ui.rules.VoiceViewModel
+import com.overud.ui.settings.SettingsScreen
 
-@Composable fun OverudRoot(factory: OverudViewModelFactory, onWork: () -> Unit, onOverlayPermission: () -> Unit, onNotificationPermission: () -> Unit, onLocationPermission: () -> Unit) {
+@Composable
+fun OverudRoot(
+    factory: OverudViewModelFactory,
+    onWork: () -> Unit,
+    onOverlayPermission: () -> Unit,
+    onNotificationPermission: () -> Unit,
+    onLocationPermission: () -> Unit,
+) {
     val dashboard: DashboardViewModel = viewModel(factory = factory)
     val rules: RulesViewModel = viewModel(factory = factory)
-    val voice: com.overud.ui.rules.VoiceViewModel = viewModel(factory = factory)
-    val runtimeDiagnostics: com.overud.ui.diagnostics.RuntimeDiagnosticsViewModel = viewModel(factory = factory)
-    val state by dashboard.state.collectAsStateWithLifecycle()
+    val voice: VoiceViewModel = viewModel(factory = factory)
+    val runtimeDiagnostics: RuntimeDiagnosticsViewModel = viewModel(factory = factory)
     val analysisViewModel: AnalysisViewModel = viewModel(factory = factory)
+    val state by dashboard.state.collectAsStateWithLifecycle()
     val analysis by analysisViewModel.state.collectAsStateWithLifecycle()
     val ruleState by rules.state.collectAsStateWithLifecycle()
     val prop22State by rules.prop22.collectAsStateWithLifecycle()
@@ -39,35 +54,51 @@ import com.overud.ui.rules.RulesScreen
         if (rules.state.value.saving) return
         if (rules.hasChanges()) pendingNavigation = action else action()
     }
-    androidx.activity.compose.BackHandler(enabled = settings || dirty) {
-        navigate { settings = false; selected = Destination.DASHBOARD }
-    }
+    BackHandler(enabled = settings || dirty) { navigate { settings = false; selected = Destination.DASHBOARD } }
     var showRuntimeDiagnostics by rememberSaveable { mutableStateOf(false) }
     var resolve by remember { mutableStateOf(false) }
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                if (settings) TextButton(onClick = { navigate { settings = false } }) { Text("返回") }
-                Text(if (settings) "设置" else selected.label, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
-                if (!settings) TextButton(onClick = { navigate { settings = true } }) { Text("设置 ⚙") }
-            }
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                navigationIcon = {
+                    if (settings) {
+                        IconButton(onClick = { navigate { settings = false } }) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
+                        }
+                    }
+                },
+                title = { Text(if (settings) "设置" else selected.label, style = MaterialTheme.typography.titleLarge) },
+                actions = {
+                    if (!settings) {
+                        FilledTonalIconButton(
+                            onClick = { navigate { settings = true } },
+                            modifier = Modifier.padding(end = 8.dp),
+                        ) { Icon(Icons.Rounded.Settings, contentDescription = "设置", modifier = Modifier.size(20.dp)) }
+                    }
+                },
+            )
         },
         bottomBar = {
             if (!settings) {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 0.dp) {
                     Destination.entries.forEach { destination ->
-                        NavigationBarItem(selected = selected == destination,
+                        val isSelected = selected == destination
+                        NavigationBarItem(
+                            selected = isSelected,
                             onClick = { navigate { selected = destination; settings = false } },
-                            icon = { Text(destination.symbol, style = MaterialTheme.typography.titleLarge) },
-                            label = { Text(destination.label) })
+                            icon = { Icon(if (isSelected) destination.selectedIcon else destination.unselectedIcon,
+                                contentDescription = destination.label) },
+                            label = { Text(destination.label, style = MaterialTheme.typography.labelMedium) },
+                        )
                     }
                 }
             }
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
-            if (settings) com.overud.ui.settings.SettingsScreen(factory, rules, voice) { showRuntimeDiagnostics = true }
+            if (settings) SettingsScreen(factory, rules, voice) { showRuntimeDiagnostics = true }
             else AnimatedContent(selected, label = "navigation") { page ->
                 when (page) {
                     Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
@@ -83,13 +114,10 @@ import com.overud.ui.rules.RulesScreen
         confirmButton = { TextButton(onClick = { pendingNavigation = null }) { Text("继续编辑") } },
         dismissButton = { TextButton(onClick = {
             if (!rules.state.value.saving) {
-                rules.discardChanges()
-                val action = pendingNavigation
-                pendingNavigation = null
-                action?.invoke()
+                rules.discardChanges(); val action = pendingNavigation; pendingNavigation = null; action?.invoke()
             }
         }) { Text("放弃并离开") } })
-    if (showRuntimeDiagnostics) com.overud.ui.diagnostics.RuntimeDiagnosticsDialog(runtimeDiagnostics,
+    if (showRuntimeDiagnostics) RuntimeDiagnosticsDialog(runtimeDiagnostics,
         onOverlayPermission, onNotificationPermission, onLocationPermission) { showRuntimeDiagnostics = false }
     if (resolve) AlertDialog(onDismissRequest = { resolve = false }, title = { Text("核对当前配送状态") },
         text = { Text("请先查看 Uber 和 DoorDash，确认当前没有正在进行的配送，再清除订单占用状态。此操作不会取消平台订单。") },
