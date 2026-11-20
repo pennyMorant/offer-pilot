@@ -42,6 +42,15 @@ object NodePageAssembler {
             }
             ancestor = container.parentIndex
         }
+        val spatialRegions = visible.flatMap { node ->
+            listOfNotNull(node.text, node.description).filter(String::isNotBlank).map { label ->
+                TextRegion(label, node.bounds.left, node.bounds.top, node.bounds.right, node.bounds.bottom)
+            }
+        }
+        val located = OfferCardLocator.locate(platform, spatialRegions)
+        if ((located.amountRegion != null || located.actionRegion != null) && located.cardText.isNotBlank()) {
+            return fallback.copy(text = located.cardText)
+        }
         return fallback
     }
 
