@@ -118,19 +118,14 @@ internal fun TextView.stylePill(bg: Int, fg: Int) {
     setTextColor(fg)
 }
 
-internal fun applyIslandColors(v: OverlayViews, colors: ColorScheme, alert: Boolean, idle: Boolean, strokePx: Int) {
-    val bgColor = when {
-        alert -> colors.errorContainer.toArgb()
-        idle -> Color.rgb(16, 18, 20)
-        else -> Color.rgb(20, 23, 26)
-    }
-    val fgColor = if (alert) colors.onErrorContainer.toArgb() else Color.rgb(242, 244, 247)
-    val subColor = if (alert) fgColor else Color.rgb(180, 186, 194)
-    v.cardBg.setColor(bgColor)
-    v.cardBg.setStroke(strokePx, if (alert) colors.error.toArgb() else Color.argb(70, 255, 255, 255))
-    v.amountText.setTextColor(fgColor)
+internal fun applyIslandColors(v: OverlayViews, colors: ColorScheme, alert: Boolean, strokePx: Int) {
+    v.cardBg.setColor(Color.BLACK)
+    v.cardBg.setStroke(if (alert) strokePx * 2 else 0, if (alert) colors.error.toArgb() else Color.TRANSPARENT)
+    val fgColor = Color.WHITE
+    val subColor = if (alert) colors.error.toArgb() else Color.rgb(176, 182, 190)
+    v.amountText.setTextColor(if (alert) colors.error.toArgb() else fgColor)
     v.detailText.setTextColor(subColor)
-    val tileBg = if (alert) colors.surface.toArgb() else Color.rgb(34, 38, 43)
+    val tileBg = Color.rgb(22, 24, 28)
     v.perMileTile.stylePill(tileBg, fgColor)
     v.hourlyTile.stylePill(tileBg, fgColor)
     v.pauseBtn.stylePill(colors.primaryContainer.toArgb(), colors.onPrimaryContainer.toArgb())

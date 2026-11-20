@@ -102,7 +102,7 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         params.width = targetWidth
                         runCatching { manager.updateViewLayout(v.root, params) }
                     }
-                    applyIslandColors(v, colors, alert, idle = offer == null && !hasActivity, dp(1))
+                    applyIslandColors(v, colors, alert, dp(1))
 
                     val modeDot = when {
                         state.automatic -> "● 自动"
