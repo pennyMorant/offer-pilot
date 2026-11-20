@@ -9,10 +9,11 @@ object PageClassifier {
 
     fun classify(platform: Platform, text: String, rules: PlatformPageRules, source: OfferSource): PlatformPage {
         val lines = text.lines().map(::normalize).filter(String::isNotBlank).toSet()
+        val suffixOk = Regex("^(?:(?:us\\$|\\$)\\s*\\d|[·•\\-|(]?\\s*\\d{1,3}\\s*s\\)?)$", RegexOption.IGNORE_CASE)
         val signals = buildSet {
             if (lines.any { line -> rules.quoteActions.any { action ->
-                line == action || (line.startsWith("$action ") && money.containsMatchIn(line.removePrefix("$action ")) &&
-                    Regex("^(?:us\\$|\\$)", RegexOption.IGNORE_CASE).containsMatchIn(line.removePrefix("$action ")))
+                line == action || line == "slide to $action" ||
+                    (line.startsWith("$action ") && suffixOk.containsMatchIn(line.removePrefix("$action ").trim()))
             } }) add(PageSignal.QUOTE_ACTION)
             if (money.containsMatchIn(text)) add(PageSignal.PRICE)
             if (lines.any { it in rules.confirmation }) add(PageSignal.ACCEPT_CONFIRMATION)
