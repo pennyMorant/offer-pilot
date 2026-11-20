@@ -1,37 +1,42 @@
 package com.overud.ui.analysis
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Map
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.overud.ui.components.AnalysisPage
 import com.overud.ui.components.AnalysisSelection
 
-private enum class AnalysisMode { REGIONS, TIMES }
+private enum class AnalysisMode(val label: String) { REGIONS("区域机会"), TIMES("时段趋势") }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalysisScreen(state: UnifiedAnalysisUiState, onSelection: (AnalysisSelection) -> Unit) {
     var mode by rememberSaveable { mutableStateOf(AnalysisMode.REGIONS) }
     Column(Modifier.fillMaxSize()) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        SingleChoiceSegmentedButtonRow(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
         ) {
-            FilterChip(mode == AnalysisMode.REGIONS, onClick = { mode = AnalysisMode.REGIONS },
-                label = { Text("区域机会") })
-            FilterChip(mode == AnalysisMode.TIMES, onClick = { mode = AnalysisMode.TIMES },
-                label = { Text("时段趋势") })
+            AnalysisMode.entries.forEachIndexed { index, item ->
+                SegmentedButton(
+                    selected = mode == item,
+                    onClick = { mode = item },
+                    shape = SegmentedButtonDefaults.itemShape(index, AnalysisMode.entries.size),
+                    icon = {
+                        Icon(
+                            if (item == AnalysisMode.REGIONS) Icons.Rounded.Map else Icons.Rounded.Schedule,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    },
+                    label = { Text(item.label, style = MaterialTheme.typography.labelLarge) },
+                )
+            }
         }
         AnalysisPage(
             state = if (mode == AnalysisMode.REGIONS) state.regions else state.times,
