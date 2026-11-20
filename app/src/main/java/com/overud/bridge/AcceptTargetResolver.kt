@@ -106,7 +106,7 @@ class AcceptTargetResolver(
     }
 
     private fun isSlideTarget(node: AccessibilityNodeInfo): Boolean {
-        val combined = "${node.text.orEmpty()} ${node.contentDescription.orEmpty()}"
+        val combined = "${node.text?.toString().orEmpty()} ${node.contentDescription?.toString().orEmpty()}"
         return combined.contains("slide", ignoreCase = true) || combined.contains("滑动")
     }
 
