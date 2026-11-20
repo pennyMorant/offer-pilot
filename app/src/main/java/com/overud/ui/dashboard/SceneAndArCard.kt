@@ -20,6 +20,8 @@ import com.overud.ui.components.ToolBadge
 fun SceneAndArCard(
     activeScene: DrivingScene?,
     arGuard: ArGuardState,
+    sessionSeen: Int,
+    sessionAccepted: Int,
     onScene: (DrivingScene) -> Unit,
     onAdjustAr: (Int) -> Unit,
 ) {
@@ -75,6 +77,11 @@ fun SceneAndArCard(
                     )
                     Text(arGuard.hint, style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (sessionSeen > 0) {
+                        val rate = (sessionAccepted * 100) / sessionSeen.coerceAtLeast(1)
+                        Text("本班次专属单：接 $sessionAccepted / 见 $sessionSeen（$rate%）",
+                            style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                    }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     FilledTonalIconButton(onClick = { onAdjustAr(-1) }, modifier = Modifier.size(34.dp)) {

@@ -97,13 +97,22 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                     }
                     pause.visibility = if (state.autoAcceptEnabled) View.VISIBLE else View.GONE
                     val active = state.activePlatform
-                    val other = active?.let { p -> Platform.entries.firstOrNull { it != p } }
-                    if (state.deliveryPhase == DeliveryPhase.ACTIVE && active != null && other != null) {
-                        switchOther.visibility = View.VISIBLE
-                        switchOther.text = "去暂停 ${other.label}"
-                        switchOther.setOnClickListener { runtime.launchOtherPlatform(active) }
-                    } else {
-                        switchOther.visibility = View.GONE
+                    val otherActive = active?.let { p -> Platform.entries.firstOrNull { it != p } }
+                    val completed = state.lastCompletedPlatform
+                    val otherCompleted = completed?.let { p -> Platform.entries.firstOrNull { it != p } }
+                    val recentComplete = state.lastCompletedAt?.let { System.currentTimeMillis() - it in 0..90_000L } == true
+                    when {
+                        state.deliveryPhase == DeliveryPhase.ACTIVE && active != null && otherActive != null -> {
+                            switchOther.visibility = View.VISIBLE
+                            switchOther.text = "去暂停 ${otherActive.label}"
+                            switchOther.setOnClickListener { runtime.launchOtherPlatform(active) }
+                        }
+                        state.deliveryPhase == DeliveryPhase.AVAILABLE && recentComplete && completed != null && otherCompleted != null -> {
+                            switchOther.visibility = View.VISIBLE
+                            switchOther.text = "去恢复 ${otherCompleted.label}"
+                            switchOther.setOnClickListener { runtime.launchOtherPlatform(completed) }
+                        }
+                        else -> switchOther.visibility = View.GONE
                     }
                 }
         }

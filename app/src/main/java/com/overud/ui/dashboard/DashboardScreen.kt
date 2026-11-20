@@ -64,7 +64,7 @@ fun DashboardScreen(
                 AutoAcceptCard(state, onAutomatic, onRules, onResolve)
             }
         }
-        item { SceneAndArCard(state.activeScene, state.arGuard, onScene, onAdjustAr) }
+        item { SceneAndArCard(state.activeScene, state.arGuard, state.sessionExclusiveSeen, state.sessionExclusiveAccepted, onScene, onAdjustAr) }
         item {
             state.latest?.let { OfferCard(it, state.decision, state.destinationAssessment) } ?: Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerLow,

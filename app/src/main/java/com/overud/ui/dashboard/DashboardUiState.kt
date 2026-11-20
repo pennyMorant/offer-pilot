@@ -25,6 +25,8 @@ data class DashboardUiState(
     val currentPageLabel: String? = null,
     val activeScene: DrivingScene? = null,
     val arGuard: ArGuardState = ArGuardState(),
+    val sessionExclusiveSeen: Int = 0,
+    val sessionExclusiveAccepted: Int = 0,
 ) {
     companion object {
         fun from(work: WorkState, bridge: BridgeStatus, arGuard: ArGuardState = ArGuardState()) = DashboardUiState(
@@ -38,6 +40,8 @@ data class DashboardUiState(
             currentPageLabel = platformPagePresentation(work.currentPage),
             activeScene = DrivingScene.match(work.policy),
             arGuard = arGuard,
+            sessionExclusiveSeen = work.sessionExclusiveSeen,
+            sessionExclusiveAccepted = work.sessionExclusiveAccepted,
         )
     }
 }

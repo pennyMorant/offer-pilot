@@ -37,11 +37,15 @@ class WorkSessionController(
     fun startWork() {
         generation.incrementAndGet()
         bridge.bind()
-        mutable.update { it.copy(working = true, automatic = false, autoAcceptEnabled = false, message = "正在监听订单页面") }
+        mutable.update { it.copy(working = true, automatic = false, autoAcceptEnabled = false,
+            activePlatform = null, lastCompletedPlatform = null, lastCompletedAt = null,
+            sessionExclusiveSeen = 0, sessionExclusiveAccepted = 0, message = "正在监听订单页面") }
     }
     fun stopWork() {
         generation.incrementAndGet()
         mutable.update { it.copy(working = false, automatic = false, autoAcceptEnabled = false, latest = null, decision = null, currentPage = null,
+            activePlatform = null, lastCompletedPlatform = null, lastCompletedAt = null,
+            sessionExclusiveSeen = 0, sessionExclusiveAccepted = 0,
             destinationAssessment = DestinationAssessment(), destinationEvidence = null, message = "工作已结束") }
         bridge.unbind()
     }

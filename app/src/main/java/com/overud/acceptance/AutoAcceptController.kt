@@ -31,13 +31,22 @@ class AutoAcceptController(
             confirmationTimeout?.cancel()
             gate.occupyConfirmed()
             deliveries.confirmed(token, platform)
-            session.update { it.copy(activePlatform = platform) }
+            session.update {
+                it.copy(
+                    activePlatform = platform,
+                    lastCompletedPlatform = null,
+                    lastCompletedAt = null,
+                    sessionExclusiveAccepted = it.sessionExclusiveAccepted + 1,
+                )
+            }
         },
         onCompleted = { token, platform ->
             confirmationTimeout?.cancel()
             gate.userResolved()
             deliveries.completed(token, platform)
-            session.update { it.copy(activePlatform = null) }
+            session.update {
+                it.copy(activePlatform = null, lastCompletedPlatform = platform, lastCompletedAt = System.currentTimeMillis())
+            }
             onDeliveryCompleted(platform)
         })
     fun restore() {

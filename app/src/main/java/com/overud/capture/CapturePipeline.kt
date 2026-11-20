@@ -28,6 +28,7 @@ class CapturePipeline(
     private val mutex: Mutex,
 ) {
     private var lastOcrAt = 0L
+    private val seenExclusiveIds = linkedSetOf<String>()
     private val sourceConflictMessage = "节点与截图识别不一致，本帧不接单、不计入报价统计"
     suspend fun poll() = coroutineScope {
         val lease = CaptureLease(session)
@@ -41,7 +42,7 @@ class CapturePipeline(
     private suspend fun collect(lease: CaptureLease) = mutex.withLock {
         try {
             deliveries.checkContinuity()
-            if (!session.state.value.working) { waiting.interrupt(); return@withLock }
+            if (!session.state.value.working) { seenExclusiveIds.clear(); waiting.interrupt(); return@withLock }
             if (session.state.value.diagnosticActive) { waiting.interrupt(); deliveries.invalidate(); return@withLock }
             if (!session.canInteract()) {
                 lease.expire("设备已锁定或熄屏，自动接单已关闭；解锁后需手动开启")
@@ -123,12 +124,15 @@ class CapturePipeline(
             var offer = observation.offer
             if (offer != null) {
                 currentCoroutineContext().ensureActive()
-                if (!session.state.value.working) { waiting.interrupt(); return@withLock }
+                if (!session.state.value.working) { seenExclusiveIds.clear(); waiting.interrupt(); return@withLock }
                 offer = tracker.observe(offer, now)
                 waiting.quote(offer)
                 val decision = session.state.value.assessOffer(offer, now)
                 val changed = statistics.record(offer, regions.usableRegion())
                 val aggregate = if (changed) statistics.snapshot() else session.state.value.statistics
+                val newExclusive = offer.channel == OfferChannel.EXCLUSIVE && seenExclusiveIds.add(offer.id).also {
+                    if (seenExclusiveIds.size > 200) seenExclusiveIds.remove(seenExclusiveIds.first())
+                }
                 if (!lease.valid()) { waiting.interrupt(); deliveries.invalidate(); return@withLock }
                 session.update {
                     if (lease.current()) {
@@ -136,6 +140,7 @@ class CapturePipeline(
                         val initial = DestinationAssessment(resolution = if (offer.destination.isNullOrBlank())
                             DestinationResolution.MISSING else DestinationResolution.RESOLVING)
                         it.copy(latest = offer, decision = decision, statistics = aggregate,
+                            sessionExclusiveSeen = if (newExclusive) it.sessionExclusiveSeen + 1 else it.sessionExclusiveSeen,
                             message = if (it.message == sourceConflictMessage) "正在分析当前报价" else it.message,
                             destinationAssessment = if (sameDestination) it.destinationAssessment else initial,
                             destinationEvidence = if (sameDestination) it.destinationEvidence else null)

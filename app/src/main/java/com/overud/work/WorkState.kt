@@ -27,4 +27,8 @@ data class WorkState(
     val destinationAssessment: DestinationAssessment = DestinationAssessment(),
     val deliveryPhase: DeliveryPhase = DeliveryPhase.AVAILABLE,
     val activePlatform: Platform? = null,
+    val lastCompletedPlatform: Platform? = null,
+    val lastCompletedAt: Long? = null,
+    val sessionExclusiveSeen: Int = 0,
+    val sessionExclusiveAccepted: Int = 0,
 )
