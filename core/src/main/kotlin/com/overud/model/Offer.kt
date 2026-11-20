@@ -20,4 +20,7 @@ data class Offer(
     val pickupAddress: String? = null,
     val includesTip: Boolean? = null,
     val firstObservedAt: Long = observedAt,
+    val channel: OfferChannel = OfferChannel.UNKNOWN,
+    val preferredTag: Boolean = false,
+    val itemCount: Int? = null,
 )
