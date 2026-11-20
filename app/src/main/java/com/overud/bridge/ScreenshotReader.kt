@@ -32,7 +32,7 @@ class ScreenshotReader(private val connection: UiAutomationConnection, private v
                 Thread({
                     try {
                         runCatching { ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]).use {
-                            image.compress(Bitmap.CompressFormat.PNG, 100, it)
+                            image.compress(Bitmap.CompressFormat.JPEG, 85, it)
                         } }
                     } finally { image.recycle(); busy.set(false) }
                 }, "overud-screenshot-pipe").apply { isDaemon = true }.start()

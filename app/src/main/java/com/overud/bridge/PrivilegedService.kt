@@ -18,6 +18,13 @@ class PrivilegedService : IPrivilegedService.Stub() {
         acceptance.accept(expectedToken, expectedPackage, deadlineElapsed)
     override fun confirmAcceptance(originalToken: String, expectedToken: String, expectedPackage: String, deadlineElapsed: Long): String =
         acceptance.confirm(originalToken, expectedToken, expectedPackage, deadlineElapsed)
+    override fun launchPlatform(packageName: String): Boolean {
+        val platform = com.overud.model.Platform.fromPackage(packageName) ?: return false
+        return runCatching {
+            connection.get().executeShellCommand("monkey -p ${platform.packageName} -c android.intent.category.LAUNCHER 1")?.close()
+            true
+        }.getOrDefault(false)
+    }
     override fun destroy() {
         connection.close()
         kotlin.system.exitProcess(0)

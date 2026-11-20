@@ -1,7 +1,10 @@
 package com.overud.bridge
 
-import android.view.accessibility.AccessibilityNodeInfo
+import android.graphics.Rect
 import android.os.SystemClock
+import android.view.InputDevice
+import android.view.MotionEvent
+import android.view.accessibility.AccessibilityNodeInfo
 import com.overud.model.Offer
 import com.overud.model.Platform
 import com.overud.platform.AcceptanceActionPolicy
@@ -34,7 +37,7 @@ class AcceptTargetResolver(
     private fun click(expectedToken: String, expectedPackage: String, deadlineElapsed: Long, confirmation: Pending? = null): String {
         if (deadlineElapsed - SystemClock.elapsedRealtime() !in 1..2000) return "action_expired"
         val platform = Platform.fromPackage(expectedPackage) ?: return "unsupported"
-        val root = connection.get().rootInActiveWindow ?: return "no_window"
+        val root = reader.findTargetRoot(expectedPackage) ?: return "no_window"
         if (root.packageName?.toString() != expectedPackage) return "window_changed"
         val nodes = reader.flatten(root)
         val body = reader.text(nodes)
@@ -47,36 +50,63 @@ class AcceptTargetResolver(
         }
         if (targets.size != 1) return "ambiguous_button"
         val label = targets.single()
-        var target: AccessibilityNodeInfo? = label
-        repeat(4) {
-            val current = target ?: return "missing_button"
-            if (!eligible(current, expectedPackage, root.windowId)) return "button_unavailable"
-            if (current.isClickable) {
-                // Re-read the active window after resolving ancestors, before issuing the action.
-                val latest = connection.get().rootInActiveWindow ?: return "no_window"
-                if (latest.packageName?.toString() != expectedPackage || latest.windowId != root.windowId) {
-                    return "window_changed"
-                }
-                if (fingerprint(platform, reader.text(reader.flatten(latest))) != expectedToken) return "offer_changed"
-                if (!label.refresh() || !eligible(label, expectedPackage, latest.windowId) ||
-                    !matches(platform, label, confirmation != null)) {
-                    return "button_changed"
-                }
-                if (!current.refresh() || !eligible(current, expectedPackage, latest.windowId) || !current.isClickable) {
-                    return "button_unavailable"
-                }
-                if (confirmation != null && SystemClock.elapsedRealtime() - confirmation.startedAt >=
-                    AcceptanceConfirmationPolicy.WINDOW_MILLIS) return "confirmation_context_expired"
-                val initial = if (confirmation == null) OfferParser.parse(platform, body, System.currentTimeMillis()) else null
-                val startedAt = SystemClock.elapsedRealtime()
-                if (startedAt >= deadlineElapsed) return "action_expired"
-                val dispatched = current.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                if (dispatched && initial != null) pending = Pending(expectedToken, initial, startedAt)
-                return if (dispatched) "dispatched" else "click_failed"
-            }
-            target = current.parent
+        val clickable = findClickableAncestor(label, expectedPackage, root.windowId)
+        val latest = reader.findTargetRoot(expectedPackage) ?: return "no_window"
+        if (latest.packageName?.toString() != expectedPackage || latest.windowId != root.windowId) {
+            return "window_changed"
         }
-        return "button_not_clickable"
+        if (fingerprint(platform, reader.text(reader.flatten(latest))) != expectedToken) return "offer_changed"
+        if (!label.refresh() || !eligible(label, expectedPackage, latest.windowId) ||
+            !matches(platform, label, confirmation != null)) {
+            return "button_changed"
+        }
+        if (confirmation != null && SystemClock.elapsedRealtime() - confirmation.startedAt >=
+            AcceptanceConfirmationPolicy.WINDOW_MILLIS) return "confirmation_context_expired"
+        val initial = if (confirmation == null) OfferParser.parse(platform, body, System.currentTimeMillis()) else null
+        val startedAt = SystemClock.elapsedRealtime()
+        if (startedAt >= deadlineElapsed) return "action_expired"
+
+        val dispatched = if (clickable != null && clickable.refresh() &&
+            eligible(clickable, expectedPackage, latest.windowId) && clickable.isClickable) {
+            clickable.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+        } else {
+            injectTap(label)
+        }
+        if (dispatched && initial != null) pending = Pending(expectedToken, initial, startedAt)
+        return if (dispatched) "dispatched" else "click_failed"
+    }
+
+    private fun findClickableAncestor(label: AccessibilityNodeInfo, pkg: String, windowId: Int): AccessibilityNodeInfo? {
+        var current: AccessibilityNodeInfo? = label
+        repeat(4) {
+            val node = current ?: return null
+            if (!eligible(node, pkg, windowId)) return null
+            if (node.isClickable) return node
+            current = node.parent
+        }
+        return null
+    }
+
+    /** Real touch fallback via UiAutomation (UID 2000) for custom-drawn or Compose buttons. */
+    private fun injectTap(node: AccessibilityNodeInfo): Boolean {
+        val bounds = Rect().also(node::getBoundsInScreen)
+        if (bounds.isEmpty || bounds.width() < 4 || bounds.height() < 4) return false
+        val x = bounds.exactCenterX()
+        val y = bounds.exactCenterY()
+        val now = SystemClock.uptimeMillis()
+        val ui = connection.get()
+        val down = MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN, x, y, 0).apply {
+            source = InputDevice.SOURCE_TOUCHSCREEN
+        }
+        val up = MotionEvent.obtain(now, now + 45, MotionEvent.ACTION_UP, x, y, 0).apply {
+            source = InputDevice.SOURCE_TOUCHSCREEN
+        }
+        return try {
+            ui.injectInputEvent(down, true) && ui.injectInputEvent(up, true)
+        } finally {
+            down.recycle()
+            up.recycle()
+        }
     }
 
     private fun matches(platform: Platform, node: AccessibilityNodeInfo, confirmation: Boolean): Boolean {
