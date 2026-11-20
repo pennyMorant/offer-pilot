@@ -21,7 +21,9 @@ fun opportunityPresentation(summary: QualitySummary, exposureMs: Long, currentRe
     val ready = summary.regionKey != AnalysisBucket.UNKNOWN_REGION &&
         summary.qualityVersion == QualityEvaluator.VERSION && classified >= 10 &&
         summary.perMileCount >= 10 && summary.perHourCount >= 10 && offerRate != null
-    val score = if (ready) opportunityScore(goodRate!!, offerRate!!, mileCents!!, hourCents!!) else null
+    val score = if (ready && goodRate != null && mileCents != null && hourCents != null) {
+        opportunityScore(goodRate, offerRate, mileCents, hourCents)
+    } else null
     val confidence = when {
         !ready -> "证据不足"
         classified >= 50 && hours >= 10 -> "高可信"

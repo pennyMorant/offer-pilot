@@ -29,7 +29,7 @@ object ValueEngine {
         val contributionPerHour = if (seconds != null && contribution != null) contribution * 3600.0 / seconds else null
 
         val weakDeadhead = destinationEvidence?.assessment?.outlook == RegionalOutlook.WEAK && miles != null && miles > 6.0
-        val evalMiles = if (weakDeadhead) miles!! * 1.35 else miles
+        val evalMiles = if (weakDeadhead) miles * 1.35 else miles
         val evalSeconds = if (weakDeadhead && seconds != null) (seconds * 1.30).toLong() else seconds
         val evalCost = if (evalMiles != null && effective.costCentsPerMile >= 0) evalMiles * effective.costCentsPerMile else null
         val evalContribution = if (amount != null && evalCost != null) amount - evalCost else contribution

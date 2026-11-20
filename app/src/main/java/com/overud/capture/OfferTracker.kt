@@ -20,7 +20,7 @@ class OfferTracker(private val store: TrackerCheckpointStore) {
         val lastOffer = latest[offer.platform]
         val fillingFields = previous != null && lastOffer != null && now - previous.lastAt in 0..3000 && compatible(lastOffer, offer)
         val same = previous != null && now - previous.lastAt in 0..30_000 && (previous.identity == identity || fillingFields)
-        val tracked = if (same) previous!!.copy(identity = identity, lastAt = now)
+        val tracked = if (same) previous.copy(identity = identity, lastAt = now)
             else TrackerCheckpoint(identity, fingerprint(offer.platform, "$identity:$now"), now, now)
         val merged = if (same && lastOffer != null) {
             offer.copy(

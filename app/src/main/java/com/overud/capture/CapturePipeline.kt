@@ -140,7 +140,7 @@ class CapturePipeline(
                 if (!lease.valid()) { waiting.interrupt(); deliveries.invalidate(); return@withLock }
                 session.update {
                     if (lease.current()) {
-                        val sameDestination = it.latest?.id == offer.id && it.latest?.destination == offer.destination
+                        val sameDestination = it.latest?.id == offer.id && it.latest.destination == offer.destination
                         val initial = DestinationAssessment(resolution = if (offer.destination.isNullOrBlank())
                             DestinationResolution.MISSING else DestinationResolution.RESOLVING)
                         it.copy(latest = offer, decision = decision, statistics = aggregate,
