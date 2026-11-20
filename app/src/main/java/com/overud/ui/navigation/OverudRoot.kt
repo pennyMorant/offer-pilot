@@ -4,7 +4,9 @@ package com.overud.ui.navigation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Settings
@@ -13,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -60,6 +63,7 @@ fun OverudRoot(
     BackHandler(enabled = settings || dirty) { navigate { settings = false; selected = Destination.DASHBOARD } }
     var showRuntimeDiagnostics by rememberSaveable { mutableStateOf(false) }
     var resolve by remember { mutableStateOf(false) }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -83,39 +87,53 @@ fun OverudRoot(
                 },
             )
         },
-        bottomBar = {
-            if (!settings) {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 0.dp) {
-                    Destination.entries.forEach { destination ->
-                        val isSelected = selected == destination
-                        NavigationBarItem(
-                            selected = isSelected,
-                            onClick = { navigate { selected = destination; settings = false } },
-                            icon = { Icon(if (isSelected) destination.selectedIcon else destination.unselectedIcon,
-                                contentDescription = destination.label) },
-                            label = { Text(destination.label, style = MaterialTheme.typography.labelMedium) },
+    ) { padding ->
+        Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()), contentAlignment = Alignment.TopCenter) {
+            if (settings) {
+                Box(Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())) {
+                    SettingsScreen(factory, rules, voice) { showRuntimeDiagnostics = true }
+                }
+            } else {
+                AnimatedContent(selected, label = "navigation",
+                    modifier = Modifier.fillMaxSize().padding(bottom = 84.dp + padding.calculateBottomPadding())) { page ->
+                    when (page) {
+                        Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
+                            { navigate { selected = Destination.RULES } }, { resolve = true }, dashboard::applyScene,
+                            dashboard::adjustUberAr, dashboard::openPlatform)
+                        Destination.ANALYSIS -> AnalysisScreen(
+                            analysis, dailyState, analysisViewModel::select,
+                            dailyReviewViewModel::selectRange, dailyReviewViewModel::selectPlatform, dailyReviewViewModel::selectFilter,
                         )
+                        Destination.RULES -> RulesScreen(rules)
                     }
                 }
-            }
-        },
-    ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
-            if (settings) SettingsScreen(factory, rules, voice) { showRuntimeDiagnostics = true }
-            else AnimatedContent(selected, label = "navigation") { page ->
-                when (page) {
-                    Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
-                        { navigate { selected = Destination.RULES } }, { resolve = true }, dashboard::applyScene,
-                        dashboard::adjustUberAr, dashboard::openPlatform)
-                    Destination.ANALYSIS -> AnalysisScreen(
-                        analysis,
-                        dailyState,
-                        analysisViewModel::select,
-                        dailyReviewViewModel::selectRange,
-                        dailyReviewViewModel::selectPlatform,
-                        dailyReviewViewModel::selectFilter,
-                    )
-                    Destination.RULES -> RulesScreen(rules)
+                HorizontalFloatingToolbar(
+                    expanded = true,
+                    colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
+                    modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 14.dp),
+                ) {
+                    Destination.entries.forEach { destination ->
+                        val isSelected = selected == destination
+                        Surface(
+                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0f),
+                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                            shape = CircleShape,
+                            modifier = Modifier.clip(CircleShape)
+                                .clickable { navigate { selected = destination; settings = false } },
+                        ) {
+                            Row(
+                                Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                Icon(if (isSelected) destination.selectedIcon else destination.unselectedIcon,
+                                    contentDescription = destination.label, modifier = Modifier.size(20.dp))
+                                Text(destination.label, style = MaterialTheme.typography.labelLarge)
+                            }
+                        }
+                    }
                 }
             }
         }
