@@ -10,8 +10,9 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import rikka.shizuku.Shizuku
 
-/** Shevery uses the Shizuku provider protocol; authorization is not a ready capture service. */
+/** Shevery native fast-pull + Shizuku provider protocol; authorization is not a ready capture service. */
 class SheveryBridge(context: Context) {
+    private val appContext = context.applicationContext
     private val mutable = MutableStateFlow(BridgeStatus())
     val status = mutable.asStateFlow()
     private val eventFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -23,8 +24,8 @@ class SheveryBridge(context: Context) {
     private var timeout: Job? = null
     @Volatile var service: IPrivilegedService? = null
         private set
-    private val args = Shizuku.UserServiceArgs(ComponentName(context.packageName, PrivilegedService::class.java.name))
-        .daemon(false).processNameSuffix("capture").debuggable(false).version(7)
+    private val args = Shizuku.UserServiceArgs(ComponentName(appContext.packageName, PrivilegedService::class.java.name))
+        .daemon(false).processNameSuffix("capture").debuggable(false).version(8)
     private val received = Shizuku.OnBinderReceivedListener { scope.launch { refresh(); connectIfRequested() } }
     private val dead = Shizuku.OnBinderDeadListener {
         scope.launch { disconnect(); mutable.value = BridgeStatus(message = "Shevery 已断开，自动接单已关闭") }
@@ -39,16 +40,18 @@ class SheveryBridge(context: Context) {
     }
 
     fun refresh() {
-        val alive = runCatching { Shizuku.pingBinder() }.getOrDefault(false)
+        var alive = runCatching { Shizuku.pingBinder() }.getOrDefault(false)
+        if (!alive) alive = SheveryFastPull.tryPull(appContext)
         val granted = alive && runCatching { Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED }.getOrDefault(false)
         if ((!alive || !granted) && active != null) disconnect()
         val ready = granted && service?.asBinder()?.isBinderAlive == true
         mutable.value = BridgeStatus(alive, granted, ready, when {
-            !alive -> "未收到 Shevery Binder，请先启动 Shevery 服务"
-            !granted -> "Shevery 服务在线，等待授权"
-            ready -> "Shevery 采集服务已连接，页面读取可用"
+            !alive -> if (SheveryFastPull.isSheveryInstalled(appContext))
+                "未收到 Shevery 服务，请在 Shevery 中通过无线调试启动" else "未检测到 Shevery，请先安装并启动服务"
+            !granted -> "Shevery 服务在线（${SheveryFastPull.uidLabel()}），等待授权"
+            ready -> "Shevery 已连接（${SheveryFastPull.uidLabel()}），页面读取可用"
             active != null -> "Shevery 已授权，正在连接并检查页面读取"
-            else -> "Shevery 已授权，可开始工作"
+            else -> "Shevery 已授权（${SheveryFastPull.uidLabel()}），可开始工作"
         })
     }
 
