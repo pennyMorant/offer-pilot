@@ -4,6 +4,7 @@ import com.overud.model.OfferChannel
 import com.overud.model.OfferService
 import com.overud.model.Platform
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 /** Pure Kotlin item projection of persisted offer_history rows for daily analytics. */
 data class LoggedOfferItem(
