@@ -42,7 +42,9 @@ class AppContainer(context: Context) {
     private val waiting = WaitingRecorder(session, regions, WaitingRepository(database), scope, mutex)
     private val deliveries = DeliveryRecorder(session, regions, DeliveryRepository(database), scope, mutex)
     val acceptance = AutoAcceptController(session, AcceptanceRepository(database.acceptance()), bridge, scope, mutex,
-        deliveries, waiting::start)
+        deliveries, waiting::start) { offerId ->
+        scope.launch(Dispatchers.IO) { runCatching { offerHistory.markAccepted(offerId) } }
+    }
     private val destinations = DestinationController(session,
         DestinationResolver(AndroidGeocodingProvider(context)), scope)
     private val tracker = OfferTracker(TrackerCheckpointStore(context))

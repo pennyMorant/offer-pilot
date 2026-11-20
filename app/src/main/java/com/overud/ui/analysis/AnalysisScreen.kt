@@ -29,6 +29,7 @@ fun AnalysisScreen(
     onDailyRange: (DailyDateRange) -> Unit,
     onDailyPlatform: (Platform?) -> Unit,
     onDailyFilter: (DailyItemFilter) -> Unit,
+    onClearHistory: () -> Unit,
 ) {
     var mode by rememberSaveable { mutableStateOf(AnalysisMode.DAILY) }
     Column(Modifier.fillMaxSize()) {
@@ -56,7 +57,7 @@ fun AnalysisScreen(
             }
         }
         when (mode) {
-            AnalysisMode.DAILY -> DailyReviewPage(dailyState, onDailyRange, onDailyPlatform, onDailyFilter)
+            AnalysisMode.DAILY -> DailyReviewPage(dailyState, onDailyRange, onDailyPlatform, onDailyFilter, onClearHistory)
             AnalysisMode.REGIONS -> AnalysisPage(state.regions, onSelection, byRegion = true)
             AnalysisMode.TIMES -> AnalysisPage(state.times, onSelection, byRegion = false)
         }

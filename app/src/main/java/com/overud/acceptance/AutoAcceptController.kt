@@ -21,6 +21,7 @@ class AutoAcceptController(
     private val mutex: Mutex,
     private val deliveries: DeliveryRecorder,
     onDeliveryCompleted: (Platform) -> Unit = {},
+    private val onOfferAccepted: (String) -> Unit = {},
 ) {
     private var gate = AcceptanceGate()
     private var confirmationTimeout: Job? = null
@@ -31,6 +32,7 @@ class AutoAcceptController(
             confirmationTimeout?.cancel()
             gate.occupyConfirmed()
             deliveries.confirmed(token, platform)
+            session.state.value.latest?.takeIf { it.platform == platform }?.id?.let(onOfferAccepted)
             session.update {
                 it.copy(
                     activePlatform = platform,

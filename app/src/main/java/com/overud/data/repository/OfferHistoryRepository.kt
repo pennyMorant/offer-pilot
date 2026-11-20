@@ -55,6 +55,12 @@ class OfferHistoryRepository(private val database: OverudDatabase) {
         return true
     }
 
+    fun markAccepted(offerId: String) {
+        if (offerId.isBlank()) return
+        database.offerHistory().markAccepted(offerId)
+        mutableRevision.value += 1
+    }
+
     fun itemsByDateRange(startDate: String, endDate: String): List<LoggedOfferItem> =
         database.offerHistory().byDateRange(startDate, endDate).map(::toItem)
 
@@ -91,6 +97,7 @@ class OfferHistoryRepository(private val database: OverudDatabase) {
         valueScore = row.valueScore,
         quality = OrderQuality.entries.find { it.name == row.quality } ?: OrderQuality.UNKNOWN,
         eligible = row.eligible,
+        accepted = row.accepted,
         merchant = row.merchant,
         destinationArea = row.destinationArea,
     )

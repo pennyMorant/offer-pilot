@@ -33,8 +33,10 @@ fun DailyReviewPage(
     onRange: (DailyDateRange) -> Unit,
     onPlatform: (Platform?) -> Unit,
     onFilter: (DailyItemFilter) -> Unit,
+    onClearAll: () -> Unit,
 ) {
     val summary = state.summary
+    var confirmClear by remember { mutableStateOf(false) }
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -66,11 +68,14 @@ fun DailyReviewPage(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text("${summary.totalCount} 单", style = MaterialTheme.typography.displayMedium)
                         }
-                        Text(
-                            "好单 ${summary.goodPercent}% · 垃圾单 ${summary.lowPercent}%",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("好单 ${summary.goodPercent}% · 垃圾单 ${summary.lowPercent}%",
+                                style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                            if (summary.acceptedCount > 0) {
+                                Text("已接 ${summary.acceptedCount}单 (${money(summary.acceptedAmountCents)}) · ${summary.acceptedPercent}%",
+                                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
+                            }
+                        }
                     }
                     QualityRatioBar(summary.goodCount, summary.normalCount, summary.lowCount)
                     Text(
@@ -85,14 +90,23 @@ fun DailyReviewPage(
                         ToolMetricTile("均毛时薪", summary.avgGrossCentsPerHour?.let(::money) ?: "—", Modifier.weight(1f))
                         ToolMetricTile("达标率", if (summary.totalCount > 0) "${summary.eligiblePercent}%" else "—", Modifier.weight(0.8f))
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        ToolBadge("雷达单 ${summary.radarCount}")
-                        ToolBadge("专属单 ${summary.exclusiveCount}")
-                        if (summary.fakePreferredCount > 0) {
-                            ToolBadge("假好单 ${summary.fakePreferredCount}",
-                                MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
+                    if (summary.totalCount > 0) HourlyVolumeStrip(summary.hourlyCounts)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            ToolBadge("雷达 ${summary.radarCount}")
+                            ToolBadge("专属 ${summary.exclusiveCount}")
+                            if (summary.fakePreferredCount > 0) {
+                                ToolBadge("假好单 ${summary.fakePreferredCount}",
+                                    MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
+                            }
+                            if (summary.shopCount > 0) ToolBadge("商超 ${summary.shopCount}")
                         }
-                        if (summary.shopCount > 0) ToolBadge("商超 ${summary.shopCount}")
+                        if (summary.totalCount > 0) {
+                            TextButton(onClick = { confirmClear = true }, contentPadding = PaddingValues(horizontal = 6.dp)) {
+                                Text("清空", style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
                     }
                 }
             }
@@ -124,6 +138,15 @@ fun DailyReviewPage(
             }
         }
     }
+    if (confirmClear) {
+        AlertDialog(
+            onDismissRequest = { confirmClear = false },
+            title = { Text("清空推送历史") },
+            text = { Text("确定删除所有已记录的推送订单历史吗？区域和时段汇总统计不受影响。") },
+            confirmButton = { TextButton(onClick = { confirmClear = false; onClearAll() }) { Text("确认清空") } },
+            dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("取消") } },
+        )
+    }
 }
 
 @Composable
@@ -134,6 +157,25 @@ private fun QualityRatioBar(good: Int, normal: Int, low: Int) {
         if (good > 0) Box(Modifier.weight(good.toFloat() / total).fillMaxHeight().background(MaterialTheme.colorScheme.primary))
         if (normal > 0) Box(Modifier.weight(normal.toFloat() / total).fillMaxHeight().background(MaterialTheme.colorScheme.tertiary))
         if (low > 0) Box(Modifier.weight(low.toFloat() / total).fillMaxHeight().background(MaterialTheme.colorScheme.error))
+    }
+}
+
+@Composable
+private fun HourlyVolumeStrip(counts: List<Int>) {
+    val peak = counts.maxOrNull()?.coerceAtLeast(1) ?: 1
+    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Text("24 小时推单分布（峰值 $peak 单）", style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.fillMaxWidth().height(22.dp), horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalAlignment = Alignment.Bottom) {
+            counts.forEach { count ->
+                val frac = (count.toFloat() / peak).coerceIn(0.08f, 1f)
+                Box(Modifier.weight(1f).fillMaxHeight(if (count == 0) 0.08f else frac)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(if (count == 0) MaterialTheme.colorScheme.surfaceContainerHighest
+                        else MaterialTheme.colorScheme.primary))
+            }
+        }
     }
 }
 
@@ -158,6 +200,7 @@ private fun LoggedOfferRow(item: LoggedOfferItem, index: Int, count: Int) {
                     Text(money(item.amountCents), style = MaterialTheme.typography.titleMedium)
                     ToolBadge(item.platform.label)
                     ToolBadge(qLabel, qBg, qFg)
+                    if (item.accepted) ToolBadge("已接", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
                     if (item.fakePreferred) ToolBadge("假好单", MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
                     else if (item.channel == OfferChannel.TRIP_RADAR) ToolBadge("雷达")
                 }

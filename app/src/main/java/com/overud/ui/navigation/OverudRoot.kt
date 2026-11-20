@@ -102,7 +102,8 @@ fun OverudRoot(
                             dashboard::adjustUberAr, dashboard::openPlatform)
                         Destination.ANALYSIS -> AnalysisScreen(
                             analysis, dailyState, analysisViewModel::select,
-                            dailyReviewViewModel::selectRange, dailyReviewViewModel::selectPlatform, dailyReviewViewModel::selectFilter,
+                            dailyReviewViewModel::selectRange, dailyReviewViewModel::selectPlatform,
+                            dailyReviewViewModel::selectFilter, dailyReviewViewModel::clearAll,
                         )
                         Destination.RULES -> RulesScreen(rules)
                     }

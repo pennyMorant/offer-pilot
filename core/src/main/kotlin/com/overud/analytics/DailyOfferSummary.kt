@@ -26,6 +26,7 @@ data class LoggedOfferItem(
     val valueScore: Int,
     val quality: OrderQuality,
     val eligible: Boolean,
+    val accepted: Boolean = false,
     val merchant: String,
     val destinationArea: String,
 )
@@ -42,6 +43,9 @@ data class DailyOfferSummary(
     val lowPercent: Int = 0,
     val eligibleCount: Int = 0,
     val eligiblePercent: Int = 0,
+    val acceptedCount: Int = 0,
+    val acceptedPercent: Int = 0,
+    val acceptedAmountCents: Long = 0,
     val radarCount: Int = 0,
     val exclusiveCount: Int = 0,
     val preferredCount: Int = 0,
@@ -63,6 +67,7 @@ data class DailyOfferSummary(
             val classified = good + normal + low
             fun pct(count: Int, denom: Int) = if (denom > 0) (count * 100.0 / denom).roundToInt() else 0
             val eligible = items.count { it.eligible }
+            val acceptedItems = items.filter { it.accepted }
             val amounts = items.map { it.amountCents }.filter { it > 0 }
             val distances = items.map { it.distanceMeters }.filter { it > 0 }
             val perMiles = items.map { it.centsPerMile }.filter { it > 0 }
@@ -81,6 +86,9 @@ data class DailyOfferSummary(
                 lowPercent = pct(low, classified),
                 eligibleCount = eligible,
                 eligiblePercent = pct(eligible, items.size),
+                acceptedCount = acceptedItems.size,
+                acceptedPercent = pct(acceptedItems.size, items.size),
+                acceptedAmountCents = acceptedItems.sumOf { it.amountCents },
                 radarCount = items.count { it.channel == OfferChannel.TRIP_RADAR },
                 exclusiveCount = items.count { it.channel == OfferChannel.EXCLUSIVE },
                 preferredCount = items.count { it.preferredTag },

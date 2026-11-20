@@ -32,6 +32,7 @@ public class OfferHistoryRecord {
     public int valueScore;
     @NonNull public String quality = "";
     public boolean eligible;
+    public boolean accepted;
     @NonNull public String merchant = "";
     @NonNull public String destinationArea = "";
 }
