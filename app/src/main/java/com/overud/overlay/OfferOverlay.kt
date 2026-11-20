@@ -10,6 +10,9 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.overud.di.AppContainer
+import com.overud.model.DeliveryPhase
+import com.overud.model.Platform
+import com.overud.valuation.StrategyAdvisor
 import com.overud.ui.components.vehicleCostPresentation
 import com.overud.ui.components.valueRatingPresentation
 import com.overud.ui.components.prop22Compact
@@ -40,7 +43,8 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
         }
         val label = TextView(context).apply { textSize = 14f }
         val pause = Button(context).apply { text = "暂停自动接单"; setOnClickListener { runtime.setAutomatic(false) } }
-        panel.addView(label); panel.addView(pause)
+        val switchOther = Button(context).apply { visibility = android.view.View.GONE }
+        panel.addView(label); panel.addView(pause); panel.addView(switchOther)
         val params = WindowManager.LayoutParams(dp(255), WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.END; y = dp(90); x = dp(12) }
@@ -55,22 +59,35 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                 label.setTextColor(colors.onSurface.toArgb())
                 pause.backgroundTintList = android.content.res.ColorStateList.valueOf(colors.primaryContainer.toArgb())
                 pause.setTextColor(colors.onPrimaryContainer.toArgb())
+                switchOther.backgroundTintList = android.content.res.ColorStateList.valueOf(colors.secondaryContainer.toArgb())
+                switchOther.setTextColor(colors.onSecondaryContainer.toArgb())
                 val offer = state.latest
                 val mode = when {
                     state.automatic -> "自动接单中"
-                    state.autoAcceptEnabled -> "自动接单已暂停"
+                    state.autoAcceptEnabled -> "自动接单待命"
                     else -> "手动模式"
                 }
+                val advice = offer?.let { StrategyAdvisor.advise(it, state.decision) }
+                val strategyLine = advice?.tags?.takeIf { it.isNotEmpty() }?.joinToString(" · ")?.let { "$it\n" }.orEmpty()
                 label.text = "Overud · $mode\n" +
                     (offer?.let {
                         val amount = offerAmountPresentation(it)
-                        "${it.platform.label}  $amount\n${state.decision?.reasons?.firstOrNull() ?: "符合接单要求"}\n" +
+                        "${it.platform.label}  $amount\n$strategyLine${state.decision?.reasons?.firstOrNull() ?: "符合接单要求"}\n" +
                             valueRatingPresentation(state.decision?.valuation).compact + "\n" +
                             vehicleCostPresentation(state.decision?.valuation).compact + "\n" +
                             prop22Compact(state.decision?.valuation?.prop22) +
                             destinationPresentation(state.destinationAssessment, Locale.getDefault()).title
                     } ?: platformPagePresentation(state.currentPage) ?: "等待新报价")
                 pause.isEnabled = state.autoAcceptEnabled
+                val active = state.activePlatform
+                val other = active?.let { p -> Platform.entries.firstOrNull { it != p } }
+                if (state.deliveryPhase == DeliveryPhase.DELIVERING && active != null && other != null) {
+                    switchOther.visibility = android.view.View.VISIBLE
+                    switchOther.text = "去暂停 ${other.label}"
+                    switchOther.setOnClickListener { runtime.launchOtherPlatform(active) }
+                } else {
+                    switchOther.visibility = android.view.View.GONE
+                }
             }
         }
     }

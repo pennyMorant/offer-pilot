@@ -26,4 +26,5 @@ data class WorkState(
     val destinationEvidence: DestinationEvidence? = null,
     val destinationAssessment: DestinationAssessment = DestinationAssessment(),
     val deliveryPhase: DeliveryPhase = DeliveryPhase.AVAILABLE,
+    val activePlatform: Platform? = null,
 )

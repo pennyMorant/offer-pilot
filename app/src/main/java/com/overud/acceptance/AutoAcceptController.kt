@@ -31,11 +31,13 @@ class AutoAcceptController(
             confirmationTimeout?.cancel()
             gate.occupyConfirmed()
             deliveries.confirmed(token, platform)
+            session.update { it.copy(activePlatform = platform) }
         },
         onCompleted = { token, platform ->
             confirmationTimeout?.cancel()
             gate.userResolved()
             deliveries.completed(token, platform)
+            session.update { it.copy(activePlatform = null) }
             onDeliveryCompleted(platform)
         })
     fun restore() {
@@ -62,7 +64,7 @@ class AutoAcceptController(
                     observer.reset()
                     deliveries.resolved()
                     session.update { state -> state.copy(pending = false, automatic = false, autoAcceptEnabled = false,
-                        deliveryPhase = DeliveryPhase.AVAILABLE, message = "已确认当前无进行中的配送；可重新开启自动接单") }
+                        deliveryPhase = DeliveryPhase.AVAILABLE, activePlatform = null, message = "已确认当前无进行中的配送；可重新开启自动接单") }
                 }.onFailure {
                     session.update { state -> state.copy(pending = true, automatic = false, autoAcceptEnabled = false,
                         deliveryPhase = DeliveryPhase.UNCERTAIN, message = "订单占用状态未能保存，保持暂停，请稍后重试") }
