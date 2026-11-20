@@ -31,6 +31,7 @@ fun RulesScreen(viewModel: RulesViewModel) {
             RuleField.TARGET_CONTRIBUTION_HOUR, RuleField.MINIMUM_SCORE -> "价值评分"
             RuleField.DISTANCE, RuleField.TIME, RuleField.PICKUP -> "距离与时间"
             RuleField.REGION_PERCENT, RuleField.REGION_SAMPLES -> "目的地区域"
+            RuleField.MAX_SHOP_ITEMS, RuleField.RADAR_EXTRA_SCORE -> "订单偏好"
             else -> section
         }
     }

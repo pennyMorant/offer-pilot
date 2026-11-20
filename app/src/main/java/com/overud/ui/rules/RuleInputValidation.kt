@@ -42,4 +42,11 @@ fun ruleInputErrors(input: RulesUiState): Map<RuleField, String> = buildMap {
         if (input.regionalGoodPercent.toIntOrNull()?.let { it in 1..100 } != true) put(RuleField.REGION_PERCENT, "请输入 1–100 的整数")
         if (input.regionalSamples.toLongOrNull()?.let { it in 10L..100000L } != true) put(RuleField.REGION_SAMPLES, "请输入 10–100000 的整数")
     }
+    if (input.allowShopAndPay && input.maxShopItems.isNotBlank() &&
+        input.maxShopItems.trim().toIntOrNull()?.let { it in 1..200 } != true) {
+        put(RuleField.MAX_SHOP_ITEMS, "请输入 1–200 的整数，或留空表示不限")
+    }
+    if (input.allowTripRadar && input.radarExtraScore.trim().toIntOrNull()?.let { it in 0..30 } != true) {
+        put(RuleField.RADAR_EXTRA_SCORE, "请输入 0–30 的整数")
+    }
 }

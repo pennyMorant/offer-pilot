@@ -88,6 +88,8 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
                 RuleField.MERCHANTS -> it.copy(excludedMerchants = value)
                 RuleField.REGION_PERCENT -> it.copy(regionalGoodPercent = value)
                 RuleField.REGION_SAMPLES -> it.copy(regionalSamples = value)
+                RuleField.MAX_SHOP_ITEMS -> it.copy(maxShopItems = value)
+                RuleField.RADAR_EXTRA_SCORE -> it.copy(radarExtraScore = value)
             }.copy(error = null).let { updated -> updated.copy(fieldErrors = ruleInputErrors(updated)) }
         }
     }
@@ -100,6 +102,15 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
     }
     fun addon(enabled: Boolean) {
         if (!state.value.saving) mutable.update { it.copy(addon = enabled) }
+    }
+    fun allowPackage(enabled: Boolean) {
+        if (!state.value.saving) mutable.update { it.copy(allowPackage = enabled, error = null) }
+    }
+    fun allowShopAndPay(enabled: Boolean) {
+        if (!state.value.saving) mutable.update { it.copy(allowShopAndPay = enabled, error = null) }
+    }
+    fun allowTripRadar(enabled: Boolean) {
+        if (!state.value.saving) mutable.update { it.copy(allowTripRadar = enabled, error = null) }
     }
     fun save() {
         if (state.value.saving) return

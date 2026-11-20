@@ -8,6 +8,7 @@ enum class RuleField {
     MINIMUM, MILE, HOUR, MINIMUM_CONTRIBUTION,
     TARGET_CONTRIBUTION, TARGET_CONTRIBUTION_MILE, TARGET_CONTRIBUTION_HOUR, MINIMUM_SCORE,
     DISTANCE, TIME, PICKUP, COST, EXCLUDED, MERCHANTS, REGION_PERCENT, REGION_SAMPLES,
+    MAX_SHOP_ITEMS, RADAR_EXTRA_SCORE,
 }
 
 data class RulesUiState(
@@ -27,6 +28,11 @@ data class RulesUiState(
     val platforms: Set<Platform>,
     val stacked: Boolean,
     val addon: Boolean,
+    val allowPackage: Boolean = true,
+    val allowShopAndPay: Boolean = true,
+    val maxShopItems: String = "",
+    val allowTripRadar: Boolean = true,
+    val radarExtraScore: String = "5",
     val excludedMerchants: String = "",
     val disabledConditions: Set<RuleCondition> = emptySet(),
     val scope: Platform? = null,

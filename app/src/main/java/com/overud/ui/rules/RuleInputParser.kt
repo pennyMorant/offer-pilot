@@ -33,6 +33,11 @@ object RuleInputParser {
             platforms = policy.enabledPlatforms,
             stacked = selected.allowStacked,
             addon = selected.allowAddon,
+            allowPackage = selected.allowPackage,
+            allowShopAndPay = selected.allowShopAndPay,
+            maxShopItems = selected.maximumShopItems?.toString().orEmpty(),
+            allowTripRadar = selected.allowTripRadar,
+            radarExtraScore = selected.radarExtraScore.toString(),
             excludedMerchants = selected.excludedMerchants.joinToString(", "),
             disabledConditions = disabled,
             scope = scope,
@@ -71,6 +76,10 @@ object RuleInputParser {
             else -> meters(input.pickup) ?: return null
         }
         val regional = regional(input, selected) ?: return null
+        val maxItems = if (!input.allowShopAndPay || input.maxShopItems.isBlank()) null
+            else input.maxShopItems.trim().toIntOrNull()?.takeIf { it in 1..200 } ?: return null
+        val radarExtra = if (!input.allowTripRadar) selected.radarExtraScore
+            else input.radarExtraScore.trim().toIntOrNull()?.takeIf { it in 0..30 } ?: return null
         return AcceptanceRules(
             minimumCents = amount,
             minimumCentsPerMile = mile,
@@ -88,6 +97,11 @@ object RuleInputParser {
             regionalRequirement = regional,
             allowStacked = input.stacked,
             allowAddon = input.addon,
+            allowPackage = input.allowPackage,
+            allowShopAndPay = input.allowShopAndPay,
+            maximumShopItems = maxItems,
+            allowTripRadar = input.allowTripRadar,
+            radarExtraScore = radarExtra,
             excludedDestinations = keywords(input.excluded),
             excludedMerchants = keywords(input.excludedMerchants),
             disabledConditions = input.disabledConditions,
