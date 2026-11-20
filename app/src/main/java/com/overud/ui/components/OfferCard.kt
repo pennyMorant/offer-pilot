@@ -85,7 +85,8 @@ fun OfferCard(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ToolMetricTile("每英里", valuation?.centsPerMile?.let { money(it.roundToLong()) } ?: "—",
                     Modifier.weight(1f), highlight = (valuation?.centsPerMile ?: 0.0) >= 200.0)
-                ToolMetricTile("贡献时薪", valuation?.contributionCentsPerHour?.let { money(it.roundToLong()) }
+                val hourlyLabel = if ((valuation?.vehicleCostCents ?: 0.0) > 0.0) "贡献时薪" else "预计时薪"
+                ToolMetricTile(hourlyLabel, valuation?.contributionCentsPerHour?.let { money(it.roundToLong()) }
                     ?: valuation?.grossCentsPerHour?.let { money(it.roundToLong()) } ?: "—", Modifier.weight(1f))
                 ToolMetricTile("路线", offerRoutePresentation(offer), Modifier.weight(1.2f))
             }
@@ -128,7 +129,7 @@ fun OfferCard(
                             color = MaterialTheme.colorScheme.tertiary)
                     }
                     decision?.reasons?.drop(1)?.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
-                    VehicleCostSummary(valuation)
+                    if ((valuation?.vehicleCostCents ?: 0.0) > 0.0) VehicleCostSummary(valuation)
                     Prop22Summary(valuation?.prop22)
                     DestinationSummary(destination)
                 }

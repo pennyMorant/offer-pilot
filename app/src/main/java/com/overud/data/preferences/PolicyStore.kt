@@ -30,7 +30,7 @@ class PolicyStore(context: Context) {
             maximumMeters = prefs.getLong("distance", 16093),
             maximumSeconds = prefs.getLong("time", 2700),
             maximumPickupMeters = prefs.getLong("pickup", 0).takeIf { it > 0 },
-            costCentsPerMile = prefs.getLong("cost", 35),
+            costCentsPerMile = prefs.getLong("cost", 0),
             hourlyBasis = basis ?: HourlyBasis.GROSS,
             regionalRequirement = region ?: RegionalRequirement(),
             allowStacked = prefs.getBoolean("stack", false),

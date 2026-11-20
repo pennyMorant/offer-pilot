@@ -14,7 +14,7 @@ data class Policy(
     val maximumMeters: Long = 16093,
     val maximumSeconds: Long = 2700,
     val maximumPickupMeters: Long? = null,
-    val costCentsPerMile: Long = 35,
+    val costCentsPerMile: Long = 0,
     val allowStacked: Boolean = false,
     val allowAddon: Boolean = false,
     val allowPackage: Boolean = true,

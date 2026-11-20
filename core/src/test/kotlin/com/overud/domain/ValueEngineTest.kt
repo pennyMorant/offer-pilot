@@ -12,7 +12,7 @@ import org.junit.Test
 class ValueEngineTest {
     private val offer = Offer("a", Platform.UBER_EATS, 1000, 1200, 8046, 1500, reliable = true)
     @Test fun goodOfferPassesAndComputesGrossAndContribution() {
-        val result = EligibilityEvaluator.assess(offer, Policy(), 1000)
+        val result = EligibilityEvaluator.assess(offer, Policy(costCentsPerMile = 35), 1000)
         assertTrue(result.reasons.toString(), result.eligible)
         assertEquals(2880.0, result.valuation.grossCentsPerHour!!, 0.01)
         assertEquals(1025.0, result.valuation.contributionCents!!, 0.1)
