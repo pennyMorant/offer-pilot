@@ -17,7 +17,7 @@ internal data class UberCard(
 )
 
 internal object UberOfferCard {
-    private val header = Regex("^(?:Package|Delivery|Shop\\s*&\\s*Pay|Shop\\s+and\\s+Pay|Connect)(?:\\s*\\(\\d+\\))?(?:\\s+Exclusive)?$",
+    private val header = Regex("(?:^|\\s)(Package|Delivery|Shop\\s*&\\s*Pay|Shop\\s+and\\s+Pay|Connect)(?:\\s*\\(\\d+\\))?(?:\\s+Exclusive)?$",
         RegexOption.IGNORE_CASE)
     private val money = Regex("(?:US\\$|\\$)\\s*\\d{1,4}(?:,\\d{3})*(?:\\.\\d{2})?")
     private val route = Regex("\\d+(?:\\.\\d+)?\\s*(?:mi(?:les?)?|km)\\b|\\d+\\s*min(?:ute)?s?\\b", RegexOption.IGNORE_CASE)
@@ -28,7 +28,7 @@ internal object UberOfferCard {
     private val items = Regex("\\b(\\d{1,3})\\s*(?:items?|units?|件)\\b", RegexOption.IGNORE_CASE)
     private val postal = Regex("^\\d{5}(?:-\\d{4})?(?:,?\\s*(?:USA|US))?$", RegexOption.IGNORE_CASE)
     private val decoration = Regex(
-        "^(?:[★⭐]?\\s*[0-5]\\.\\d{1,2}(?:\\s+Verified)?|Verified|[×✕x]|Exclusive|Trip\\s+Radar|" +
+        "^(?:[★⭐*☆•·✓✔]?\\s*[0-5]\\.\\d{1,2}(?:\\s*[✓✔v]?\\s*Verified)?|[✓✔v]?\\s*Verified|[×✕x]|Exclusive|Trip\\s+Radar|" +
             "Preferred\\s+Deliver(?:y|ies)|Guaranteed.*|Includes.*tip.*|Package.*|Delivery.*|Shop\\s*&\\s*Pay.*|" +
             "\\d+\\s*(?:items?|units?)|\\d+\\s*s)$",
         RegexOption.IGNORE_CASE,
@@ -37,10 +37,10 @@ internal object UberOfferCard {
     fun kind(text: String): OfferService {
         val lines = lines(text)
         if (lines.any { shopHint.containsMatchIn(it) }) return OfferService.SHOP_AND_PAY
-        if (lines.any { Regex("^Package\\b|^Connect\\b", RegexOption.IGNORE_CASE).containsMatchIn(it) }) {
+        if (lines.any { Regex("\\b(?:Package|Connect)\\b", RegexOption.IGNORE_CASE).containsMatchIn(it) && it.length <= 32 }) {
             return OfferService.PACKAGE
         }
-        if (lines.any { Regex("^Delivery\\b", RegexOption.IGNORE_CASE).containsMatchIn(it) }) {
+        if (lines.any { Regex("\\bDelivery\\b", RegexOption.IGNORE_CASE).containsMatchIn(it) && it.length <= 32 }) {
             return OfferService.DELIVERY
         }
         if (items.containsMatchIn(text)) return OfferService.SHOP_AND_PAY
@@ -80,10 +80,12 @@ internal object UberOfferCard {
     }
 
     private fun extractSlice(all: List<String>, end: Int): List<String> {
-        val headerIdx = all.indices.lastOrNull { it < end && (header.matches(all[it]) || all[it].contains("Trip Radar", true)) }
+        val headerIdx = all.indices.lastOrNull {
+            it < end && (header.containsMatchIn(all[it]) || all[it].contains("Trip Radar", true))
+        }
         if (headerIdx != null) return all.subList(headerIdx, end + 1)
         val priceIdx = all.indices.lastOrNull { it < end && money.containsMatchIn(all[it]) } ?: return all.subList(0, end + 1)
-        val start = (priceIdx - 3).coerceAtLeast(0)
+        val start = (priceIdx - 2).coerceAtLeast(0)
         return all.subList(start, end + 1)
     }
 
@@ -91,7 +93,7 @@ internal object UberOfferCard {
         val priceIdx = slice.indexOfFirst { money.containsMatchIn(it) }
         val startIdx = if (priceIdx >= 0) priceIdx + 1 else 0
         val candidates = slice.subList(startIdx, slice.size).filter { line ->
-            line.length in 3..200 &&
+            line.length in 4..200 &&
                 !action.containsMatchIn(line) &&
                 !decoration.matches(line) &&
                 !money.containsMatchIn(line) &&

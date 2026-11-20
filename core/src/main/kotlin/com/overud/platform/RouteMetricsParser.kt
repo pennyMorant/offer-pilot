@@ -20,11 +20,11 @@ internal object RouteMetricsParser {
     private val trailingTotal = Regex("^\\s*(?:total|总计|全程)\\b", RegexOption.IGNORE_CASE)
     private val standalone = Regex("^($label)\\s*[:：]?\\s*$", RegexOption.IGNORE_CASE)
     private val compactTimeDist = Regex(
-        "(?:(\\d+)\\s*(?:hours?|hrs?|h)\\s*)?(\\d+)\\s*min(?:ute)?s?\\s*(?:\\(|[·•\\-|,]|\\s+)\\s*(\\d+(?:\\.\\d+)?)\\s*(mi(?:les?)?|km)\\)?",
+        "(?:(\\d+)\\s*(?:hours?|hrs?|h)\\s*)?(\\d+)\\s*min(?:ute)?s?\\s*(?:\\(|[·•.\\-|,*]|\\s+)\\s*(\\d+(?:\\.\\d+)?)\\s*(mi(?:les?)?|km)\\)?",
         RegexOption.IGNORE_CASE,
     )
     private val compactDistTime = Regex(
-        "(\\d+(?:\\.\\d+)?)\\s*(mi(?:les?)?|km)\\s*(?:\\(|[·•\\-|,]|\\s+)\\s*(?:(\\d+)\\s*(?:hours?|hrs?|h)\\s*)?(\\d+)\\s*min(?:ute)?s?\\)?",
+        "(\\d+(?:\\.\\d+)?)\\s*(mi(?:les?)?|km)\\s*(?:\\(|[·•.\\-|,*]|\\s+)\\s*(?:(\\d+)\\s*(?:hours?|hrs?|h)\\s*)?(\\d+)\\s*min(?:ute)?s?\\)?",
         RegexOption.IGNORE_CASE,
     )
     private val deliverBy = Regex(

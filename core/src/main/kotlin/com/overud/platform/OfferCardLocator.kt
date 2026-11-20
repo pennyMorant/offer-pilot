@@ -24,7 +24,10 @@ object OfferCardLocator {
         val fullText = SpatialPageText.assemble(valid)
         val minTop = valid.minOf { it.top }
         val maxBottom = valid.maxOf { it.bottom }
+        val minLeft = valid.minOf { it.left }
+        val maxRight = valid.maxOf { it.right }
         val span = (maxBottom - minTop).coerceAtLeast(1)
+        val width = (maxRight - minLeft).coerceAtLeast(1)
 
         val actions = if (platform == Platform.UBER_EATS) uberActions else ddActions
         val action = findAction(valid, actions, minTop, span)
@@ -34,17 +37,25 @@ object OfferCardLocator {
             return LocatedOfferCard(valid, null, null, fullText, fullText)
         }
 
-        val cardBottom = ((action?.bottom ?: maxBottom) + (span * 0.035).toInt()).coerceAtMost(maxBottom)
+        val cardBottom = ((action?.bottom ?: maxBottom) + (span * 0.025).toInt()).coerceAtMost(maxBottom)
         val cardTop = if (amount != null) {
-            val headerMargin = maxOf(amount.height * 4, (span * 0.16).toInt())
+            // Only one badge row (Delivery/Package + Exclusive + X) sits above the payout amount.
+            val headerMargin = maxOf((amount.height * 2.0).toInt(), (span * 0.08).toInt())
             val candidateTop = (amount.top - headerMargin).coerceAtLeast(minTop)
             // Keep entire frame when user imported an already-cropped offer card screenshot.
-            if (amount.top - minTop <= span * 0.35) minTop else candidateTop
+            if (amount.top - minTop <= span * 0.30) minTop else candidateTop
         } else {
-            (minTop + (span * 0.42).toInt()).coerceAtMost(action!!.top)
+            (minTop + (span * 0.48).toInt()).coerceAtMost(action!!.top)
         }
 
-        val cardRegions = valid.filter { it.centerY in cardTop..cardBottom }
+        val cardRegions = valid.filter { region ->
+            val inY = region.centerY in cardTop..cardBottom
+            val trimmed = region.text.trim()
+            val edgeNoise = trimmed.length <= 3 && !trimmed.contains('$') &&
+                !trimmed.equals("x", true) && trimmed != "×" && trimmed != "✕" &&
+                (region.left <= minLeft + (width * 0.03).toInt() || region.right >= maxRight - (width * 0.03).toInt())
+            inY && !edgeNoise
+        }
         val cardText = SpatialPageText.assemble(cardRegions)
         return LocatedOfferCard(cardRegions, amount, action, fullText, cardText)
     }
