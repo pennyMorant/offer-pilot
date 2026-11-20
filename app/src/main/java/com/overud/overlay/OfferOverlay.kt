@@ -81,7 +81,7 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                 pause.isEnabled = state.autoAcceptEnabled
                 val active = state.activePlatform
                 val other = active?.let { p -> Platform.entries.firstOrNull { it != p } }
-                if (state.deliveryPhase == DeliveryPhase.DELIVERING && active != null && other != null) {
+                if (state.deliveryPhase == DeliveryPhase.ACTIVE && active != null && other != null) {
                     switchOther.visibility = android.view.View.VISIBLE
                     switchOther.text = "去暂停 ${other.label}"
                     switchOther.setOnClickListener { runtime.launchOtherPlatform(active) }
