@@ -17,20 +17,38 @@ internal object RouteMetricsParser {
         "(?:additional|extra|incremental|added)(?:\\s+(?:route|distance|time|duration))?|pickup(?:\\s+distance)?|" +
         "总里程|总距离|总耗时|总时间|全程路线|全程|总计|取餐距离|(?:新增|额外)(?:里程|距离|耗时|时间)?)"
     private val marker = Regex("(?:^|\\s)($label)\\s*[:：]?\\s*(?=\\d)", RegexOption.IGNORE_CASE)
+    private val trailingTotal = Regex("^\\s*(?:total|总计|全程)\\b", RegexOption.IGNORE_CASE)
     private val standalone = Regex("^($label)\\s*[:：]?\\s*$", RegexOption.IGNORE_CASE)
+    private val compactTimeDist = Regex(
+        "(?:(\\d+)\\s*(?:hours?|hrs?|h)\\s*)?(\\d+)\\s*min(?:ute)?s?\\s*(?:\\(|[·•\\-|,]|\\s+)\\s*(\\d+(?:\\.\\d+)?)\\s*(mi(?:les?)?|km)\\)?",
+        RegexOption.IGNORE_CASE,
+    )
+    private val compactDistTime = Regex(
+        "(\\d+(?:\\.\\d+)?)\\s*(mi(?:les?)?|km)\\s*(?:\\(|[·•\\-|,]|\\s+)\\s*(?:(\\d+)\\s*(?:hours?|hrs?|h)\\s*)?(\\d+)\\s*min(?:ute)?s?\\)?",
+        RegexOption.IGNORE_CASE,
+    )
 
-    fun parse(text: String, addon: Boolean): RouteMetrics {
+    fun parse(text: String, addon: Boolean, cardScoped: Boolean = false): RouteMetrics {
         val lines = text.lines().map(String::trim).filter(String::isNotBlank)
         val distances = mutableListOf<Metric>()
         val durations = mutableListOf<Metric>()
+        var compactMeters: Long? = null
+        var compactSeconds: Long? = null
+
         lines.forEachIndexed { index, line ->
             val previous = lines.getOrNull(index - 1).orEmpty()
+            if (compactMeters == null && compactSeconds == null) {
+                parseCompact(line)?.let { (m, s) -> compactMeters = m; compactSeconds = s }
+            }
             distance.findAll(line).forEach { match ->
                 val factor = if (match.groupValues[2].startsWith("mi", true)) 1609.344 else 1000.0
                 val negative = Regex("[−-]\\s*$").containsMatchIn(line.take(match.range.first))
                 val meters = match.groupValues[1].toDoubleOrNull()?.times(factor)
                     ?.takeIf { !negative && it.isFinite() && it in 0.0..1_000_000.0 }?.toLong()
-                distances += Metric(meters, scope(line.take(match.range.last + 1), previous, true))
+                val suffix = line.substring(match.range.last + 1)
+                val sc = if (trailingTotal.containsMatchIn(suffix)) Scope.TOTAL
+                    else scope(line.take(match.range.last + 1), previous, true)
+                distances += Metric(meters, sc)
             }
             duration.findAll(line).forEach { match ->
                 val hours = (match.groupValues[1].ifBlank { match.groupValues[3] }).ifBlank { "0" }.toLongOrNull()
@@ -38,23 +56,50 @@ internal object RouteMetricsParser {
                 val negative = Regex("[−-]\\s*$").containsMatchIn(line.take(match.range.first))
                 val seconds = if (!negative && hours != null && hours in 0..24 && minutes != null && minutes in 0..1440)
                     (hours * 3600 + minutes * 60).takeIf { it in 1..86400 } else null
-                durations += Metric(seconds, scope(line.take(match.range.last + 1), previous, false))
+                val suffix = line.substring(match.range.last + 1)
+                val sc = if (trailingTotal.containsMatchIn(suffix)) Scope.TOTAL
+                    else scope(line.take(match.range.last + 1), previous, false)
+                durations += Metric(seconds, sc)
             }
         }
         val expected = if (addon) Scope.INCREMENTAL else Scope.TOTAL
-        val miles = select(distances.filter { it.scope != Scope.PICKUP }, expected)
-        val time = select(durations, expected)
+        val miles = select(distances.filter { it.scope != Scope.PICKUP }, expected, cardScoped)
+        val time = select(durations, expected, cardScoped)
         val pickup = distances.filter { it.scope == Scope.PICKUP }.map { it.value }.distinct().singleOrNull()
-        return RouteMetrics(miles.value?.takeIf { it > 0 }, time.value, pickup,
-            miles.verified && miles.value != null && miles.value > 0, time.verified)
+        val finalMeters = (miles.value ?: compactMeters)?.takeIf { it > 0 }
+        val finalSeconds = time.value ?: compactSeconds
+        val distOk = (miles.verified || (cardScoped && compactMeters != null) || (cardScoped && miles.value != null)) && finalMeters != null
+        val timeOk = (time.verified || (cardScoped && compactSeconds != null) || (cardScoped && time.value != null)) && finalSeconds != null
+        return RouteMetrics(finalMeters, finalSeconds, pickup, distOk, timeOk)
     }
 
-    private fun select(metrics: List<Metric>, expected: Scope): Selection {
+    private fun parseCompact(line: String): Pair<Long, Long>? {
+        compactTimeDist.find(line)?.let { m ->
+            val h = m.groupValues[1].ifBlank { "0" }.toLongOrNull() ?: return null
+            val min = m.groupValues[2].toLongOrNull() ?: return null
+            val factor = if (m.groupValues[4].startsWith("mi", true)) 1609.344 else 1000.0
+            val meters = m.groupValues[3].toDoubleOrNull()?.times(factor)?.toLong()?.takeIf { it in 1..1_000_000 } ?: return null
+            val secs = (h * 3600 + min * 60).takeIf { it in 1..86400 } ?: return null
+            return meters to secs
+        }
+        compactDistTime.find(line)?.let { m ->
+            val factor = if (m.groupValues[2].startsWith("mi", true)) 1609.344 else 1000.0
+            val meters = m.groupValues[1].toDoubleOrNull()?.times(factor)?.toLong()?.takeIf { it in 1..1_000_000 } ?: return null
+            val h = m.groupValues[3].ifBlank { "0" }.toLongOrNull() ?: return null
+            val min = m.groupValues[4].toLongOrNull() ?: return null
+            val secs = (h * 3600 + min * 60).takeIf { it in 1..86400 } ?: return null
+            return meters to secs
+        }
+        return null
+    }
+
+    private fun select(metrics: List<Metric>, expected: Scope, cardScoped: Boolean): Selection {
         val labelled = metrics.filter { it.scope == expected }
         val choices = (if (labelled.isNotEmpty()) labelled else metrics.filter { it.scope == Scope.UNKNOWN })
             .map { it.value }.distinct()
         val value = choices.singleOrNull()
-        return Selection(value, labelled.isNotEmpty() && choices.size == 1 && value != null)
+        val verified = (labelled.isNotEmpty() || cardScoped) && choices.size == 1 && value != null
+        return Selection(value, verified)
     }
 
     private fun scope(prefix: String, previous: String, isDistance: Boolean): Scope {
