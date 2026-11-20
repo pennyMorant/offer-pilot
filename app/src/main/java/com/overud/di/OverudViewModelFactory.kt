@@ -13,6 +13,7 @@ class OverudViewModelFactory(private val container: AppContainer) : ViewModelPro
             RulesViewModel::class.java -> RulesViewModel(container.session)
             com.overud.ui.rules.VoiceViewModel::class.java -> com.overud.ui.rules.VoiceViewModel(container.voice)
             AnalysisViewModel::class.java -> AnalysisViewModel(container.session)
+            com.overud.ui.analysis.DailyReviewViewModel::class.java -> com.overud.ui.analysis.DailyReviewViewModel(container.offerHistory)
             com.overud.ui.diagnostics.RuntimeDiagnosticsViewModel::class.java ->
                 com.overud.ui.diagnostics.RuntimeDiagnosticsViewModel(container.deviceStatus, container.session, container.bridge)
             com.overud.ui.settings.AppearanceViewModel::class.java -> com.overud.ui.settings.AppearanceViewModel(container.appearance)

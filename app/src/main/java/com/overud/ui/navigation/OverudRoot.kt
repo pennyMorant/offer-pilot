@@ -19,6 +19,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.overud.di.OverudViewModelFactory
 import com.overud.ui.analysis.AnalysisScreen
 import com.overud.ui.analysis.AnalysisViewModel
+import com.overud.ui.analysis.DailyReviewViewModel
 import com.overud.ui.dashboard.DashboardScreen
 import com.overud.ui.dashboard.DashboardViewModel
 import com.overud.ui.diagnostics.RuntimeDiagnosticsDialog
@@ -41,8 +42,10 @@ fun OverudRoot(
     val voice: VoiceViewModel = viewModel(factory = factory)
     val runtimeDiagnostics: RuntimeDiagnosticsViewModel = viewModel(factory = factory)
     val analysisViewModel: AnalysisViewModel = viewModel(factory = factory)
+    val dailyReviewViewModel: DailyReviewViewModel = viewModel(factory = factory)
     val state by dashboard.state.collectAsStateWithLifecycle()
     val analysis by analysisViewModel.state.collectAsStateWithLifecycle()
+    val dailyState by dailyReviewViewModel.state.collectAsStateWithLifecycle()
     val ruleState by rules.state.collectAsStateWithLifecycle()
     val prop22State by rules.prop22.collectAsStateWithLifecycle()
     val dirty = remember(ruleState, prop22State) { rules.hasChanges() }
@@ -104,7 +107,14 @@ fun OverudRoot(
                     Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
                         { navigate { selected = Destination.RULES } }, { resolve = true }, dashboard::applyScene,
                         dashboard::adjustUberAr, dashboard::openPlatform)
-                    Destination.ANALYSIS -> AnalysisScreen(analysis, analysisViewModel::select)
+                    Destination.ANALYSIS -> AnalysisScreen(
+                        analysis,
+                        dailyState,
+                        analysisViewModel::select,
+                        dailyReviewViewModel::selectRange,
+                        dailyReviewViewModel::selectPlatform,
+                        dailyReviewViewModel::selectFilter,
+                    )
                     Destination.RULES -> RulesScreen(rules)
                 }
             }
