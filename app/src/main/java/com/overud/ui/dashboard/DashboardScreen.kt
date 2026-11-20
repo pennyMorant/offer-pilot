@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.LinkOff
+import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.overud.bridge.BridgeStatus
 import com.overud.model.DrivingScene
+import com.overud.model.Platform
 import com.overud.ui.components.OfferCard
 
 @Composable
@@ -26,6 +28,7 @@ fun DashboardScreen(
     onResolve: () -> Unit,
     onScene: (DrivingScene) -> Unit,
     onAdjustAr: (Int) -> Unit,
+    onOpenPlatform: (Platform) -> Unit,
 ) {
     LazyColumn(
         Modifier.widthIn(max = 760.dp).fillMaxSize(),
@@ -53,6 +56,28 @@ fun DashboardScreen(
                         FilledTonalButton(onClick = onAuthorize, shape = RoundedCornerShape(10.dp),
                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)) {
                             Text("连接", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+                }
+            }
+        }
+        state.backgroundAlert?.takeIf { System.currentTimeMillis() - it.receivedAt in 0..35_000L }?.let { alert ->
+            item {
+                Surface(
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(Icons.Rounded.NotificationsActive, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text("${alert.platform.label} 后台来单${alert.amountPreview?.let { " $it" }.orEmpty()}",
+                            style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+                        FilledTonalButton(onClick = { onOpenPlatform(alert.platform) }, shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)) {
+                            Text("查看", style = MaterialTheme.typography.labelLarge)
                         }
                     }
                 }

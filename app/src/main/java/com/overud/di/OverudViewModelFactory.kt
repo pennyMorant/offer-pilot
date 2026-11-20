@@ -9,7 +9,7 @@ import com.overud.ui.analysis.AnalysisViewModel
 class OverudViewModelFactory(private val container: AppContainer) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val instance = when (modelClass) {
-            DashboardViewModel::class.java -> DashboardViewModel(container.session, container.bridge, container.acceptance, container.arGuard)
+            DashboardViewModel::class.java -> DashboardViewModel(container.session, container.bridge, container.acceptance, container.arGuard, container::launchPlatform)
             RulesViewModel::class.java -> RulesViewModel(container.session)
             com.overud.ui.rules.VoiceViewModel::class.java -> com.overud.ui.rules.VoiceViewModel(container.voice)
             AnalysisViewModel::class.java -> AnalysisViewModel(container.session)

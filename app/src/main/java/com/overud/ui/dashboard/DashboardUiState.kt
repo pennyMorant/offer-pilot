@@ -27,6 +27,7 @@ data class DashboardUiState(
     val arGuard: ArGuardState = ArGuardState(),
     val sessionExclusiveSeen: Int = 0,
     val sessionExclusiveAccepted: Int = 0,
+    val backgroundAlert: BackgroundOfferAlert? = null,
 ) {
     companion object {
         fun from(work: WorkState, bridge: BridgeStatus, arGuard: ArGuardState = ArGuardState()) = DashboardUiState(
@@ -42,6 +43,7 @@ data class DashboardUiState(
             arGuard = arGuard,
             sessionExclusiveSeen = work.sessionExclusiveSeen,
             sessionExclusiveAccepted = work.sessionExclusiveAccepted,
+            backgroundAlert = work.backgroundAlert,
         )
     }
 }

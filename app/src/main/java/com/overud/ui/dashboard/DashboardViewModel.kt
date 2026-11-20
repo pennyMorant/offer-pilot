@@ -13,6 +13,7 @@ class DashboardViewModel(
     private val bridge: SheveryBridge,
     private val acceptance: AutoAcceptController,
     private val arGuard: ArGuardPreferences,
+    private val launchPlatform: (com.overud.model.Platform) -> Unit,
 ) : ViewModel() {
     val state = combine(session.state, bridge.status, arGuard.state) { work, connection, ar ->
         DashboardUiState.from(work, connection, ar)
@@ -24,4 +25,5 @@ class DashboardViewModel(
     fun applyScene(scene: com.overud.model.DrivingScene) =
         session.savePolicy(scene.applyTo(session.state.value.policy))
     fun adjustUberAr(delta: Int) = arGuard.adjustUberAr(delta)
+    fun openPlatform(platform: com.overud.model.Platform) = launchPlatform(platform)
 }

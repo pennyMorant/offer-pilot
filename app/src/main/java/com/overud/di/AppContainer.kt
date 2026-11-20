@@ -34,7 +34,7 @@ class AppContainer(context: Context) {
     val bridge = SheveryBridge(context)
     val deviceStatus = com.overud.device.DeviceStatusReader(context)
     val session = WorkSessionController(bridge, PolicyStore(context), scope, mutex, DeviceInteractionGuard(context))
-    val voice = com.overud.speech.VoiceController(context, session)
+    val voice = com.overud.speech.VoiceController(context, session, arGuard)
     val state = session.state
     private val statistics = StatisticsRepository(database)
     val regions = RegionRecorder(session, RegionRepository(database))

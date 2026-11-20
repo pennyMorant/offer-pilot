@@ -6,13 +6,14 @@ import com.overud.work.WorkState
 import java.util.Locale
 
 object OrderAnnouncement {
-    fun text(state: WorkState, includeProp22: Boolean): String? {
+    fun text(state: WorkState, includeProp22: Boolean, uberArPercent: Int? = null): String? {
         val offer = state.latest ?: return null
         val decision = state.decision ?: return null
         val amount = offer.amountCents ?: return null
         if (offer.currency != "USD" || amount <= 0) return null
         if (!offer.reliable && offer.evidence?.amountVerified != true) return null
         val advice = StrategyAdvisor.advise(offer, decision, state.destinationAssessment,
+            uberArPercent = uberArPercent,
             customPreferredZones = state.policy.effective(offer.platform).preferredZones)
         return buildString {
             if (advice.fakePreferred) append("注意，优选标签低效假好单。")

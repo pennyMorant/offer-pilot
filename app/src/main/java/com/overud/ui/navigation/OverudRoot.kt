@@ -102,7 +102,8 @@ fun OverudRoot(
             else AnimatedContent(selected, label = "navigation") { page ->
                 when (page) {
                     Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
-                        { navigate { selected = Destination.RULES } }, { resolve = true }, dashboard::applyScene, dashboard::adjustUberAr)
+                        { navigate { selected = Destination.RULES } }, { resolve = true }, dashboard::applyScene,
+                        dashboard::adjustUberAr, dashboard::openPlatform)
                     Destination.ANALYSIS -> AnalysisScreen(analysis, analysisViewModel::select)
                     Destination.RULES -> RulesScreen(rules)
                 }

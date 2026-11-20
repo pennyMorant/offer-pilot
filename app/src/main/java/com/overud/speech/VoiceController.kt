@@ -1,6 +1,7 @@
 package com.overud.speech
 
 import android.content.Context
+import com.overud.data.preferences.ArGuardPreferences
 import com.overud.model.DeliveryPhase
 import com.overud.model.Platform
 import com.overud.work.WorkSessionController
@@ -9,7 +10,11 @@ import kotlinx.coroutines.flow.*
 
 data class VoiceSettings(val enabled: Boolean = false, val includeProp22: Boolean = false)
 
-class VoiceController(context: Context, private val session: WorkSessionController) {
+class VoiceController(
+    context: Context,
+    private val session: WorkSessionController,
+    private val arGuard: ArGuardPreferences,
+) {
     private val prefs = context.getSharedPreferences("voice", Context.MODE_PRIVATE)
     private val mutable = MutableStateFlow(runCatching {
         VoiceSettings(prefs.getBoolean("enabled", false), prefs.getBoolean("prop22", false))
@@ -89,7 +94,7 @@ class VoiceController(context: Context, private val session: WorkSessionControll
                     val now = System.currentTimeMillis()
                     if (now - offer.observedAt !in 0..10_000 || now - (work.lastCaptureAt ?: 0) !in 0..5000) return@collect
                     if (offer.id in spoken) return@collect
-                    val text = OrderAnnouncement.text(work, voice.includeProp22) ?: return@collect
+                    val text = OrderAnnouncement.text(work, voice.includeProp22, arGuard.state.value.uberArPercent) ?: return@collect
                     spoken += offer.id
                     if (spoken.size > 256) spoken.remove(spoken.first())
                     if (engine.speak(text)) announcedOffer = offer.id
