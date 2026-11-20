@@ -36,10 +36,10 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
         fun dp(v: Int) = (v * density).toInt()
         val v = buildOverlayViews(context, onPause = { runtime.setAutomatic(false) }, onDecline = { runtime.declineCurrentOffer() })
         val params = WindowManager.LayoutParams(
-            dp(264), WindowManager.LayoutParams.WRAP_CONTENT,
+            dp(212), WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT,
-        ).apply { gravity = Gravity.TOP or Gravity.END; y = dp(84); x = dp(10) }
+        ).apply { gravity = Gravity.TOP or Gravity.END; y = dp(76); x = dp(8) }
 
         var startX = 0; var startY = 0; var touchX = 0f; var touchY = 0f; var moved = false
         v.root.setOnTouchListener { _, event ->
@@ -81,6 +81,10 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                     v.modeBadge.text = if (offer != null) "${offer.platform.label} · $mode" else "OVERUD · $mode"
 
                     if (offer != null) {
+                        if (params.width != dp(212)) {
+                            params.width = dp(212)
+                            runCatching { manager.updateViewLayout(v.root, params) }
+                        }
                         v.heroRow.visibility = View.VISIBLE
                         v.metricsRow.visibility = View.VISIBLE
                         val valuation = state.decision?.valuation
@@ -101,25 +105,28 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         } ?: "—"
                         val min = offer.durationSeconds?.takeIf { offer.hasVerifiedDuration() }?.let { "${it / 60}m" } ?: "—"
                         v.routeText.text = "$min · $mi"
-                        v.perMileTile.text = "每英里\n${valuation?.centsPerMile?.let { money(it.roundToLong()) } ?: "—"}"
+                        v.perMileTile.text = "${valuation?.centsPerMile?.let { money(it.roundToLong()) } ?: "—"}/mi"
                         val hr = valuation?.contributionCentsPerHour ?: valuation?.grossCentsPerHour
-                        v.hourlyTile.text = "时薪\n${hr?.let { money(it.roundToLong()) } ?: "—"}"
+                        v.hourlyTile.text = "${hr?.let { money(it.roundToLong()) } ?: "—"}/h"
                         val eligible = state.decision?.eligible == true
                         v.verdictTile.stylePill(
                             if (eligible) colors.primaryContainer.toArgb() else colors.errorContainer.toArgb(),
                             if (eligible) colors.onPrimaryContainer.toArgb() else colors.onErrorContainer.toArgb(),
                         )
-                        v.verdictTile.text = "判断\n${if (eligible) "通过" else "拦截"}"
-                        val tags = advice?.tags?.take(2)?.joinToString(" · ").orEmpty()
+                        v.verdictTile.text = if (eligible) "通过" else "拦截"
+                        val tags = advice?.tags?.take(1)?.joinToString("").orEmpty()
                         val reason = state.decision?.reasons?.firstOrNull() ?: "全部条件通过"
-                        val cycle = advice?.cycleCentsPerHour?.let { " · 等单周期 ${money(it.roundToLong())}/h" }.orEmpty()
-                        val prop = prop22Compact(valuation?.prop22).trim()
-                        v.detailText.text = listOf(tags, "$reason$cycle", prop).filter(String::isNotBlank).joinToString("\n")
+                        v.detailText.visibility = View.VISIBLE
+                        v.detailText.text = listOf(tags, reason).filter(String::isNotBlank).joinToString(" · ")
                     } else {
+                        if (params.width != WindowManager.LayoutParams.WRAP_CONTENT) {
+                            params.width = WindowManager.LayoutParams.WRAP_CONTENT
+                            runCatching { manager.updateViewLayout(v.root, params) }
+                        }
                         v.heroRow.visibility = View.GONE
                         v.metricsRow.visibility = View.GONE
                         v.scoreBadge.visibility = View.GONE
-                        v.detailText.text = platformPagePresentation(state.currentPage) ?: "等待新报价…"
+                        v.detailText.visibility = View.GONE
                     }
 
                     v.pauseBtn.visibility = if (state.autoAcceptEnabled) View.VISIBLE else View.GONE
