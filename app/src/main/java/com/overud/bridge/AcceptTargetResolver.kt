@@ -66,14 +66,21 @@ class AcceptTargetResolver(
         val startedAt = SystemClock.elapsedRealtime()
         if (startedAt >= deadlineElapsed) return "action_expired"
 
-        val dispatched = if (clickable != null && clickable.refresh() &&
-            eligible(clickable, expectedPackage, latest.windowId) && clickable.isClickable) {
-            clickable.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-        } else {
-            injectTap(label)
+        val isSlide = isSlideTarget(label)
+        val dispatched = when {
+            isSlide -> injectSwipe(label)
+            clickable != null && clickable.refresh() &&
+                eligible(clickable, expectedPackage, latest.windowId) && clickable.isClickable ->
+                clickable.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            else -> injectTap(label)
         }
         if (dispatched && initial != null) pending = Pending(expectedToken, initial, startedAt)
         return if (dispatched) "dispatched" else "click_failed"
+    }
+
+    private fun isSlideTarget(node: AccessibilityNodeInfo): Boolean {
+        val combined = "${node.text.orEmpty()} ${node.contentDescription.orEmpty()}"
+        return combined.contains("slide", ignoreCase = true) || combined.contains("滑动")
     }
 
     private fun findClickableAncestor(label: AccessibilityNodeInfo, pkg: String, windowId: Int): AccessibilityNodeInfo? {
@@ -106,6 +113,31 @@ class AcceptTargetResolver(
         } finally {
             down.recycle()
             up.recycle()
+        }
+    }
+
+    /** Horizontal slide gesture via UiAutomation (UID 2000) for Slide-to-Accept controls. */
+    private fun injectSwipe(node: AccessibilityNodeInfo): Boolean {
+        val bounds = Rect().also(node::getBoundsInScreen)
+        if (bounds.isEmpty || bounds.width() < 40 || bounds.height() < 8) return false
+        val startX = bounds.left + bounds.width() * 0.12f
+        val endX = bounds.right - bounds.width() * 0.12f
+        val y = bounds.exactCenterY()
+        val downTime = SystemClock.uptimeMillis()
+        val ui = connection.get()
+        fun event(time: Long, action: Int, x: Float) =
+            MotionEvent.obtain(downTime, time, action, x, y, 0).apply { source = InputDevice.SOURCE_TOUCHSCREEN }
+        val events = mutableListOf(event(downTime, MotionEvent.ACTION_DOWN, startX))
+        val steps = 6
+        for (i in 1..steps) {
+            val fraction = i.toFloat() / steps
+            events += event(downTime + i * 28L, MotionEvent.ACTION_MOVE, startX + (endX - startX) * fraction)
+        }
+        events += event(downTime + (steps + 1) * 28L, MotionEvent.ACTION_UP, endX)
+        return try {
+            events.all { ui.injectInputEvent(it, true) }
+        } finally {
+            events.forEach(MotionEvent::recycle)
         }
     }
 

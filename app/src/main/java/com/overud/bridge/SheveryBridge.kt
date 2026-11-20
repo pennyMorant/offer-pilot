@@ -22,13 +22,19 @@ class SheveryBridge(context: Context) {
     private var generation = 0L
     private var active: ServiceConnection? = null
     private var timeout: Job? = null
+    private var reconnectJob: Job? = null
+    private var reconnectAttempt = 0
     @Volatile var service: IPrivilegedService? = null
         private set
     private val args = Shizuku.UserServiceArgs(ComponentName(appContext.packageName, PrivilegedService::class.java.name))
         .daemon(false).processNameSuffix("capture").debuggable(false).version(8)
     private val received = Shizuku.OnBinderReceivedListener { scope.launch { refresh(); connectIfRequested() } }
     private val dead = Shizuku.OnBinderDeadListener {
-        scope.launch { disconnect(); mutable.value = BridgeStatus(message = "Shevery 已断开，自动接单已关闭") }
+        scope.launch {
+            disconnect()
+            mutable.value = BridgeStatus(message = "Shevery 已断开，自动接单已关闭")
+            scheduleReconnect()
+        }
     }
     private val permission = Shizuku.OnRequestPermissionResultListener { code, _ ->
         if (code == 100) scope.launch { refresh(); connectIfRequested() }
@@ -109,6 +115,8 @@ class SheveryBridge(context: Context) {
         if (!requested || epoch != generation) return
         result.onSuccess {
             timeout?.cancel()
+            reconnectJob?.cancel()
+            reconnectAttempt = 0
             service = remote
             refresh()
             eventFlow.tryEmit(Unit)
@@ -120,6 +128,19 @@ class SheveryBridge(context: Context) {
             if (epoch != generation) return@launch
             disconnect()
             mutable.value = mutable.value.copy(serviceReady = false, message = message)
+            scheduleReconnect()
+        }
+    }
+
+    private fun scheduleReconnect() {
+        if (!requested || reconnectAttempt >= RECONNECT_DELAYS_MS.size) return
+        val delayMs = RECONNECT_DELAYS_MS[reconnectAttempt++]
+        reconnectJob?.cancel()
+        reconnectJob = scope.launch {
+            delay(delayMs)
+            if (!requested || service?.asBinder()?.isBinderAlive == true) return@launch
+            refresh()
+            connectIfRequested()
         }
     }
 
@@ -135,7 +156,14 @@ class SheveryBridge(context: Context) {
 
     fun unbind() {
         requested = false
+        reconnectAttempt = 0
+        reconnectJob?.cancel()
+        reconnectJob = null
         disconnect()
         refresh()
+    }
+
+    companion object {
+        private val RECONNECT_DELAYS_MS = longArrayOf(1_000L, 3_000L, 8_000L)
     }
 }
