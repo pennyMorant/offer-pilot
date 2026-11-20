@@ -2,40 +2,84 @@ package com.overud.ui.dashboard
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.overud.bridge.BridgeStatus
 import com.overud.model.DrivingScene
-import com.overud.ui.components.*
+import com.overud.ui.components.OfferCard
 
-@Composable fun DashboardScreen(state: DashboardUiState, bridge: BridgeStatus, onWork: () -> Unit,
-    onAutomatic: (Boolean) -> Unit, onAuthorize: () -> Unit, onRules: () -> Unit, onResolve: () -> Unit,
-    onScene: (DrivingScene) -> Unit, onAdjustAr: (Int) -> Unit) {
-    LazyColumn(Modifier.widthIn(max = 760.dp).fillMaxSize(), contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (!bridge.serviceReady) item {
-            Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium) {
-                Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                    Text(bridge.message, style = MaterialTheme.typography.bodyMedium)
-                    TextButton(onClick = onAuthorize) { Text("连接与授权") }
+@Composable
+fun DashboardScreen(
+    state: DashboardUiState,
+    bridge: BridgeStatus,
+    onWork: () -> Unit,
+    onAutomatic: (Boolean) -> Unit,
+    onAuthorize: () -> Unit,
+    onRules: () -> Unit,
+    onResolve: () -> Unit,
+    onScene: (DrivingScene) -> Unit,
+    onAdjustAr: (Int) -> Unit,
+) {
+    LazyColumn(
+        Modifier.widthIn(max = 760.dp).fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item {
+            Surface(
+                color = if (bridge.serviceReady) MaterialTheme.colorScheme.surfaceContainerLow
+                    else MaterialTheme.colorScheme.secondaryContainer,
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(
+                        if (bridge.serviceReady) Icons.Rounded.CheckCircle else Icons.Rounded.LinkOff,
+                        contentDescription = null,
+                        tint = if (bridge.serviceReady) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(bridge.message, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                    if (!bridge.serviceReady) {
+                        FilledTonalButton(onClick = onAuthorize, shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)) {
+                            Text("连接", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
                 }
             }
         }
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 WorkSessionCard(state, onWork)
                 AutoAcceptCard(state, onAutomatic, onRules, onResolve)
             }
         }
         item { SceneAndArCard(state.activeScene, state.arGuard, onScene, onAdjustAr) }
-        item { Text("当前订单", style = MaterialTheme.typography.titleMedium) }
         item {
-            state.latest?.let { OfferCard(it, state.decision, state.destinationAssessment) } ?: Column {
-                Text(if (state.working) "等待新报价" else "开始工作后显示订单分析", style = MaterialTheme.typography.titleLarge)
-                Text(if (state.working) "请在 Uber 或 DoorDash 打开报价页面。" else "连接 Shevery，然后开始工作。",
-                    Modifier.padding(top = 8.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            state.latest?.let { OfferCard(it, state.decision, state.destinationAssessment) } ?: Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(if (state.working) "等待报价弹窗…" else "实时报价仪表盘", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (state.working) "打开 Uber Eats 或 DoorDash 报价页面，将自动计算真实收益与假好单警示。"
+                        else "连接 Shevery 无线调试后点击“开始工作”。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }

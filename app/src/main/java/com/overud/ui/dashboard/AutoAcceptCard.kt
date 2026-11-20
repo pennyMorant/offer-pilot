@@ -1,12 +1,18 @@
 package com.overud.ui.dashboard
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.overud.model.DeliveryPhase
+import com.overud.ui.components.groupedItemShape
 
 @Composable
 fun AutoAcceptCard(
@@ -15,20 +21,28 @@ fun AutoAcceptCard(
     onRules: () -> Unit,
     onResolve: () -> Unit,
 ) {
-    Surface(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium) {
-        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = groupedItemShape(1, 2),
+        modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Surface(
+                    color = if (state.automatic) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = if (state.automatic) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    shape = RoundedCornerShape(10.dp),
+                ) { Icon(Icons.Rounded.Bolt, contentDescription = null, modifier = Modifier.padding(8.dp).size(18.dp)) }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text("自动接单", style = MaterialTheme.typography.titleMedium)
                     Text(
                         text = when {
-                            state.policySaving -> "正在保存规则，自动接单暂停"
-                            state.deliveryPhase == DeliveryPhase.ACTIVE && state.autoAcceptEnabled -> "配送中暂停，确认送达后继续"
-                            state.pending -> "订单占用中，等待确认配送状态"
-                            state.automatic -> "符合全部开启条件时直接接单"
-                            else -> "开启后按已保存要求执行"
+                            state.policySaving -> "保存规则中，已暂停"
+                            state.deliveryPhase == DeliveryPhase.ACTIVE && state.autoAcceptEnabled -> "配送中暂停，送达后自动恢复"
+                            state.pending -> "订单占用中，等待核对状态"
+                            state.automatic -> "运行中 · 全部启用条件同时满足时执行"
+                            state.autoAcceptEnabled -> "待命 · 切回平台自动恢复"
+                            else -> "关闭 · 仅展示分析与语音"
                         },
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Switch(
@@ -38,9 +52,28 @@ fun AutoAcceptCard(
                         !state.pending && !state.policySaving),
                 )
             }
-            TextButton(onClick = onRules) { Text("调整接单要求 →") }
-            if (state.pending) {
-                FilledTonalButton(onClick = onResolve) { Text("核对接单结果 / 配送状态") }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = onRules, shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)) {
+                    Icon(Icons.Rounded.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("规则参数", style = MaterialTheme.typography.labelLarge)
+                }
+                if (state.pending) {
+                    Button(
+                        onClick = onResolve,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        ),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    ) {
+                        Icon(Icons.Rounded.WarningAmber, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("核对配送状态", style = MaterialTheme.typography.labelLarge)
+                    }
+                }
             }
         }
     }
