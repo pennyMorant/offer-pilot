@@ -1,6 +1,7 @@
 package com.overud.ui.dashboard
 
 import com.overud.bridge.BridgeStatus
+import com.overud.data.preferences.ArGuardState
 import com.overud.model.*
 import com.overud.work.WorkState
 import com.overud.ui.components.platformPagePresentation
@@ -22,9 +23,11 @@ data class DashboardUiState(
     val autoAcceptEnabled: Boolean = false,
     val deliveryPhase: DeliveryPhase = DeliveryPhase.AVAILABLE,
     val currentPageLabel: String? = null,
+    val activeScene: DrivingScene? = null,
+    val arGuard: ArGuardState = ArGuardState(),
 ) {
     companion object {
-        fun from(work: WorkState, bridge: BridgeStatus) = DashboardUiState(
+        fun from(work: WorkState, bridge: BridgeStatus, arGuard: ArGuardState = ArGuardState()) = DashboardUiState(
             work.working, work.automatic, work.policy, work.latest, work.decision,
             work.message, work.pending, work.statistics.totals.sumOf { it.offerCount }, work.statistics.totals.sumOf { it.goodCount }, bridge,
             policySaving = work.policySaving,
@@ -33,6 +36,8 @@ data class DashboardUiState(
             autoAcceptEnabled = work.autoAcceptEnabled,
             deliveryPhase = work.deliveryPhase,
             currentPageLabel = platformPagePresentation(work.currentPage),
+            activeScene = DrivingScene.match(work.policy),
+            arGuard = arGuard,
         )
     }
 }

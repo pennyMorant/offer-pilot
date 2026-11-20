@@ -71,7 +71,7 @@ import com.overud.ui.rules.RulesScreen
             else AnimatedContent(selected, label = "navigation") { page ->
                 when (page) {
                     Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
-                        { navigate { selected = Destination.RULES } }, { resolve = true }, dashboard::applyScene)
+                        { navigate { selected = Destination.RULES } }, { resolve = true }, dashboard::applyScene, dashboard::adjustUberAr)
                     Destination.ANALYSIS -> AnalysisScreen(analysis, analysisViewModel::select)
                     Destination.RULES -> RulesScreen(rules)
                 }

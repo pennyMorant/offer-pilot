@@ -1,9 +1,7 @@
 package com.overud.ui.dashboard
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,7 +12,7 @@ import com.overud.ui.components.*
 
 @Composable fun DashboardScreen(state: DashboardUiState, bridge: BridgeStatus, onWork: () -> Unit,
     onAutomatic: (Boolean) -> Unit, onAuthorize: () -> Unit, onRules: () -> Unit, onResolve: () -> Unit,
-    onScene: (DrivingScene) -> Unit) {
+    onScene: (DrivingScene) -> Unit, onAdjustAr: (Int) -> Unit) {
     LazyColumn(Modifier.widthIn(max = 760.dp).fillMaxSize(), contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (!bridge.serviceReady) item {
@@ -31,20 +29,7 @@ import com.overud.ui.components.*
                 AutoAcceptCard(state, onAutomatic, onRules, onResolve)
             }
         }
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("LA 场景策略一键切换", style = MaterialTheme.typography.titleMedium)
-                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DrivingScene.entries.forEach { scene ->
-                        AssistChip(
-                            onClick = { onScene(scene) },
-                            label = { Text(scene.label) },
-                        )
-                    }
-                }
-            }
-        }
+        item { SceneAndArCard(state.activeScene, state.arGuard, onScene, onAdjustAr) }
         item { Text("当前订单", style = MaterialTheme.typography.titleMedium) }
         item {
             state.latest?.let { OfferCard(it, state.decision, state.destinationAssessment) } ?: Column {

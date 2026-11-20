@@ -30,6 +30,7 @@ class AppContainer(context: Context) {
         .build()
     val appContext = context.applicationContext
     val appearance = com.overud.data.preferences.AppearancePreferences(context)
+    val arGuard = com.overud.data.preferences.ArGuardPreferences(context)
     val bridge = SheveryBridge(context)
     val deviceStatus = com.overud.device.DeviceStatusReader(context)
     val session = WorkSessionController(bridge, PolicyStore(context), scope, mutex, DeviceInteractionGuard(context))

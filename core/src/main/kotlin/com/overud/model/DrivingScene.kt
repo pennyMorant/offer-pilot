@@ -49,4 +49,16 @@ enum class DrivingScene(val label: String, val summary: String) {
             prop22 = prop22,
         )
     }
+
+    companion object {
+        fun match(policy: Policy): DrivingScene? = entries.firstOrNull { scene ->
+            val expected = scene.applyTo(policy)
+            policy.minimumCents == expected.minimumCents &&
+                policy.minimumCentsPerMile == expected.minimumCentsPerMile &&
+                policy.minimumCentsPerHour == expected.minimumCentsPerHour &&
+                policy.maximumMeters == expected.maximumMeters &&
+                policy.maximumSeconds == expected.maximumSeconds &&
+                (scene != LA_RAIN_PROP22 || policy.prop22.enabled)
+        }
+    }
 }
