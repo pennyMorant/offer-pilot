@@ -21,6 +21,7 @@ class CapturePipeline(
     private val recognizer: OcrRecognizer,
     private val tracker: OfferTracker,
     private val statistics: StatisticsRepository,
+    private val history: com.overud.data.repository.OfferHistoryRepository,
     private val regions: RegionRecorder,
     private val acceptance: AutoAcceptController,
     private val waiting: WaitingRecorder,
@@ -53,6 +54,7 @@ class CapturePipeline(
                 waiting.refresh()
                 deliveries.refresh()
             }
+            history.prune(System.currentTimeMillis())
             val service = bridge.service ?: run {
                 clearQuote(); waiting.interrupt(); deliveries.invalidate(); return@withLock
             }
@@ -130,6 +132,7 @@ class CapturePipeline(
                 waiting.quote(offer)
                 val decision = session.state.value.assessOffer(offer, now)
                 val changed = statistics.record(offer, regions.usableRegion())
+                history.record(offer, decision)
                 val aggregate = if (changed) statistics.snapshot() else session.state.value.statistics
                 val newExclusive = offer.channel == OfferChannel.EXCLUSIVE && seenExclusiveIds.add(offer.id).also {
                     if (seenExclusiveIds.size > 200) seenExclusiveIds.remove(seenExclusiveIds.first())

@@ -37,6 +37,7 @@ class AppContainer(context: Context) {
     val voice = com.overud.speech.VoiceController(context, session, arGuard)
     val state = session.state
     private val statistics = StatisticsRepository(database)
+    val offerHistory = OfferHistoryRepository(database)
     val regions = RegionRecorder(session, RegionRepository(database))
     private val waiting = WaitingRecorder(session, regions, WaitingRepository(database), scope, mutex)
     private val deliveries = DeliveryRecorder(session, regions, DeliveryRepository(database), scope, mutex)
@@ -45,7 +46,7 @@ class AppContainer(context: Context) {
     private val destinations = DestinationController(session,
         DestinationResolver(AndroidGeocodingProvider(context)), scope)
     private val tracker = OfferTracker(TrackerCheckpointStore(context))
-    val pipeline = CapturePipeline(session, bridge, OcrRecognizer(bridge), tracker, statistics, regions, acceptance, waiting, deliveries, mutex)
+    val pipeline = CapturePipeline(session, bridge, OcrRecognizer(bridge), tracker, statistics, offerHistory, regions, acceptance, waiting, deliveries, mutex)
     init {
         scope.launch {
             bridge.status.collect {
@@ -56,6 +57,7 @@ class AppContainer(context: Context) {
             mutex.withLock {
                 runCatching {
                     statistics.prune()
+                    offerHistory.prune()
                     session.update { it.copy(statistics = statistics.snapshot()) }
                     waiting.refresh()
                     deliveries.refresh()
