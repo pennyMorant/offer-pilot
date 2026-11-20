@@ -25,6 +25,8 @@ class PrivilegedService : IPrivilegedService.Stub() {
             true
         }.getOrDefault(false)
     }
+    override fun decline(expectedToken: String, expectedPackage: String, deadlineElapsed: Long): String =
+        acceptance.decline(expectedToken, expectedPackage, deadlineElapsed)
     override fun destroy() {
         connection.close()
         kotlin.system.exitProcess(0)

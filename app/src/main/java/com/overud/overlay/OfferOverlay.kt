@@ -47,8 +47,9 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
         }
         val body = TextView(context).apply { textSize = 12.5f; fontFeatureSettings = "tnum" }
         val pause = Button(context).apply { text = "暂停自动接单"; textSize = 12f; setOnClickListener { runtime.setAutomatic(false) } }
+        val decline = Button(context).apply { text = "秒拒此单"; textSize = 12f; visibility = View.GONE; setOnClickListener { runtime.declineCurrentOffer() } }
         val switchOther = Button(context).apply { textSize = 12f; visibility = View.GONE }
-        panel.addView(header); panel.addView(headline); panel.addView(body); panel.addView(pause); panel.addView(switchOther)
+        panel.addView(header); panel.addView(headline); panel.addView(body); panel.addView(pause); panel.addView(decline); panel.addView(switchOther)
 
         val params = WindowManager.LayoutParams(dp(248), WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
@@ -73,6 +74,8 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                     body.setTextColor(fgColor)
                     pause.backgroundTintList = android.content.res.ColorStateList.valueOf(colors.primaryContainer.toArgb())
                     pause.setTextColor(colors.onPrimaryContainer.toArgb())
+                    decline.backgroundTintList = android.content.res.ColorStateList.valueOf(colors.errorContainer.toArgb())
+                    decline.setTextColor(colors.onErrorContainer.toArgb())
                     switchOther.backgroundTintList = android.content.res.ColorStateList.valueOf(colors.tertiaryContainer.toArgb())
                     switchOther.setTextColor(colors.onTertiaryContainer.toArgb())
 
@@ -96,6 +99,8 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         body.text = platformPagePresentation(state.currentPage) ?: "等待新报价…"
                     }
                     pause.visibility = if (state.autoAcceptEnabled) View.VISIBLE else View.GONE
+                    decline.visibility = if (offer != null && state.decision?.eligible == false &&
+                        state.deliveryPhase == DeliveryPhase.AVAILABLE) View.VISIBLE else View.GONE
                     val active = state.activePlatform
                     val otherActive = active?.let { p -> Platform.entries.firstOrNull { it != p } }
                     val completed = state.lastCompletedPlatform

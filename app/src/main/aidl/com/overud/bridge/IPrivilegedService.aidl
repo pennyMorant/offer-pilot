@@ -10,5 +10,6 @@ interface IPrivilegedService {
     void registerWindowEvents(IWindowEvents listener) = 4;
     Bundle diagnosticSnapshot() = 5;
     boolean launchPlatform(String packageName) = 6;
+    String decline(String expectedToken, String expectedPackage, long deadlineElapsed) = 7;
     void destroy() = 16777114;
 }

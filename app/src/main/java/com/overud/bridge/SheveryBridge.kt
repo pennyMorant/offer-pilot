@@ -27,7 +27,7 @@ class SheveryBridge(context: Context) {
     @Volatile var service: IPrivilegedService? = null
         private set
     private val args = Shizuku.UserServiceArgs(ComponentName(appContext.packageName, PrivilegedService::class.java.name))
-        .daemon(false).processNameSuffix("capture").debuggable(false).version(8)
+        .daemon(false).processNameSuffix("capture").debuggable(false).version(9)
     private val received = Shizuku.OnBinderReceivedListener { scope.launch { refresh(); connectIfRequested() } }
     private val dead = Shizuku.OnBinderDeadListener {
         scope.launch {

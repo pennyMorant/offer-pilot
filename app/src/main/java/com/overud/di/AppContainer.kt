@@ -86,4 +86,13 @@ class AppContainer(context: Context) {
     fun launchOtherPlatform(active: Platform) {
         Platform.entries.firstOrNull { it != active }?.let(::launchPlatform)
     }
+    fun declineCurrentOffer() {
+        val offer = session.state.value.latest ?: return
+        val token = com.overud.platform.fingerprint(offer.platform, offer.rawText)
+        scope.launch {
+            runCatching {
+                bridge.service?.decline(token, offer.platform.packageName, android.os.SystemClock.elapsedRealtime() + 2000)
+            }
+        }
+    }
 }

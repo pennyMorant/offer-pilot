@@ -34,6 +34,33 @@ class AcceptTargetResolver(
         return click(expectedToken, expectedPackage, deadlineElapsed, context)
     }
 
+    /** Manual one-tap decline: verifies live offer fingerprint before clicking Decline / Close. */
+    @Synchronized fun decline(expectedToken: String, expectedPackage: String, deadlineElapsed: Long): String {
+        if (deadlineElapsed - SystemClock.elapsedRealtime() !in 1..2000) return "action_expired"
+        val platform = Platform.fromPackage(expectedPackage) ?: return "unsupported"
+        val root = reader.findTargetRoot(expectedPackage) ?: return "no_window"
+        val nodes = reader.flatten(root)
+        val body = reader.text(nodes)
+        if (fingerprint(platform, body) != expectedToken) return "offer_changed"
+        if (!AcceptanceActionPolicy.allowsInitialClick(OfferParser.classify(platform, body))) return "page_changed"
+        val targets = nodes.filter { eligible(it, expectedPackage, root.windowId) && matchesDecline(it) }
+        val label = targets.singleOrNull() ?: return "ambiguous_decline"
+        val clickable = findClickableAncestor(label, expectedPackage, root.windowId)
+        val latest = reader.findTargetRoot(expectedPackage) ?: return "no_window"
+        if (latest.windowId != root.windowId || fingerprint(platform, reader.text(reader.flatten(latest))) != expectedToken) {
+            return "offer_changed"
+        }
+        if (!label.refresh() || !eligible(label, expectedPackage, latest.windowId) || !matchesDecline(label)) {
+            return "button_changed"
+        }
+        if (SystemClock.elapsedRealtime() >= deadlineElapsed) return "action_expired"
+        val ok = if (clickable != null && clickable.refresh() &&
+            eligible(clickable, expectedPackage, latest.windowId) && clickable.isClickable) {
+            clickable.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+        } else injectTap(label)
+        return if (ok) "declined" else "click_failed"
+    }
+
     private fun click(expectedToken: String, expectedPackage: String, deadlineElapsed: Long, confirmation: Pending? = null): String {
         if (deadlineElapsed - SystemClock.elapsedRealtime() !in 1..2000) return "action_expired"
         val platform = Platform.fromPackage(expectedPackage) ?: return "unsupported"
@@ -147,6 +174,12 @@ class AcceptTargetResolver(
             if (confirmation) AcceptanceConfirmationPolicy.matchesButton(platform, it)
             else AcceptanceActionPolicy.matchesInitialButton(platform, it)
         }
+    }
+
+    private fun matchesDecline(node: AccessibilityNodeInfo): Boolean {
+        val labels = listOf(node.text?.toString(), node.contentDescription?.toString())
+        val targets = setOf("decline", "decline offer", "close", "dismiss", "拒绝", "跳过", "×", "✕", "x")
+        return labels.any { it?.trim()?.lowercase(java.util.Locale.ROOT) in targets }
     }
 
     private fun eligible(node: AccessibilityNodeInfo, expectedPackage: String, expectedWindow: Int) =
