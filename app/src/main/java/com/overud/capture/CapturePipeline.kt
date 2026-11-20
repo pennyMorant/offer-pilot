@@ -87,6 +87,7 @@ class CapturePipeline(
                     it.deliveryPhase == DeliveryPhase.AVAILABLE && !it.policySaving && it.policy.valid()
                 it.copy(
                     lastCaptureAt = now,
+                    backgroundAlert = if (it.backgroundAlert?.platform == platform) null else it.backgroundAlert,
                     automatic = if (resume) true else it.automatic,
                     message = if (resume) "已返回 ${platform.label}，自动接单已恢复" else it.message,
                 )

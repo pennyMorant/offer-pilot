@@ -101,11 +101,19 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                     val completed = state.lastCompletedPlatform
                     val otherCompleted = completed?.let { p -> Platform.entries.firstOrNull { it != p } }
                     val recentComplete = state.lastCompletedAt?.let { System.currentTimeMillis() - it in 0..90_000L } == true
+                    val bgAlert = state.backgroundAlert?.takeIf {
+                        System.currentTimeMillis() - it.receivedAt in 0..35_000L && it.platform != offer?.platform
+                    }
                     when {
                         state.deliveryPhase == DeliveryPhase.ACTIVE && active != null && otherActive != null -> {
                             switchOther.visibility = View.VISIBLE
                             switchOther.text = "去暂停 ${otherActive.label}"
                             switchOther.setOnClickListener { runtime.launchOtherPlatform(active) }
+                        }
+                        bgAlert != null && state.deliveryPhase == DeliveryPhase.AVAILABLE -> {
+                            switchOther.visibility = View.VISIBLE
+                            switchOther.text = "${bgAlert.platform.label}来单${bgAlert.amountPreview?.let { " $it" }.orEmpty()} · 查看"
+                            switchOther.setOnClickListener { runtime.launchPlatform(bgAlert.platform) }
                         }
                         state.deliveryPhase == DeliveryPhase.AVAILABLE && recentComplete && completed != null && otherCompleted != null -> {
                             switchOther.visibility = View.VISIBLE

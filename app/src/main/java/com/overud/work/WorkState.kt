@@ -31,4 +31,5 @@ data class WorkState(
     val lastCompletedAt: Long? = null,
     val sessionExclusiveSeen: Int = 0,
     val sessionExclusiveAccepted: Int = 0,
+    val backgroundAlert: BackgroundOfferAlert? = null,
 )

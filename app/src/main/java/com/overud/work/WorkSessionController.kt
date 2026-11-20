@@ -45,7 +45,7 @@ class WorkSessionController(
         generation.incrementAndGet()
         mutable.update { it.copy(working = false, automatic = false, autoAcceptEnabled = false, latest = null, decision = null, currentPage = null,
             activePlatform = null, lastCompletedPlatform = null, lastCompletedAt = null,
-            sessionExclusiveSeen = 0, sessionExclusiveAccepted = 0,
+            sessionExclusiveSeen = 0, sessionExclusiveAccepted = 0, backgroundAlert = null,
             destinationAssessment = DestinationAssessment(), destinationEvidence = null, message = "工作已结束") }
         bridge.unbind()
     }
@@ -83,7 +83,15 @@ class WorkSessionController(
     }
     fun notification(platform: Platform, text: String) {
         // Notifications only trigger status information; incomplete background offers never authorize clicks.
-        if (state.value.working) mutable.update { it.copy(message = "${platform.label} 有新通知，请查看订单页面") }
+        if (!state.value.working) return
+        val alert = NotificationAlertParser.parse(platform, text, System.currentTimeMillis())
+        mutable.update {
+            it.copy(
+                backgroundAlert = alert ?: it.backgroundAlert,
+                message = alert?.let { a -> "${platform.label} 后台来单${a.amountPreview?.let { " $it" }.orEmpty()}，点击悬浮窗可查看" }
+                    ?: "${platform.label} 有新通知，请查看订单页面",
+            )
+        }
     }
     fun releaseDelivery(message: String) {
         mutable.update {

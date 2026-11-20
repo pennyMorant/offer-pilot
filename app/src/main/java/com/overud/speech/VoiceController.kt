@@ -23,6 +23,7 @@ class VoiceController(context: Context, private val session: WorkSessionControll
     private var wasWorking = false
     private var previewPending = false
     private var announcedOffer: String? = null
+    private var announcedAlertAt = 0L
 
     init {
         scope.launch {
@@ -76,6 +77,14 @@ class VoiceController(context: Context, private val session: WorkSessionControll
                         }
                     }
                     if (work.deliveryPhase == DeliveryPhase.ACTIVE || work.deliveryPhase == DeliveryPhase.UNCERTAIN) return@collect
+                    val bgAlert = work.backgroundAlert
+                    if (bgAlert != null && bgAlert.receivedAt != announcedAlertAt &&
+                        System.currentTimeMillis() - bgAlert.receivedAt in 0..15_000L &&
+                        bgAlert.platform != work.latest?.platform) {
+                        announcedAlertAt = bgAlert.receivedAt
+                        engine.speak("${bgAlert.platform.label}后台来新单${bgAlert.amountPreview?.let { "，约$it" }.orEmpty()}。")
+                        return@collect
+                    }
                     val offer = work.latest ?: return@collect
                     val now = System.currentTimeMillis()
                     if (now - offer.observedAt !in 0..10_000 || now - (work.lastCaptureAt ?: 0) !in 0..5000) return@collect

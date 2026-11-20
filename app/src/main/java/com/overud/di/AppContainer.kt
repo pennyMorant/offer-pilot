@@ -71,17 +71,19 @@ class AppContainer(context: Context) {
     fun stopWork() { deliveries.invalidate(); waiting.invalidate(); session.stopWork(); regions.clear(); tracker.reset() }
     fun setAutomatic(enabled: Boolean) = session.setAutomatic(enabled)
     fun notification(platform: Platform, text: String) = session.notification(platform, text)
-    fun launchOtherPlatform(active: Platform) {
-        val other = Platform.entries.firstOrNull { it != active } ?: return
+    fun launchPlatform(target: Platform) {
         scope.launch {
-            val launched = runCatching { bridge.service?.launchPlatform(other.packageName) == true }.getOrDefault(false)
+            val launched = runCatching { bridge.service?.launchPlatform(target.packageName) == true }.getOrDefault(false)
             if (!launched) {
-                val intent = appContext.packageManager.getLaunchIntentForPackage(other.packageName)
+                val intent = appContext.packageManager.getLaunchIntentForPackage(target.packageName)
                 if (intent != null) {
                     intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                     runCatching { appContext.startActivity(intent) }
                 }
             }
         }
+    }
+    fun launchOtherPlatform(active: Platform) {
+        Platform.entries.firstOrNull { it != active }?.let(::launchPlatform)
     }
 }
