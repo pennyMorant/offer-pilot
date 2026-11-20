@@ -15,8 +15,6 @@ interface OfferParser {
         }
         fun classify(platform: Platform, text: String, source: OfferSource = OfferSource.UI_NODES) =
             adapter(platform).classify(text, source)
-        fun classifyRegions(platform: Platform, regions: List<TextRegion>, source: OfferSource = OfferSource.OCR) =
-            adapter(platform).classify(SpatialPageText.assemble(regions), source)
         fun parse(platform: Platform, text: String, now: Long, source: OfferSource = OfferSource.UI_NODES): Offer? =
             adapter(platform).parse(text, now, source)
         fun parseRegions(platform: Platform, regions: List<TextRegion>, now: Long, source: OfferSource = OfferSource.OCR): Offer? =
