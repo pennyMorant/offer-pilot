@@ -38,35 +38,35 @@ internal fun buildOverlayViews(
 ): OverlayViews {
     val d = context.resources.displayMetrics.density
     fun dp(v: Int) = (v * d).toInt()
-    val cardBg = GradientDrawable().apply { cornerRadius = dp(16).toFloat() }
+    val cardBg = GradientDrawable().apply { cornerRadius = dp(18).toFloat() }
     val root = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(10), dp(7), dp(10), dp(7))
+        setPadding(dp(12), dp(9), dp(12), dp(9))
         background = cardBg
-        elevation = dp(8).toFloat()
+        elevation = dp(10).toFloat()
     }
     fun pill(size: Float) = TextView(context).apply {
         textSize = size; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"
-        setPadding(dp(6), dp(2), dp(6), dp(2))
-        background = GradientDrawable().apply { cornerRadius = dp(8).toFloat() }
+        setPadding(dp(7), dp(3), dp(7), dp(3))
+        background = GradientDrawable().apply { cornerRadius = dp(9).toFloat() }
     }
     fun tile() = TextView(context).apply {
-        textSize = 10.5f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"
+        textSize = 11.5f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"
         gravity = Gravity.CENTER; maxLines = 1
-        setPadding(dp(4), dp(3), dp(4), dp(3))
-        background = GradientDrawable().apply { cornerRadius = dp(8).toFloat() }
-        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(3) }
+        setPadding(dp(5), dp(4), dp(5), dp(4))
+        background = GradientDrawable().apply { cornerRadius = dp(9).toFloat() }
+        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(4) }
     }
     fun actionPill(onClick: () -> Unit) = TextView(context).apply {
-        textSize = 11f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER; maxLines = 1
-        setPadding(dp(8), dp(4), dp(8), dp(4))
+        textSize = 11.5f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER; maxLines = 1
+        setPadding(dp(9), dp(6), dp(9), dp(6))
         background = GradientDrawable().apply { cornerRadius = dp(10).toFloat() }
-        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(3) }
+        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(4) }
         setOnClickListener { onClick() }
     }
 
-    val modeBadge = pill(10f)
-    val scoreBadge = pill(10f).apply { visibility = View.GONE }
+    val modeBadge = pill(10.5f)
+    val scoreBadge = pill(11f).apply { visibility = View.GONE }
     val headerRow = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
         addView(modeBadge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(4) })
@@ -74,14 +74,14 @@ internal fun buildOverlayViews(
     }
 
     val amountText = TextView(context).apply {
-        textSize = 19f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"
+        textSize = 22f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"
     }
     val routeText = TextView(context).apply {
-        textSize = 11f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; gravity = Gravity.END
+        textSize = 12f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; gravity = Gravity.END
     }
     val heroRow = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
-        setPadding(0, dp(3), 0, dp(3))
+        setPadding(0, dp(4), 0, dp(4))
         addView(amountText, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         addView(routeText)
     }
@@ -90,13 +90,13 @@ internal fun buildOverlayViews(
     val hourlyTile = tile()
     val verdictTile = tile().apply { (layoutParams as LinearLayout.LayoutParams).marginEnd = 0 }
     val metricsRow = LinearLayout(context).apply {
-        orientation = LinearLayout.HORIZONTAL; setPadding(0, dp(1), 0, dp(4))
+        orientation = LinearLayout.HORIZONTAL; setPadding(0, dp(2), 0, dp(5))
         addView(perMileTile); addView(hourlyTile); addView(verdictTile)
     }
 
     val detailText = TextView(context).apply {
-        textSize = 10.5f; fontFeatureSettings = "tnum"; maxLines = 2; ellipsize = TextUtils.TruncateAt.END
-        setPadding(0, dp(1), 0, dp(4))
+        textSize = 11.5f; fontFeatureSettings = "tnum"; maxLines = 2; ellipsize = TextUtils.TruncateAt.END
+        setPadding(0, dp(1), 0, dp(5))
     }
 
     val pauseBtn = actionPill(onPause).apply { text = "暂停自动" }

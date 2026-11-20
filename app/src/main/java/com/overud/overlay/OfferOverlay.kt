@@ -36,7 +36,7 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
         fun dp(v: Int) = (v * density).toInt()
         val v = buildOverlayViews(context, onPause = { runtime.setAutomatic(false) }, onDecline = { runtime.declineCurrentOffer() })
         val params = WindowManager.LayoutParams(
-            dp(212), WindowManager.LayoutParams.WRAP_CONTENT,
+            dp(238), WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT,
         ).apply { gravity = Gravity.TOP or Gravity.END; y = dp(76); x = dp(8) }
@@ -81,8 +81,8 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                     v.modeBadge.text = if (offer != null) "${offer.platform.label} · $mode" else "OVERUD · $mode"
 
                     if (offer != null) {
-                        if (params.width != dp(212)) {
-                            params.width = dp(212)
+                        if (params.width != dp(238)) {
+                            params.width = dp(238)
                             runCatching { manager.updateViewLayout(v.root, params) }
                         }
                         v.heroRow.visibility = View.VISIBLE
