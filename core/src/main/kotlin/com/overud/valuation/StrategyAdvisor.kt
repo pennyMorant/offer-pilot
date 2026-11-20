@@ -6,6 +6,7 @@ data class StrategyAdvice(
     val tags: List<String> = emptyList(),
     val headline: String? = null,
     val fakePreferred: Boolean = false,
+    val highTipZone: Boolean = false,
 )
 
 /**
@@ -14,6 +15,14 @@ data class StrategyAdvice(
  */
 object StrategyAdvisor {
     private const val PICKING_SECONDS_PER_ITEM = 45
+    private val laHighTipZones = listOf(
+        "santa monica", "beverly hills", "west hollywood", "pasadena", "arcadia",
+        "irvine", "century city", "brentwood", "manhattan beach", "san marino",
+        "culver city", "marina del rey", "playa vista", "south pasadena",
+    )
+    private val highTicketGrocers = listOf(
+        "erewhon", "gelson", "sprouts", "total wine", "whole foods", "bristol farms", "pavilions",
+    )
 
     fun advise(offer: Offer, decision: Decision?): StrategyAdvice {
         val tags = mutableListOf<String>()
@@ -24,12 +33,17 @@ object StrategyAdvisor {
                 (perMile != null && perMile < 150.0) ||
                 (score != null && score < 70)
             )
+        val destLower = offer.destination?.lowercase(java.util.Locale.ROOT).orEmpty()
+        val merchantLower = offer.merchant?.lowercase(java.util.Locale.ROOT).orEmpty()
+        val highTipZone = destLower.isNotBlank() && laHighTipZones.any { it in destLower }
 
         when {
             fakePreferred -> tags += "⚠ 优选标签低效（假好单）"
             offer.preferredTag && decision?.eligible == true -> tags += "★ 优选真好单"
             offer.preferredTag -> tags += "优选标签"
         }
+
+        if (highTipZone) tags += "LA 优选商圈"
 
         when (offer.channel) {
             OfferChannel.TRIP_RADAR -> tags += "雷达单（拒单不扣AR）"
@@ -38,12 +52,14 @@ object StrategyAdvisor {
         }
 
         if (offer.serviceKind == OfferService.SHOP_AND_PAY) {
+            val premium = merchantLower.isNotBlank() && highTicketGrocers.any { it in merchantLower }
+            val prefix = if (premium) "高客单商超" else "商超"
             val items = offer.itemCount
             if (items != null) {
                 val pickMinutes = ((items * PICKING_SECONDS_PER_ITEM) + 59) / 60
-                tags += "商超 ${items}件（估拣货~${pickMinutes}分）"
+                tags += "$prefix ${items}件（估拣货~${pickMinutes}分）"
             } else {
-                tags += "商超采购"
+                tags += "${prefix}采购"
             }
         }
 
@@ -53,6 +69,6 @@ object StrategyAdvisor {
             offer.channel == OfferChannel.TRIP_RADAR -> "雷达单拒绝不扣 AR，不合算直接放过"
             else -> tags.firstOrNull()
         }
-        return StrategyAdvice(tags, headline, fakePreferred)
+        return StrategyAdvice(tags, headline, fakePreferred, highTipZone)
     }
 }

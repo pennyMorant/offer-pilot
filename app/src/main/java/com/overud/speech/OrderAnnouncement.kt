@@ -20,6 +20,7 @@ object OrderAnnouncement {
             if (offer.serviceKind == OfferService.SHOP_AND_PAY) {
                 append("商超采购${offer.itemCount?.let { "${it}件" }.orEmpty()}。")
             }
+            if (advice.highTipZone) append("目的地位于优选商圈。")
             append("报价${money(amount / 100.0)}美元。")
             if (offer.hasVerifiedDistance()) offer.distanceMeters?.let {
                 append("${decimal(it / 1609.344)}英里，")
