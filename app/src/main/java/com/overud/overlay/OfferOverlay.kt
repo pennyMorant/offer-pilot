@@ -102,7 +102,7 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         params.width = targetWidth
                         runCatching { manager.updateViewLayout(v.root, params) }
                     }
-                    applyIslandColors(v, colors, alert, dp(1))
+                    applyIslandColors(v, colors, alert, state.decision?.eligible == true, dp(1))
 
                     val modeDot = when {
                         state.automatic -> "● 自动"
@@ -125,7 +125,6 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         v.rightBadge.text = if (isExpandedOffer) "$min · $mi" else offerAmountPresentation(offer)
 
                         v.heroRow.visibility = if (isExpandedOffer) View.VISIBLE else View.GONE
-                        v.detailText.visibility = if (isExpandedOffer) View.VISIBLE else View.GONE
                         val valuation = state.decision?.valuation
                         v.amountText.text = offerAmountPresentation(offer)
                         v.perMileTile.text = "${valuation?.centsPerMile?.let { money(it.roundToLong()) } ?: "—"}/mi"
@@ -149,12 +148,19 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         val prop = com.overud.ui.components.prop22Compact(valuation?.prop22).trim()
                         val destHint = com.overud.ui.components.destinationPresentation(state.destinationAssessment, Locale.getDefault()).title
                         val extraLine = listOf(cycle, prop, destHint).filter(String::isNotBlank).joinToString(" · ")
-                        v.detailText.text = listOf(tags, routePlaces, verdictLine, extraLine)
-                            .filter(String::isNotBlank)
-                            .joinToString("\n")
+                        v.tagsText.visibility = if (isExpandedOffer && tags.isNotBlank()) View.VISIBLE else View.GONE
+                        v.tagsText.text = tags
+                        v.routeText.visibility = if (isExpandedOffer && routePlaces.isNotBlank()) View.VISIBLE else View.GONE
+                        v.routeText.text = routePlaces
+                        v.infoBox.visibility = if (isExpandedOffer) View.VISIBLE else View.GONE
+                        v.verdictText.text = if (eligible) "✓ $verdictLine" else "• $verdictLine"
+                        v.extraText.visibility = if (extraLine.isNotBlank()) View.VISIBLE else View.GONE
+                        v.extraText.text = extraLine
                     } else {
                         v.heroRow.visibility = View.GONE
-                        v.detailText.visibility = View.GONE
+                        v.tagsText.visibility = View.GONE
+                        v.routeText.visibility = View.GONE
+                        v.infoBox.visibility = View.GONE
                         v.leftBadge.stylePill(
                             if (state.automatic) colors.primaryContainer.toArgb() else Color.TRANSPARENT,
                             if (state.automatic) colors.onPrimaryContainer.toArgb() else Color.rgb(160, 230, 180),

@@ -24,7 +24,11 @@ internal class OverlayViews(
     val perMileTile: TextView,
     val hourlyTile: TextView,
     val verdictTile: TextView,
-    val detailText: TextView,
+    val tagsText: TextView,
+    val routeText: TextView,
+    val infoBox: LinearLayout,
+    val verdictText: TextView,
+    val extraText: TextView,
     val actionsRow: LinearLayout,
     val pauseBtn: TextView,
     val declineBtn: TextView,
@@ -40,28 +44,28 @@ internal fun buildOverlayViews(
 ): OverlayViews {
     val d = context.resources.displayMetrics.density
     fun dp(v: Int) = (v * d).toInt()
-    val cardBg = GradientDrawable().apply { cornerRadius = dp(24).toFloat() }
+    val cardBg = GradientDrawable().apply { cornerRadius = dp(26).toFloat() }
     val root = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(14), dp(6), dp(14), dp(8))
+        setPadding(dp(14), dp(7), dp(14), dp(10))
         background = cardBg
         elevation = dp(12).toFloat()
     }
     fun pill(size: Float) = TextView(context).apply {
         textSize = size; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; maxLines = 1
-        setPadding(dp(7), dp(2), dp(7), dp(2))
+        setPadding(dp(8), dp(3), dp(8), dp(3))
         background = GradientDrawable().apply { cornerRadius = dp(10).toFloat() }
     }
     fun tile() = TextView(context).apply {
         textSize = 11.5f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"
         gravity = Gravity.CENTER; maxLines = 1
-        setPadding(dp(6), dp(4), dp(6), dp(4))
+        setPadding(dp(6), dp(5), dp(6), dp(5))
         background = GradientDrawable().apply { cornerRadius = dp(10).toFloat() }
         layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(4) }
     }
     fun actionPill(onClick: () -> Unit) = TextView(context).apply {
         textSize = 11.5f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER; maxLines = 1
-        setPadding(dp(10), dp(5), dp(10), dp(5))
+        setPadding(dp(10), dp(6), dp(10), dp(6))
         background = GradientDrawable().apply { cornerRadius = dp(12).toFloat() }
         layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(4) }
         setOnClickListener { onClick() }
@@ -80,22 +84,42 @@ internal fun buildOverlayViews(
     }
 
     val amountText = TextView(context).apply {
-        textSize = 22f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; maxLines = 1
+        textSize = 23f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; maxLines = 1
     }
     val perMileTile = tile()
     val hourlyTile = tile()
     val verdictTile = tile()
     val heroRow = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
-        setPadding(0, dp(6), 0, dp(5))
+        setPadding(0, dp(7), 0, dp(6))
         addView(amountText)
         addView(perMileTile); addView(hourlyTile); addView(verdictTile)
     }
 
-    val detailText = TextView(context).apply {
-        textSize = 11.5f; fontFeatureSettings = "tnum"; maxLines = 5; ellipsize = TextUtils.TruncateAt.END
-        setLineSpacing(0f, 1.15f)
-        setPadding(0, dp(2), 0, dp(6))
+    val tagsText = TextView(context).apply {
+        textSize = 11f; typeface = Typeface.DEFAULT_BOLD; maxLines = 1; ellipsize = TextUtils.TruncateAt.END
+        setPadding(0, 0, 0, dp(3))
+    }
+    val routeText = TextView(context).apply {
+        textSize = 11.5f; maxLines = 1; ellipsize = TextUtils.TruncateAt.END
+        setPadding(0, 0, 0, dp(5))
+    }
+    val verdictText = TextView(context).apply {
+        textSize = 11.5f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"
+        maxLines = 2; ellipsize = TextUtils.TruncateAt.END
+    }
+    val extraText = TextView(context).apply {
+        textSize = 10.5f; fontFeatureSettings = "tnum"; maxLines = 2; ellipsize = TextUtils.TruncateAt.END
+        setPadding(0, dp(2), 0, 0)
+    }
+    val infoBox = LinearLayout(context).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(dp(10), dp(7), dp(10), dp(7))
+        background = GradientDrawable().apply { cornerRadius = dp(12).toFloat() }
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+            bottomMargin = dp(6)
+        }
+        addView(verdictText); addView(extraText)
     }
 
     val pauseBtn = actionPill(onPause).apply { text = "暂停自动" }
@@ -107,10 +131,12 @@ internal fun buildOverlayViews(
         orientation = LinearLayout.HORIZONTAL; addView(pauseBtn); addView(declineBtn); addView(switchBtn)
     }
 
-    root.addView(topRow); root.addView(heroRow); root.addView(detailText); root.addView(actionsRow)
+    root.addView(topRow); root.addView(heroRow); root.addView(tagsText)
+    root.addView(routeText); root.addView(infoBox); root.addView(actionsRow)
     return OverlayViews(
         root, cardBg, topRow, leftBadge, cameraGap, rightBadge, heroRow, amountText,
-        perMileTile, hourlyTile, verdictTile, detailText, actionsRow, pauseBtn, declineBtn, switchBtn,
+        perMileTile, hourlyTile, verdictTile, tagsText, routeText, infoBox, verdictText, extraText,
+        actionsRow, pauseBtn, declineBtn, switchBtn,
     )
 }
 
@@ -119,13 +145,20 @@ internal fun TextView.stylePill(bg: Int, fg: Int) {
     setTextColor(fg)
 }
 
-internal fun applyIslandColors(v: OverlayViews, colors: ColorScheme, alert: Boolean, strokePx: Int) {
+internal fun applyIslandColors(v: OverlayViews, colors: ColorScheme, alert: Boolean, eligible: Boolean, strokePx: Int) {
     v.cardBg.setColor(Color.BLACK)
     v.cardBg.setStroke(if (alert) strokePx * 2 else 0, if (alert) colors.error.toArgb() else Color.TRANSPARENT)
     val fgColor = Color.WHITE
-    val subColor = if (alert) colors.error.toArgb() else Color.rgb(176, 182, 190)
     v.amountText.setTextColor(if (alert) colors.error.toArgb() else fgColor)
-    v.detailText.setTextColor(subColor)
+    v.tagsText.setTextColor(if (alert) colors.error.toArgb() else colors.tertiary.toArgb())
+    v.routeText.setTextColor(Color.rgb(228, 232, 238))
+    (v.infoBox.background as? GradientDrawable)?.setColor(Color.rgb(18, 20, 24))
+    v.verdictText.setTextColor(when {
+        alert -> colors.error.toArgb()
+        eligible -> colors.primary.toArgb()
+        else -> Color.rgb(245, 190, 120)
+    })
+    v.extraText.setTextColor(Color.rgb(162, 168, 178))
     val tileBg = Color.rgb(22, 24, 28)
     v.perMileTile.stylePill(tileBg, fgColor)
     v.hourlyTile.stylePill(tileBg, fgColor)
