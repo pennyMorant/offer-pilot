@@ -63,7 +63,9 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         android.content.res.Configuration.UI_MODE_NIGHT_MASK == android.content.res.Configuration.UI_MODE_NIGHT_YES
                     val colors = appearanceColors(context, appearance, appearance.isDark(systemDark))
                     val offer = state.latest
-                    val advice = offer?.let { StrategyAdvisor.advise(it, state.decision) }
+                    val advice = offer?.let {
+                        StrategyAdvisor.advise(it, state.decision, state.destinationAssessment, runtime.arGuard.state.value.uberArPercent)
+                    }
                     val alert = advice?.fakePreferred == true
                     val bgColor = if (alert) colors.errorContainer.toArgb() else colors.surfaceContainer.toArgb()
                     val fgColor = if (alert) colors.onErrorContainer.toArgb() else colors.onSurface.toArgb()
@@ -90,7 +92,10 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         headline.visibility = View.VISIBLE
                         headline.text = "${offer.platform.label} ${offerAmountPresentation(offer)}$score"
                         val strategy = advice?.tags?.takeIf { it.isNotEmpty() }?.joinToString(" · ")?.let { "$it\n" }.orEmpty()
-                        body.text = "$strategy${state.decision?.reasons?.firstOrNull() ?: "全部条件通过"}\n" +
+                        val cycleLine = advice?.cycleCentsPerHour?.let {
+                            "含等单周期时薪 ${money(kotlin.math.round(it).toLong())}/hr\n"
+                        }.orEmpty()
+                        body.text = "$strategy$cycleLine${state.decision?.reasons?.firstOrNull() ?: "全部条件通过"}\n" +
                             vehicleCostPresentation(state.decision?.valuation).compact + "\n" +
                             prop22Compact(state.decision?.valuation?.prop22) +
                             destinationPresentation(state.destinationAssessment, Locale.getDefault()).title

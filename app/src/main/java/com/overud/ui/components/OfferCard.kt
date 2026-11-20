@@ -22,10 +22,16 @@ import java.util.Date
 import kotlin.math.roundToLong
 
 @Composable
-fun OfferCard(offer: Offer, decision: Decision?, destination: DestinationAssessment) {
+fun OfferCard(
+    offer: Offer,
+    decision: Decision?,
+    destination: DestinationAssessment,
+    uberArPercent: Int? = null,
+    customPreferredZones: Set<String> = emptySet(),
+) {
     var expanded by rememberSaveable(offer.id) { mutableStateOf(false) }
     val locale = LocalConfiguration.current.locales[0]
-    val advice = StrategyAdvisor.advise(offer, decision)
+    val advice = StrategyAdvisor.advise(offer, decision, destination, uberArPercent, customPreferredZones)
     val valuation = decision?.valuation
     val rating = valueRatingPresentation(valuation)
     val eligible = decision?.eligible == true
@@ -82,6 +88,13 @@ fun OfferCard(offer: Offer, decision: Decision?, destination: DestinationAssessm
                 ToolMetricTile("贡献时薪", valuation?.contributionCentsPerHour?.let { money(it.roundToLong()) }
                     ?: valuation?.grossCentsPerHour?.let { money(it.roundToLong()) } ?: "—", Modifier.weight(1f))
                 ToolMetricTile("路线", offerRoutePresentation(offer), Modifier.weight(1.2f))
+            }
+            advice.cycleCentsPerHour?.let { cycle ->
+                Text(
+                    "含目的地历史等单（~${advice.waitingMinutes ?: 0}分）周期时薪参考：${money(cycle.roundToLong())}/hr",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.tertiary,
+                )
             }
             Surface(
                 color = if (eligible) MaterialTheme.colorScheme.primaryContainer
