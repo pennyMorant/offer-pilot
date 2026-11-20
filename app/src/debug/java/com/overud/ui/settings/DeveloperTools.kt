@@ -44,12 +44,17 @@ fun DeveloperTools(factory: OverudViewModelFactory) {
                     debugOverlay = OfferOverlay(context, container).also { it.show() }
                 }
                 val now = System.currentTimeMillis()
-                val demo = if (simStep % 2 == 0) demoRadarOffer(now) else demoFakePreferredOffer(now)
+                val demo = when (simStep % 4) {
+                    0 -> demoExclusiveOffer(now)
+                    1 -> demoRadarOffer(now)
+                    2 -> demoFakePreferredOffer(now)
+                    else -> demoDoorDashShopOffer(now)
+                }
                 simStep++
                 container.session.update {
-                    it.copy(latest = demo, decision = it.assessOffer(demo, now), message = "测试模式：模拟雷达单弹窗")
+                    it.copy(latest = demo, decision = it.assessOffer(demo, now), message = "测试模式：模拟订单检测弹窗")
                 }
-            }) { Text("模拟雷达单弹窗") }
+            }) { Text("模拟订单弹窗") }
             OutlinedButton(onClick = {
                 debugOverlay?.close()
                 debugOverlay = null
@@ -64,8 +69,8 @@ fun DeveloperTools(factory: OverudViewModelFactory) {
     }
 }
 
-private fun demoRadarOffer(now: Long) = Offer(
-    id = "demo-radar-$now",
+private fun demoExclusiveOffer(now: Long) = Offer(
+    id = "demo-exclusive-$now",
     platform = Platform.UBER_EATS,
     observedAt = now,
     amountCents = 1480,
@@ -78,7 +83,42 @@ private fun demoRadarOffer(now: Long) = Offer(
         distanceVerified = true, durationVerified = true),
     serviceKind = OfferService.DELIVERY,
     includesTip = true,
+    channel = OfferChannel.EXCLUSIVE,
+)
+
+private fun demoRadarOffer(now: Long) = Offer(
+    id = "demo-radar-$now",
+    platform = Platform.UBER_EATS,
+    observedAt = now,
+    amountCents = 1150,
+    distanceMeters = 4989, // ~3.1 mi
+    durationSeconds = 1080, // 18 min
+    merchant = "Sweetfin (Pasadena)",
+    destination = "Lake Ave, Pasadena",
+    reliable = true,
+    evidence = QuoteEvidence(amountVerified = true, totalsVerified = true, source = OfferSource.UI_NODES,
+        distanceVerified = true, durationVerified = true),
+    serviceKind = OfferService.DELIVERY,
+    includesTip = true,
     channel = OfferChannel.TRIP_RADAR,
+)
+
+private fun demoDoorDashShopOffer(now: Long) = Offer(
+    id = "demo-dd-shop-$now",
+    platform = Platform.DOORDASH,
+    observedAt = now,
+    amountCents = 2450,
+    distanceMeters = 6759, // ~4.2 mi
+    durationSeconds = 2280, // 38 min
+    merchant = "Sprouts Farmers Market",
+    destination = "Beverly Blvd, Los Angeles",
+    reliable = true,
+    evidence = QuoteEvidence(amountVerified = true, totalsVerified = true, source = OfferSource.UI_NODES,
+        distanceVerified = true, durationVerified = true),
+    serviceKind = OfferService.SHOP_AND_PAY,
+    includesTip = true,
+    channel = OfferChannel.EXCLUSIVE,
+    itemCount = 12,
 )
 
 private fun demoFakePreferredOffer(now: Long) = Offer(
