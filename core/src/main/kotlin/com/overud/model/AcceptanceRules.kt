@@ -15,6 +15,11 @@ data class AcceptanceRules(
     val costCentsPerMile: Long = 35,
     val allowStacked: Boolean = false,
     val allowAddon: Boolean = false,
+    val allowPackage: Boolean = true,
+    val allowShopAndPay: Boolean = true,
+    val maximumShopItems: Int? = null,
+    val allowTripRadar: Boolean = true,
+    val radarExtraScore: Int = 5,
     val excludedDestinations: Set<String> = emptySet(),
     val excludedMerchants: Set<String> = emptySet(),
     val disabledConditions: Set<RuleCondition> = emptySet(),
@@ -36,6 +41,8 @@ data class AcceptanceRules(
             minimumValueScore in 1..100 &&
             maximumMeters > 0 && maximumSeconds > 0 && costCentsPerMile >= 0 &&
             (maximumPickupMeters == null || maximumPickupMeters > 0) &&
+            (maximumShopItems == null || maximumShopItems in 1..200) &&
+            radarExtraScore in 0..30 &&
             incomeConditions.any(::enabled) && regionalRequirement.valid()
     }
 }

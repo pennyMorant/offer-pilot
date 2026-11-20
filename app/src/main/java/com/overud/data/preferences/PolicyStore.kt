@@ -35,6 +35,11 @@ class PolicyStore(context: Context) {
             regionalRequirement = region ?: RegionalRequirement(),
             allowStacked = prefs.getBoolean("stack", false),
             allowAddon = prefs.getBoolean("addon", false),
+            allowPackage = prefs.getBoolean("allowPackage", true),
+            allowShopAndPay = prefs.getBoolean("allowShop", true),
+            maximumShopItems = prefs.getInt("maxShopItems", 0).takeIf { it > 0 },
+            allowTripRadar = prefs.getBoolean("allowRadar", true),
+            radarExtraScore = prefs.getInt("radarExtra", 5),
             excludedDestinations = prefs.getStringSet("excluded", emptySet())!!.toSet(),
             excludedMerchants = prefs.getStringSet("merchants", emptySet())!!.toSet(),
             disabledConditions = prefs.getStringSet("disabled", emptySet())!!.mapNotNull { name ->
@@ -58,7 +63,13 @@ class PolicyStore(context: Context) {
             .putString("hourlyBasis", policy.hourlyBasis.name)
             .putString("regionalRequirement", RegionalRuleCodec.encode(policy.regionalRequirement).toString())
             .putLong("pickup", policy.maximumPickupMeters ?: 0).putBoolean("stack", policy.allowStacked)
-            .putBoolean("addon", policy.allowAddon).putStringSet("excluded", policy.excludedDestinations)
+            .putBoolean("addon", policy.allowAddon)
+            .putBoolean("allowPackage", policy.allowPackage)
+            .putBoolean("allowShop", policy.allowShopAndPay)
+            .putInt("maxShopItems", policy.maximumShopItems ?: 0)
+            .putBoolean("allowRadar", policy.allowTripRadar)
+            .putInt("radarExtra", policy.radarExtraScore)
+            .putStringSet("excluded", policy.excludedDestinations)
             .putStringSet("merchants", policy.excludedMerchants)
             .putStringSet("disabled", policy.disabledConditions.map { it.name }.toSet())
             .putString("overrides", RuleJsonCodec.encode(policy.platformOverrides))

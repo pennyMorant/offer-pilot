@@ -36,6 +36,11 @@ object RuleJsonCodec {
         put("region", RegionalRuleCodec.encode(rules.regionalRequirement))
         put("stack", rules.allowStacked)
         put("addon", rules.allowAddon)
+        put("allowPackage", rules.allowPackage)
+        put("allowShop", rules.allowShopAndPay)
+        put("maxShopItems", rules.maximumShopItems ?: JSONObject.NULL)
+        put("allowRadar", rules.allowTripRadar)
+        put("radarExtra", rules.radarExtraScore)
         put("destinations", JSONArray(rules.excludedDestinations.toList()))
         put("merchants", JSONArray(rules.excludedMerchants.toList()))
         put("disabled", JSONArray(rules.disabledConditions.map { it.name }))
@@ -62,6 +67,11 @@ object RuleJsonCodec {
             regionalRequirement = if (json.has("region")) RegionalRuleCodec.decode(json.getJSONObject("region")) else RegionalRequirement(),
             allowStacked = json.getBoolean("stack"),
             allowAddon = json.getBoolean("addon"),
+            allowPackage = json.optBoolean("allowPackage", true),
+            allowShopAndPay = json.optBoolean("allowShop", true),
+            maximumShopItems = if (!json.has("maxShopItems") || json.isNull("maxShopItems")) null else json.getInt("maxShopItems"),
+            allowTripRadar = json.optBoolean("allowRadar", true),
+            radarExtraScore = json.optInt("radarExtra", 5),
             excludedDestinations = strings(json.getJSONArray("destinations")),
             excludedMerchants = strings(json.getJSONArray("merchants")),
             disabledConditions = disabled,

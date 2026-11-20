@@ -43,6 +43,22 @@ object EligibilityEvaluator {
             val score = value.score
             if (score == null) add("缺少可信金额、总里程或总耗时，无法完成价值评分")
             else if (score < rules.minimumValueScore) add("订单经济价值评分低于 ${rules.minimumValueScore} 分")
+            if (offer.channel == OfferChannel.TRIP_RADAR) {
+                if (!rules.allowTripRadar) add("未允许自动抢雷达单")
+                else if (rules.radarExtraScore > 0 && score != null) {
+                    val radarMin = (rules.minimumValueScore + rules.radarExtraScore).coerceAtMost(100)
+                    if (score < radarMin) add("雷达单价值分低于 ${radarMin} 分（不扣AR只抢高分单）")
+                }
+            }
+            if (offer.serviceKind == OfferService.PACKAGE && !rules.allowPackage) add("未允许自动接包裹单")
+            if (offer.serviceKind == OfferService.SHOP_AND_PAY) {
+                if (!rules.allowShopAndPay) add("未允许自动接商超采购单")
+                else rules.maximumShopItems?.let { maxItems ->
+                    val count = offer.itemCount
+                    if (count == null) add("缺少商超商品件数")
+                    else if (count > maxItems) add("商超件数超过上限（最多 ${maxItems} 件）")
+                }
+            }
             addAll(RegionalEligibilityEvaluator.reasons(offer, rules.regionalRequirement, destinationEvidence, now))
             addAll(routeLimits(offer, rules))
             if (offer.isStacked && !rules.allowStacked) add("未允许自动接叠单")

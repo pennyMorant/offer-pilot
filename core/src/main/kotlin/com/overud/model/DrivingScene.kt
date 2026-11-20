@@ -17,6 +17,11 @@ enum class DrivingScene(val label: String, val summary: String) {
                 minimumValueScore = 70,
                 maximumMeters = 9656, // 6 mi
                 maximumSeconds = 2100, // 35 min
+                allowPackage = false,
+                allowShopAndPay = true,
+                maximumShopItems = 10,
+                allowTripRadar = true,
+                radarExtraScore = 8,
             )
             OFF_PEAK_GOLD -> base.copy(
                 minimumCents = 650,
@@ -26,6 +31,11 @@ enum class DrivingScene(val label: String, val summary: String) {
                 minimumValueScore = 60,
                 maximumMeters = 8047, // 5 mi
                 maximumSeconds = 2100, // 35 min
+                allowPackage = false,
+                allowShopAndPay = true,
+                maximumShopItems = 15,
+                allowTripRadar = true,
+                radarExtraScore = 5,
             )
             LA_RAIN_PROP22 -> base.copy(
                 minimumCents = 600,
@@ -35,19 +45,15 @@ enum class DrivingScene(val label: String, val summary: String) {
                 minimumValueScore = 60,
                 maximumMeters = 4828, // 3 mi
                 maximumSeconds = 1800, // 30 min
+                allowPackage = false,
+                allowShopAndPay = true,
+                maximumShopItems = 25,
+                allowTripRadar = true,
+                radarExtraScore = 5,
             )
         }
         val prop22 = if (this == LA_RAIN_PROP22) current.prop22.copy(enabled = true) else current.prop22
-        return current.copy(
-            minimumCents = updatedRules.minimumCents,
-            minimumCentsPerMile = updatedRules.minimumCentsPerMile,
-            minimumCentsPerHour = updatedRules.minimumCentsPerHour,
-            minimumContributionCents = updatedRules.minimumContributionCents,
-            minimumValueScore = updatedRules.minimumValueScore,
-            maximumMeters = updatedRules.maximumMeters,
-            maximumSeconds = updatedRules.maximumSeconds,
-            prop22 = prop22,
-        )
+        return current.withRules(updatedRules).copy(prop22 = prop22)
     }
 
     companion object {
