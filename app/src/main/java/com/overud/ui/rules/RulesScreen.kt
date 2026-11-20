@@ -67,7 +67,7 @@ fun RulesScreen(viewModel: RulesViewModel) {
                             add(Triple(Icons.Rounded.Route, "距离与时间", state.routeSummary()))
                             add(Triple(Icons.Rounded.LocationOn, "目的地区域",
                                 if (state.regionalEnabled) "优质占比 ${state.regionalGoodPercent}% · 至少 ${state.regionalSamples} 样本" else "未启用"))
-                            add(Triple(Icons.Rounded.FilterList, "订单偏好", "叠单、追加单及排除条件"))
+                            add(Triple(Icons.Rounded.FilterList, "订单偏好", state.preferencesSummary()))
                         }
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {

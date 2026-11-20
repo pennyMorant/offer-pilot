@@ -21,3 +21,13 @@ fun RulesUiState.routeSummary() = buildList {
 
 fun RulesUiState.scoreSummary() =
     "最低 $minimumScore 分 · 目标 $$targetContributionHour/h · $$targetContributionMile/mi · 单笔 $$targetContribution"
+
+fun RulesUiState.preferencesSummary() = buildList {
+    add(if (allowTripRadar) "雷达 +${radarExtraScore.ifBlank { "0" }}分" else "禁雷达")
+    add(if (allowShopAndPay) "商超${maxShopItems.takeIf(String::isNotBlank)?.let { " ≤${it}件" }.orEmpty()}" else "禁商超")
+    if (!allowPackage) add("禁包裹")
+    if (stacked) add("含叠单")
+    if (addon) add("含追加")
+    val zones = preferredZones.split(',', '，').map(String::trim).count(String::isNotBlank)
+    if (zones > 0) add("优选商圈 $zones 项")
+}.joinToString(" · ")

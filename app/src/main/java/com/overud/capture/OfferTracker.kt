@@ -22,13 +22,24 @@ class OfferTracker(private val store: TrackerCheckpointStore) {
         val same = previous != null && now - previous.lastAt in 0..30_000 && (previous.identity == identity || fillingFields)
         val tracked = if (same) previous!!.copy(identity = identity, lastAt = now)
             else TrackerCheckpoint(identity, fingerprint(offer.platform, "$identity:$now"), now, now)
+        val merged = if (same && lastOffer != null) {
+            offer.copy(
+                id = tracked.token,
+                firstObservedAt = tracked.firstAt,
+                channel = if (offer.channel != OfferChannel.UNKNOWN) offer.channel else lastOffer.channel,
+                preferredTag = offer.preferredTag || lastOffer.preferredTag,
+                itemCount = offer.itemCount ?: lastOffer.itemCount,
+            )
+        } else {
+            offer.copy(id = tracked.token, firstObservedAt = tracked.firstAt)
+        }
         active[offer.platform] = tracked
-        latest[offer.platform] = offer
+        latest[offer.platform] = merged
         if (!same || now - (savedAt[offer.platform] ?: 0) >= 5000) {
             store.write(offer.platform, tracked)
             savedAt[offer.platform] = now
         }
-        return offer.copy(id = tracked.token, firstObservedAt = tracked.firstAt)
+        return merged
     }
 
     fun absent(platform: Platform, now: Long) {
@@ -51,7 +62,10 @@ class OfferTracker(private val store: TrackerCheckpointStore) {
         fun matches(a: Any?, b: Any?) = a == null || b == null || a == b
         val sameKind = previous.serviceKind == OfferService.UNKNOWN || next.serviceKind == OfferService.UNKNOWN ||
             previous.serviceKind == next.serviceKind
-        return sameKind && matches(previous.pickupAddress, next.pickupAddress) &&
+        val sameChannel = previous.channel == OfferChannel.UNKNOWN || next.channel == OfferChannel.UNKNOWN ||
+            previous.channel == next.channel
+        return sameKind && sameChannel && matches(previous.pickupAddress, next.pickupAddress) &&
+            matches(previous.itemCount, next.itemCount) &&
             previous.currency == next.currency && matches(previous.amountCents, next.amountCents) &&
             matches(previous.merchant, next.merchant) && matches(previous.destination, next.destination) &&
             matches(previous.distanceMeters, next.distanceMeters) && matches(previous.durationSeconds, next.durationSeconds) &&
