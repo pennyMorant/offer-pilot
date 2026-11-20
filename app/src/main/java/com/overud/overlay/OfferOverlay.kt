@@ -40,9 +40,9 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
         val screenW = metrics?.bounds?.width() ?: context.resources.displayMetrics.widthPixels
         val cutout = runCatching { metrics?.windowInsets?.displayCutout?.boundingRects?.firstOrNull() }.getOrNull()
         val centeredCutout = cutout != null && kotlin.math.abs(cutout.centerX() - screenW / 2) <= screenW / 6
-        val cutoutW = if (centeredCutout) cutout!!.width() else dp(8)
-        val cutoutH = if (centeredCutout) cutout!!.height() else dp(24)
-        val cutoutTop = if (centeredCutout) cutout!!.top.coerceAtLeast(dp(4)) else dp(8)
+        val cutoutW = if (centeredCutout) cutout.width() else dp(8)
+        val cutoutH = if (centeredCutout) cutout.height() else dp(24)
+        val cutoutTop = if (centeredCutout) cutout.top.coerceAtLeast(dp(4)) else dp(8)
 
         val v = buildOverlayViews(context, cutoutW, cutoutH,
             onPause = { runtime.setAutomatic(false) }, onDecline = { runtime.declineCurrentOffer() })
@@ -137,11 +137,21 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                             if (eligible) colors.onPrimaryContainer.toArgb() else colors.onErrorContainer.toArgb(),
                         )
                         v.verdictTile.text = if (eligible) "通过" else "拦截"
-                        val tags = advice?.tags?.take(1)?.joinToString("").orEmpty()
-                        val place = offer.merchant?.take(18) ?: offer.destination?.take(18) ?: ""
+                        val tags = advice?.tags?.take(3)?.joinToString(" · ").orEmpty()
+                        val routePlaces = listOfNotNull(
+                            offer.merchant?.take(22) ?: offer.pickupAddress?.take(22),
+                            offer.destination?.take(24),
+                        ).joinToString(" → ")
                         val reason = state.decision?.reasons?.firstOrNull() ?: "全部条件通过"
-                        val cycle = advice?.cycleCentsPerHour?.let { "周期${money(it.roundToLong())}/h" }.orEmpty()
-                        v.detailText.text = listOf(tags, place, cycle, reason).filter(String::isNotBlank).joinToString(" · ")
+                        val notes = valuation?.scoreNotes?.take(2)?.joinToString(" · ").orEmpty()
+                        val verdictLine = listOf(reason, notes).filter(String::isNotBlank).joinToString(" · ")
+                        val cycle = advice?.cycleCentsPerHour?.let { "含等单周期 ${money(it.roundToLong())}/h" }.orEmpty()
+                        val prop = com.overud.ui.components.prop22Compact(valuation?.prop22).trim()
+                        val destHint = com.overud.ui.components.destinationPresentation(state.destinationAssessment, Locale.getDefault()).title
+                        val extraLine = listOf(cycle, prop, destHint).filter(String::isNotBlank).joinToString(" · ")
+                        v.detailText.text = listOf(tags, routePlaces, verdictLine, extraLine)
+                            .filter(String::isNotBlank)
+                            .joinToString("\n")
                     } else {
                         v.heroRow.visibility = View.GONE
                         v.detailText.visibility = View.GONE

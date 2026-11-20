@@ -93,8 +93,9 @@ internal fun buildOverlayViews(
     }
 
     val detailText = TextView(context).apply {
-        textSize = 11.5f; fontFeatureSettings = "tnum"; maxLines = 2; ellipsize = TextUtils.TruncateAt.END
-        setPadding(0, dp(1), 0, dp(6))
+        textSize = 11.5f; fontFeatureSettings = "tnum"; maxLines = 5; ellipsize = TextUtils.TruncateAt.END
+        setLineSpacing(0f, 1.15f)
+        setPadding(0, dp(2), 0, dp(6))
     }
 
     val pauseBtn = actionPill(onPause).apply { text = "暂停自动" }
