@@ -22,6 +22,7 @@ data class AcceptanceRules(
     val radarExtraScore: Int = 5,
     val excludedDestinations: Set<String> = emptySet(),
     val excludedMerchants: Set<String> = emptySet(),
+    val preferredZones: Set<String> = emptySet(),
     val disabledConditions: Set<RuleCondition> = emptySet(),
     val hourlyBasis: HourlyBasis = HourlyBasis.GROSS,
     val regionalRequirement: RegionalRequirement = RegionalRequirement(),

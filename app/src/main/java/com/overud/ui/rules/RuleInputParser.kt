@@ -39,6 +39,7 @@ object RuleInputParser {
             allowTripRadar = selected.allowTripRadar,
             radarExtraScore = selected.radarExtraScore.toString(),
             excludedMerchants = selected.excludedMerchants.joinToString(", "),
+            preferredZones = selected.preferredZones.joinToString(", "),
             disabledConditions = disabled,
             scope = scope,
             inheritShared = scope != null && scope !in policy.platformOverrides,
@@ -104,6 +105,7 @@ object RuleInputParser {
             radarExtraScore = radarExtra,
             excludedDestinations = keywords(input.excluded),
             excludedMerchants = keywords(input.excludedMerchants),
+            preferredZones = keywords(input.preferredZones),
             disabledConditions = input.disabledConditions,
         ).takeIf(AcceptanceRules::valid)
     }

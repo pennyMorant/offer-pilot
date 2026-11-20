@@ -1,17 +1,41 @@
 package com.overud.ui.rules
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.overud.ui.components.NumberField
 import com.overud.ui.components.ToggleRow
+
+private val laWagePresets = listOf(
+    "加州底薪" to "16.90",
+    "LA City" to "17.87",
+    "Santa Monica" to "17.81",
+    "Pasadena" to "18.04",
+    "West Hollywood" to "19.65",
+)
 
 @Composable fun Prop22Fields(input: Prop22Input, saving: Boolean, onChange: (Prop22Input) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         ToggleRow("启用加州 Prop 22 估算", "确认用于加州取餐；两个平台共用此设置，仅作参考",
             input.enabled, enabled = !saving) { onChange(input.copy(enabled = it)) }
         if (input.enabled) {
+            Text("大洛杉矶常见城市时薪速选（可手动修改）", style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                laWagePresets.forEach { (city, wage) ->
+                    FilterChip(
+                        selected = input.wage == wage,
+                        enabled = !saving,
+                        onClick = { onChange(input.copy(wage = wage)) },
+                        label = { Text("$city $$wage", style = MaterialTheme.typography.labelMedium) },
+                    )
+                }
+            }
             NumberField("取餐地适用最低时薪", input.wage, "USD/h",
                 { onChange(input.copy(wage = it)) }, enabled = !saving)
             Text("2026 州标准为 $16.90；取餐城市标准更高时请修改。跨城市取餐需更新设置，不会自动匹配当地时薪。",

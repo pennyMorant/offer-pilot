@@ -24,6 +24,7 @@ data class Policy(
     val radarExtraScore: Int = 5,
     val excludedDestinations: Set<String> = emptySet(),
     val excludedMerchants: Set<String> = emptySet(),
+    val preferredZones: Set<String> = emptySet(),
     val disabledConditions: Set<RuleCondition> = emptySet(),
     val platformOverrides: Map<Platform, AcceptanceRules> = emptyMap(),
     val hourlyBasis: HourlyBasis = HourlyBasis.GROSS,
@@ -57,6 +58,7 @@ data class Policy(
         radarExtraScore = radarExtraScore,
         excludedDestinations = excludedDestinations,
         excludedMerchants = excludedMerchants,
+        preferredZones = preferredZones,
         disabledConditions = disabledConditions,
     )
 
@@ -89,6 +91,7 @@ data class Policy(
             radarExtraScore = rules.radarExtraScore,
             excludedDestinations = rules.excludedDestinations,
             excludedMerchants = rules.excludedMerchants,
+            preferredZones = rules.preferredZones,
             disabledConditions = rules.disabledConditions,
         )
     }

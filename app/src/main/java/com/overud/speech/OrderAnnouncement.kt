@@ -12,7 +12,8 @@ object OrderAnnouncement {
         val amount = offer.amountCents ?: return null
         if (offer.currency != "USD" || amount <= 0) return null
         if (!offer.reliable && offer.evidence?.amountVerified != true) return null
-        val advice = StrategyAdvisor.advise(offer, decision, state.destinationAssessment)
+        val advice = StrategyAdvisor.advise(offer, decision, state.destinationAssessment,
+            customPreferredZones = state.policy.effective(offer.platform).preferredZones)
         return buildString {
             if (advice.fakePreferred) append("注意，优选标签低效假好单。")
             if (advice.goldBufferCandidate) append("保金卡缓冲短途单，可考虑接。")

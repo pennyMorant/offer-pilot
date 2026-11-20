@@ -67,7 +67,8 @@ fun DashboardScreen(
         item { SceneAndArCard(state.activeScene, state.arGuard, state.sessionExclusiveSeen, state.sessionExclusiveAccepted, onScene, onAdjustAr) }
         item {
             state.latest?.let {
-                OfferCard(it, state.decision, state.destinationAssessment, state.arGuard.uberArPercent)
+                OfferCard(it, state.decision, state.destinationAssessment, state.arGuard.uberArPercent,
+                    state.policy.effective(it.platform).preferredZones)
             } ?: Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
                 shape = MaterialTheme.shapes.large,

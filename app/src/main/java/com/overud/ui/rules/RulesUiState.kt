@@ -7,7 +7,7 @@ import com.overud.model.RuleCondition
 enum class RuleField {
     MINIMUM, MILE, HOUR, MINIMUM_CONTRIBUTION,
     TARGET_CONTRIBUTION, TARGET_CONTRIBUTION_MILE, TARGET_CONTRIBUTION_HOUR, MINIMUM_SCORE,
-    DISTANCE, TIME, PICKUP, COST, EXCLUDED, MERCHANTS, REGION_PERCENT, REGION_SAMPLES,
+    DISTANCE, TIME, PICKUP, COST, EXCLUDED, MERCHANTS, PREFERRED_ZONES, REGION_PERCENT, REGION_SAMPLES,
     MAX_SHOP_ITEMS, RADAR_EXTRA_SCORE,
 }
 
@@ -34,6 +34,7 @@ data class RulesUiState(
     val allowTripRadar: Boolean = true,
     val radarExtraScore: String = "5",
     val excludedMerchants: String = "",
+    val preferredZones: String = "",
     val disabledConditions: Set<RuleCondition> = emptySet(),
     val scope: Platform? = null,
     val inheritShared: Boolean = false,

@@ -43,6 +43,7 @@ object RuleJsonCodec {
         put("radarExtra", rules.radarExtraScore)
         put("destinations", JSONArray(rules.excludedDestinations.toList()))
         put("merchants", JSONArray(rules.excludedMerchants.toList()))
+        put("preferredZones", JSONArray(rules.preferredZones.toList()))
         put("disabled", JSONArray(rules.disabledConditions.map { it.name }))
     }
 
@@ -74,6 +75,7 @@ object RuleJsonCodec {
             radarExtraScore = json.optInt("radarExtra", 5),
             excludedDestinations = strings(json.getJSONArray("destinations")),
             excludedMerchants = strings(json.getJSONArray("merchants")),
+            preferredZones = if (json.has("preferredZones")) strings(json.getJSONArray("preferredZones")) else emptySet(),
             disabledConditions = disabled,
         ).also { require(it.valid()) }
     }

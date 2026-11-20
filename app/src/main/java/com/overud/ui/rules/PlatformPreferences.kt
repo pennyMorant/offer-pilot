@@ -54,5 +54,11 @@ fun PlatformPreferences(state: RulesUiState, viewModel: RulesViewModel) {
             label = { Text("排除商家关键词，用逗号分隔") },
             modifier = Modifier.fillMaxWidth(), enabled = !state.saving,
         )
+        OutlinedTextField(
+            value = state.preferredZones,
+            onValueChange = { viewModel.edit(RuleField.PREFERRED_ZONES, it) },
+            label = { Text("自定义优选商圈 / 高小费商家，用逗号分隔") },
+            modifier = Modifier.fillMaxWidth(), enabled = !state.saving,
+        )
     }
 }

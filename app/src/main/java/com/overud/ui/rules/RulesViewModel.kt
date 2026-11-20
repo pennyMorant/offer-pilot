@@ -86,6 +86,7 @@ class RulesViewModel(private val session: WorkSessionController) : ViewModel() {
                 RuleField.COST -> it.copy(cost = value)
                 RuleField.EXCLUDED -> it.copy(excluded = value)
                 RuleField.MERCHANTS -> it.copy(excludedMerchants = value)
+                RuleField.PREFERRED_ZONES -> it.copy(preferredZones = value)
                 RuleField.REGION_PERCENT -> it.copy(regionalGoodPercent = value)
                 RuleField.REGION_SAMPLES -> it.copy(regionalSamples = value)
                 RuleField.MAX_SHOP_ITEMS -> it.copy(maxShopItems = value)

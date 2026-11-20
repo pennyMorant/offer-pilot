@@ -64,7 +64,8 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                     val colors = appearanceColors(context, appearance, appearance.isDark(systemDark))
                     val offer = state.latest
                     val advice = offer?.let {
-                        StrategyAdvisor.advise(it, state.decision, state.destinationAssessment, runtime.arGuard.state.value.uberArPercent)
+                        StrategyAdvisor.advise(it, state.decision, state.destinationAssessment,
+                            runtime.arGuard.state.value.uberArPercent, state.policy.effective(it.platform).preferredZones)
                     }
                     val alert = advice?.fakePreferred == true
                     val bgColor = if (alert) colors.errorContainer.toArgb() else colors.surfaceContainer.toArgb()

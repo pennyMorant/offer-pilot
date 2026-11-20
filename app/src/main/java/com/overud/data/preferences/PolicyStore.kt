@@ -42,6 +42,7 @@ class PolicyStore(context: Context) {
             radarExtraScore = prefs.getInt("radarExtra", 5),
             excludedDestinations = prefs.getStringSet("excluded", emptySet())!!.toSet(),
             excludedMerchants = prefs.getStringSet("merchants", emptySet())!!.toSet(),
+            preferredZones = prefs.getStringSet("preferredZones", emptySet())!!.toSet(),
             disabledConditions = prefs.getStringSet("disabled", emptySet())!!.mapNotNull { name ->
                 RuleCondition.entries.find { it.name == name }
             }.toSet(),
@@ -71,6 +72,7 @@ class PolicyStore(context: Context) {
             .putInt("radarExtra", policy.radarExtraScore)
             .putStringSet("excluded", policy.excludedDestinations)
             .putStringSet("merchants", policy.excludedMerchants)
+            .putStringSet("preferredZones", policy.preferredZones)
             .putStringSet("disabled", policy.disabledConditions.map { it.name }.toSet())
             .putString("overrides", RuleJsonCodec.encode(policy.platformOverrides))
         Platform.entries.forEach { edit.putBoolean(it.name, it in policy.enabledPlatforms) }
