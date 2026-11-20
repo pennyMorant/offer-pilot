@@ -2,6 +2,7 @@ package com.overud.speech
 
 import android.content.Context
 import com.overud.model.DeliveryPhase
+import com.overud.model.Platform
 import com.overud.work.WorkSessionController
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -48,11 +49,22 @@ class VoiceController(context: Context, private val session: WorkSessionControll
                         announcedOffer = null
                     }
                     if (work.deliveryPhase != phase) {
+                        val previousPhase = phase
                         phase = work.deliveryPhase
                         when (phase) {
                             DeliveryPhase.ACTIVE -> {
                                 announcedOffer = null
-                                engine.speak("已识别进行中的配送，自动接单暂停。")
+                                val active = work.activePlatform
+                                val other = active?.let { p -> Platform.entries.firstOrNull { it != p } }
+                                val msg = if (active != null && other != null)
+                                    "已接${active.label}，自动接单暂停，记得暂停${other.label}。"
+                                else "已识别进行中的配送，自动接单暂停。"
+                                engine.speak(msg)
+                                return@collect
+                            }
+                            DeliveryPhase.AVAILABLE -> if (previousPhase == DeliveryPhase.ACTIVE) {
+                                announcedOffer = null
+                                engine.speak("配送完成，可恢复双开。")
                                 return@collect
                             }
                             DeliveryPhase.UNCERTAIN -> {

@@ -1,6 +1,7 @@
 package com.overud.speech
 
 import com.overud.model.*
+import com.overud.valuation.StrategyAdvisor
 import com.overud.work.WorkState
 import java.util.Locale
 
@@ -11,8 +12,15 @@ object OrderAnnouncement {
         val amount = offer.amountCents ?: return null
         if (offer.currency != "USD" || amount <= 0) return null
         if (!offer.reliable && offer.evidence?.amountVerified != true) return null
+        val advice = StrategyAdvisor.advise(offer, decision)
         return buildString {
-            append("${offer.platform.label}，报价${money(amount / 100.0)}美元。")
+            if (advice.fakePreferred) append("注意，优选标签低效假好单。")
+            append("${offer.platform.label}，")
+            if (offer.channel == OfferChannel.TRIP_RADAR) append("雷达单，拒单不扣接单率。")
+            if (offer.serviceKind == OfferService.SHOP_AND_PAY) {
+                append("商超采购${offer.itemCount?.let { "${it}件" }.orEmpty()}。")
+            }
+            append("报价${money(amount / 100.0)}美元。")
             if (offer.hasVerifiedDistance()) offer.distanceMeters?.let {
                 append("${decimal(it / 1609.344)}英里，")
             } else append("总里程未确认，")
