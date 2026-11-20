@@ -5,7 +5,7 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
@@ -16,7 +16,7 @@ import kotlin.coroutines.suspendCoroutine
 class ImportedImageRecognizer(context: Context) {
     private val resolver = context.applicationContext.contentResolver
 
-    suspend fun recognize(uri: Uri): String = withContext(Dispatchers.IO) {
+    suspend fun recognize(uri: Uri): OcrPageResult = withContext(Dispatchers.IO) {
         val bitmap = ImageDecoder.decodeBitmap(ImageDecoder.createSource(resolver, uri)) { decoder, info, _ ->
             decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
             val longest = maxOf(info.size.width, info.size.height)
@@ -27,12 +27,12 @@ class ImportedImageRecognizer(context: Context) {
             }
         }
         try {
-            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+            val recognizer = TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
             try {
                 // Await the ML task even if the caller closes the dialog, then release its bitmap.
                 suspendCoroutine { continuation ->
                     recognizer.process(InputImage.fromBitmap(bitmap, 0))
-                        .addOnSuccessListener { continuation.resume(it.orderedPageText()) }
+                        .addOnSuccessListener { continuation.resume(it.toOcrPageResult()) }
                         .addOnFailureListener { continuation.resumeWithException(it) }
                 }
             } finally { recognizer.close() }

@@ -37,10 +37,10 @@ class ImageTestViewModel(
         mutable.value = ImageTestUiState(platform = state.value.platform, busy = true)
         job = viewModelScope.launch {
             try {
-                val text = recognizer.recognize(uri)
+                val result = recognizer.recognize(uri)
                 if (request != generation) return@launch
-                mutable.update { it.copy(busy = false, hasImage = true, text = text,
-                    error = if (text.isBlank()) "未识别到文字，请选择清晰、完整的订单截图" else null) }
+                mutable.update { it.copy(busy = false, hasImage = true, text = result.text, regions = result.regions,
+                    error = if (result.text.isBlank()) "未识别到文字，请选择清晰、完整的订单截图" else null) }
                 analyze()
             } catch (e: CancellationException) {
                 throw e
@@ -61,7 +61,11 @@ class ImageTestViewModel(
         val current = state.value
         if (!current.hasImage || current.text.isBlank()) return
         val now = System.currentTimeMillis()
-        val offer = OfferParser.parse(current.platform, current.text, now, OfferSource.OCR)
+        val offer = if (current.regions.isNotEmpty()) {
+            OfferParser.parseRegions(current.platform, current.regions, now, OfferSource.OCR)
+        } else {
+            OfferParser.parse(current.platform, current.text, now, OfferSource.OCR)
+        }
         val page = OfferParser.classify(current.platform, current.text, OfferSource.OCR)
         val decision = offer?.let { EligibilityEvaluator.assess(it, session.state.value.policy, now) }
         mutable.value = current.copy(offer = offer, page = page, decision = decision)

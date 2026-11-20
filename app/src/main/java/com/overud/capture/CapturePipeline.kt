@@ -103,7 +103,7 @@ class CapturePipeline(
                 lease.expire("采集连接已变化，自动接单已关闭，请重新核对当前页面")
             }
             if (!lease.valid()) { waiting.interrupt(); deliveries.invalidate(); return@withLock }
-            val observation = QuoteObservationResolver.resolve(platform, text, ocr, now)
+            val observation = QuoteObservationResolver.resolve(platform, text, ocr?.text, now, ocr?.regions)
             session.update { if (lease.current()) it.copy(currentPage = observation.page) else it }
             if (observation.sourceConflict) {
                 waiting.interrupt()

@@ -6,12 +6,22 @@ import com.overud.model.*
 data class QuoteObservation(val page: PlatformPage, val offer: Offer?, val sourceConflict: Boolean = false)
 
 object QuoteObservationResolver {
-    fun resolve(platform: Platform, nodes: String, ocr: String?, now: Long): QuoteObservation {
+    fun resolve(
+        platform: Platform,
+        nodes: String,
+        ocr: String?,
+        now: Long,
+        ocrRegions: List<TextRegion>? = null,
+    ): QuoteObservation {
         val page = OfferParser.classify(platform, nodes)
         val nodeOffer = OfferParser.parse(platform, nodes, now)
         if (!page.allowsOcrFallback || ocr == null) return QuoteObservation(page, nodeOffer)
         val ocrPage = OfferParser.classify(platform, ocr, OfferSource.OCR)
-        val ocrOffer = OfferParser.parse(platform, ocr, now, OfferSource.OCR)
+        val ocrOffer = if (!ocrRegions.isNullOrEmpty()) {
+            OfferParser.parseRegions(platform, ocrRegions, now, OfferSource.OCR)
+        } else {
+            OfferParser.parse(platform, ocr, now, OfferSource.OCR)
+        }
         if (nodeOffer == null) return QuoteObservation(ocrPage, ocrOffer)
         if (ocrPage.type != PlatformPageType.UNKNOWN && !ocrPage.allowsOffer) return conflict(page, ocrPage)
         if (ocrOffer == null) return QuoteObservation(page, nodeOffer)

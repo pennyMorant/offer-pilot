@@ -44,7 +44,9 @@ import com.overud.ui.components.*
             state.offer?.let { offer ->
                 Text(offerAmountPresentation(offer), style = MaterialTheme.typography.headlineMedium)
                 Text(offerRoutePresentation(offer))
-                Text("订单类型：${offer.serviceKind.label}")
+                Text("订单类型：${offer.serviceKind.label} · ${offer.channel.label}")
+                if (offer.preferredTag) Text("平台标记：优选高价单（Preferred / High Paying）")
+                offer.itemCount?.let { Text("商超件数：$it 件") }
                 if (offer.serviceKind == OfferService.PACKAGE) Text("取件地址：${offer.pickupAddress ?: "未识别"}")
                 else Text("商家：${offer.merchant ?: "未识别"}")
                 if (offer.includesTip == true) Text("报价含小费，小费明细未知")
