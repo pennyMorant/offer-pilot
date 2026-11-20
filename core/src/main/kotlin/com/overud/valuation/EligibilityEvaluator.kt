@@ -8,7 +8,7 @@ object EligibilityEvaluator {
         calibration: DurationCalibration? = null,
     ): Decision {
         val rules = policy.effective(offer.platform).sharedRules()
-        val value = ValueEngine.calculate(offer, policy, calibration)
+        val value = ValueEngine.calculate(offer, policy, calibration, destinationEvidence)
         val reasons = buildList {
             if (!policy.valid()) add("接单规则无效，至少启用一项最低收益要求")
             if (offer.platform !in policy.enabledPlatforms) add("该平台未开启自动接单")

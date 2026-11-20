@@ -34,6 +34,7 @@ object OrderAnnouncement {
             decision.valuation.score?.let {
                 append("价值评分${it}分，${grade(decision.valuation.grade)}，" +
                     "${confidence(decision.valuation.confidence)}。")
+                if (decision.valuation.deadheadAdjusted) append("弱区长途已计入回程折算。")
             }
             append(if (decision.eligible) "符合接单要求，不代表已接单。" else
                 "未通过接单判断，${decision.reasons.firstOrNull().orEmpty()}。")

@@ -123,6 +123,10 @@ fun OfferCard(
                     if (offer.includesTip == true) Text("报价含小费（明细未知）", style = MaterialTheme.typography.bodySmall)
                     Text("耗时依据：${rating.timeBasis}", style = MaterialTheme.typography.bodySmall)
                     Text("评分分项：${rating.breakdown}", style = MaterialTheme.typography.bodySmall)
+                    valuation?.scoreNotes?.takeIf { it.isNotEmpty() }?.let { notes ->
+                        Text("评价模型修正：${notes.joinToString(" · ")}", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.tertiary)
+                    }
                     decision?.reasons?.drop(1)?.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
                     VehicleCostSummary(valuation)
                     Prop22Summary(valuation?.prop22)
