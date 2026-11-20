@@ -42,6 +42,7 @@ fun DeveloperTools(factory: OverudViewModelFactory) {
                 }
                 if (!container.state.value.working && debugOverlay == null) {
                     debugOverlay = OfferOverlay(context, container).also { it.show() }
+                    container.registerDebugOverlayCleanup { debugOverlay?.close(); debugOverlay = null }
                 }
                 val now = System.currentTimeMillis()
                 val demo = when (simStep % 4) {

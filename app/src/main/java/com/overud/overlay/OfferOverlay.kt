@@ -36,10 +36,13 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
         if (!Settings.canDrawOverlays(context)) return
         val density = context.resources.displayMetrics.density
         fun dp(v: Int) = (v * density).toInt()
-        val cutout = runCatching { manager.currentWindowMetrics.windowInsets.displayCutout?.boundingRects?.firstOrNull() }.getOrNull()
-        val cutoutW = cutout?.width() ?: dp(40)
-        val cutoutH = cutout?.height() ?: dp(28)
-        val cutoutTop = cutout?.top?.coerceAtLeast(dp(4)) ?: dp(8)
+        val metrics = runCatching { manager.currentWindowMetrics }.getOrNull()
+        val screenW = metrics?.bounds?.width() ?: context.resources.displayMetrics.widthPixels
+        val cutout = runCatching { metrics?.windowInsets?.displayCutout?.boundingRects?.firstOrNull() }.getOrNull()
+        val centeredCutout = cutout != null && kotlin.math.abs(cutout.centerX() - screenW / 2) <= screenW / 6
+        val cutoutW = if (centeredCutout) cutout!!.width() else dp(8)
+        val cutoutH = if (centeredCutout) cutout!!.height() else dp(24)
+        val cutoutTop = if (centeredCutout) cutout!!.top.coerceAtLeast(dp(4)) else dp(8)
 
         val v = buildOverlayViews(context, cutoutW, cutoutH,
             onPause = { runtime.setAutomatic(false) }, onDecline = { runtime.declineCurrentOffer() })
@@ -135,8 +138,10 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         )
                         v.verdictTile.text = if (eligible) "通过" else "拦截"
                         val tags = advice?.tags?.take(1)?.joinToString("").orEmpty()
+                        val place = offer.merchant?.take(18) ?: offer.destination?.take(18) ?: ""
                         val reason = state.decision?.reasons?.firstOrNull() ?: "全部条件通过"
-                        v.detailText.text = listOf(tags, reason).filter(String::isNotBlank).joinToString(" · ")
+                        val cycle = advice?.cycleCentsPerHour?.let { "周期${money(it.roundToLong())}/h" }.orEmpty()
+                        v.detailText.text = listOf(tags, place, cycle, reason).filter(String::isNotBlank).joinToString(" · ")
                     } else {
                         v.heroRow.visibility = View.GONE
                         v.detailText.visibility = View.GONE

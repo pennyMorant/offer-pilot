@@ -69,7 +69,7 @@ internal fun buildOverlayViews(
 
     val leftBadge = pill(11f)
     val cameraGap = View(context).apply {
-        layoutParams = LinearLayout.LayoutParams(cutoutWidthPx.coerceAtLeast(dp(36)), cutoutHeightPx.coerceAtLeast(dp(24)))
+        layoutParams = LinearLayout.LayoutParams(cutoutWidthPx.coerceAtLeast(dp(8)), cutoutHeightPx.coerceAtLeast(dp(20)))
     }
     val rightBadge = pill(11f).apply { gravity = Gravity.END }
     val topRow = LinearLayout(context).apply {
