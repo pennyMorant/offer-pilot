@@ -27,8 +27,12 @@ internal object RouteMetricsParser {
         "(\\d+(?:\\.\\d+)?)\\s*(mi(?:les?)?|km)\\s*(?:\\(|[·•\\-|,]|\\s+)\\s*(?:(\\d+)\\s*(?:hours?|hrs?|h)\\s*)?(\\d+)\\s*min(?:ute)?s?\\)?",
         RegexOption.IGNORE_CASE,
     )
+    private val deliverBy = Regex(
+        "(?:deliver\\s+by|送达时间)\\s*[:：]?\\s*(\\d{1,2}):(\\d{2})(?:\\s*(am|pm))?",
+        RegexOption.IGNORE_CASE,
+    )
 
-    fun parse(text: String, addon: Boolean, cardScoped: Boolean = false): RouteMetrics {
+    fun parse(text: String, addon: Boolean, cardScoped: Boolean = false, nowMillis: Long = 0L): RouteMetrics {
         val lines = text.lines().map(String::trim).filter(String::isNotBlank)
         val distances = mutableListOf<Metric>()
         val durations = mutableListOf<Metric>()
@@ -67,10 +71,32 @@ internal object RouteMetricsParser {
         val time = select(durations, expected, cardScoped)
         val pickup = distances.filter { it.scope == Scope.PICKUP }.map { it.value }.distinct().singleOrNull()
         val finalMeters = (miles.value ?: compactMeters)?.takeIf { it > 0 }
-        val finalSeconds = time.value ?: compactSeconds
+        val deliverBySeconds = if (time.value == null && compactSeconds == null && cardScoped && nowMillis > 0L) {
+            parseDeliverBySeconds(text, nowMillis)
+        } else null
+        val finalSeconds = time.value ?: compactSeconds ?: deliverBySeconds
         val distOk = (miles.verified || (cardScoped && compactMeters != null) || (cardScoped && miles.value != null)) && finalMeters != null
-        val timeOk = (time.verified || (cardScoped && compactSeconds != null) || (cardScoped && time.value != null)) && finalSeconds != null
+        val timeOk = (time.verified || (cardScoped && (compactSeconds != null || deliverBySeconds != null)) ||
+            (cardScoped && time.value != null)) && finalSeconds != null
         return RouteMetrics(finalMeters, finalSeconds, pickup, distOk, timeOk)
+    }
+
+    private fun parseDeliverBySeconds(text: String, nowMillis: Long): Long? {
+        val m = deliverBy.find(text) ?: return null
+        val rawHour = m.groupValues[1].toIntOrNull() ?: return null
+        val minute = m.groupValues[2].toIntOrNull()?.takeIf { it in 0..59 } ?: return null
+        val meridiem = m.groupValues[3].lowercase(java.util.Locale.ROOT)
+        val hour24 = when (meridiem) {
+            "am" -> if (rawHour in 1..12) rawHour % 12 else return null
+            "pm" -> if (rawHour in 1..12) (rawHour % 12) + 12 else return null
+            else -> if (rawHour in 0..23) rawHour else return null
+        }
+        val zone = java.time.ZoneId.systemDefault()
+        val nowLocal = java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(nowMillis), zone)
+        var target = nowLocal.withHour(hour24).withMinute(minute).withSecond(0).withNano(0)
+        if (target.isBefore(nowLocal.minusMinutes(5))) target = target.plusDays(1)
+        val diff = java.time.Duration.between(nowLocal, target).seconds
+        return diff.takeIf { it in 300..10_800 }
     }
 
     private fun parseCompact(line: String): Pair<Long, Long>? {

@@ -17,8 +17,15 @@ object ValueEngine {
         val miles = offer.distanceMeters?.takeIf { it > 0 && offer.hasVerifiedDistance() }?.div(METERS_PER_MILE)
         val quotedSeconds = offer.durationSeconds?.takeIf { it > 0 && offer.hasVerifiedDuration() }
         val usableCalibration = calibration?.takeIf(DurationCalibration::valid)
-        val seconds = quotedSeconds?.let { quoted ->
+        val baseSeconds = quotedSeconds?.let { quoted ->
             usableCalibration?.let { (quoted * it.ratio.coerceAtLeast(1.0)).toLong() } ?: quoted
+        }
+        val shopFloorSeconds = if (offer.serviceKind == OfferService.SHOP_AND_PAY) {
+            offer.itemCount?.takeIf { it > 0 }?.let { it * 45L + 600L }
+        } else null
+        val seconds = when {
+            baseSeconds != null && shopFloorSeconds != null -> maxOf(baseSeconds, shopFloorSeconds)
+            else -> baseSeconds
         }
         val cost = if (miles != null && effective.costCentsPerMile >= 0) miles * effective.costCentsPerMile else null
         val contribution = if (amount != null && cost != null) amount - cost else null

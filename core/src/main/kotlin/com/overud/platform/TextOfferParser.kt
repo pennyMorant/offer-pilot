@@ -41,7 +41,7 @@ abstract class TextOfferParser(
         if (!page.allowsOffer) return null
         val amount = if (cardScoped) QuoteMoneyParser.parseCard(cardText, amountHint) else QuoteMoneyParser.parse(cardText)
         val addon = page.type == PlatformPageType.ADDON_OFFER
-        val route = RouteMetricsParser.parse(cardText, addon, cardScoped)
+        val route = RouteMetricsParser.parse(cardText, addon, cardScoped, now)
         val locations = DeliveryLocationParser.parse(cardText)
         val totals = route.distanceVerified && route.durationVerified
         val incremental = addon && amount.incremental && totals
