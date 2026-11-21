@@ -14,6 +14,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.overud.ui.components.ToggleRow
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable fun NodeDiagnosticDialog(viewModel: NodeDiagnosticViewModel, onDismiss: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     DisposableEffect(viewModel) {
@@ -21,17 +22,13 @@ import com.overud.ui.components.ToggleRow
         onDispose { viewModel.close() }
     }
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.fillMaxWidth().fillMaxHeight(0.94f).padding(12.dp), shape = MaterialTheme.shapes.large) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("临时节点诊断", style = MaterialTheme.typography.titleLarge)
-                Text("诊断期间不自动接单、不将抓取内容计入统计。关闭清空；已有平台订单不会取消。",
-                    style = MaterialTheme.typography.bodySmall)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = viewModel::captureAfterDelay, enabled = !state.busy) { Text("5 秒后抓取") }
-                    TextButton(onClick = onDismiss) { Text("关闭并清空") }
+        Surface(Modifier.systemBarsPadding().padding(12.dp).widthIn(max = 680.dp).fillMaxWidth().fillMaxHeight(0.94f),
+            shape = MaterialTheme.shapes.extraLarge) {
+            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                item {
+                    NodeDiagnosticHeader(state, viewModel::captureAfterDelay, onDismiss)
                 }
-                Text(if (state.countdown > 0) "${state.countdown} 秒后抓取 · ${state.message}" else state.message)
-                LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     state.pageSummary?.let { item { Text(it) } }
                     if (state.nodes.isNotEmpty()) {
                         item { Text("节点示意图（非截图）：灰框为可见节点，主题辅色粗框为 OCR 区域，主色框为选中节点") }
@@ -59,8 +56,22 @@ import com.overud.ui.components.ToggleRow
                             }
                         }
                     }
-                }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun NodeDiagnosticHeader(state: NodeDiagnosticState, onCapture: () -> Unit, onDismiss: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("临时节点诊断", style = MaterialTheme.typography.titleLarge)
+        Text("诊断期间不自动接单、不将抓取内容计入统计。关闭清空；已有平台订单不会取消。",
+            style = MaterialTheme.typography.bodySmall)
+        Button(onClick = onCapture, enabled = !state.busy, shapes = ButtonDefaults.shapes(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("5 秒后抓取") }
+        TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("关闭并清空") }
+        Text(if (state.countdown > 0) "${state.countdown} 秒后抓取 · ${state.message}" else state.message)
     }
 }

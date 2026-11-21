@@ -21,6 +21,7 @@ import com.overud.work.assessOffer
 
 private var debugOverlay: OfferOverlay? = null
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DeveloperTools(factory: OverudViewModelFactory) {
     var selected by remember { mutableStateOf<String?>(null) }
@@ -30,11 +31,10 @@ fun DeveloperTools(factory: OverudViewModelFactory) {
 
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text("开发工具 · 仅测试版本", style = MaterialTheme.typography.titleMedium)
-        TextButton(onClick = { selected = "image" }) { Text("订单图片识别") }
-        TextButton(onClick = { selected = "nodes" }) { Text("临时节点诊断") }
-        TextButton(onClick = { selected = "rules" }) { Text("文本规则调试") }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilledTonalButton(onClick = {
+        DeveloperToolLinks { selected = it }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilledTonalButton(shapes = ButtonDefaults.shapes(),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
                 if (!Settings.canDrawOverlays(context)) {
                     context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                         Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -56,7 +56,8 @@ fun DeveloperTools(factory: OverudViewModelFactory) {
                     it.copy(latest = demo, decision = it.assessOffer(demo, now), message = "测试模式：模拟订单检测弹窗")
                 }
             }) { Text("模拟订单弹窗") }
-            OutlinedButton(onClick = {
+            OutlinedButton(shapes = ButtonDefaults.shapes(),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), onClick = {
                 debugOverlay?.close()
                 debugOverlay = null
                 container.session.update { it.copy(latest = null, decision = null, message = "已清除模拟弹窗") }

@@ -5,7 +5,6 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -22,7 +21,7 @@ import com.overud.ui.components.*
 
 private enum class TestDisplayMode(val label: String) { WORK("Work 模式"), DEBUG("Debug 模式") }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun ImageTestDialog(viewModel: ImageTestViewModel, onDismiss: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -36,7 +35,6 @@ fun ImageTestDialog(viewModel: ImageTestViewModel, onDismiss: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = close,
         sheetState = sheetState,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(
@@ -47,22 +45,22 @@ fun ImageTestDialog(viewModel: ImageTestViewModel, onDismiss: () -> Unit) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("订单图片测试", style = MaterialTheme.typography.titleLarge)
-                IconButton(onClick = close) {
+                IconButton(onClick = close, shapes = IconButtonDefaults.shapes()) {
                     Icon(Icons.Rounded.Close, contentDescription = "关闭")
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Platform.entries.forEach { platform ->
                     FilterChip(selected = state.platform == platform,
                         onClick = { viewModel.selectPlatform(platform) }, label = { Text(platform.label) })
                 }
             }
-            Button(enabled = !state.busy, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().height(46.dp),
+            Button(enabled = !state.busy, shapes = ButtonDefaults.shapes(), modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
                 onClick = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
                 Text(if (state.hasImage) "重新选择截图" else "选择订单截图", style = MaterialTheme.typography.labelLarge)
             }
             if (state.busy) {
-                LinearProgressIndicator(Modifier.fillMaxWidth())
+                LoadingIndicator(Modifier.align(Alignment.CenterHorizontally))
                 Text("正在识别图片…", style = MaterialTheme.typography.bodySmall)
             }
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
