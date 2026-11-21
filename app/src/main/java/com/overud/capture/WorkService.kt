@@ -31,7 +31,7 @@ class WorkService : Service() {
         val stop = PendingIntent.getService(this, 1, Intent(this, WorkService::class.java).setAction("STOP"), PendingIntent.FLAG_IMMUTABLE)
         val mute = PendingIntent.getService(this, 2, Intent(this, WorkService::class.java).setAction("MUTE_VOICE"), PendingIntent.FLAG_IMMUTABLE)
         val notification = Notification.Builder(this, "work").setSmallIcon(R.drawable.ic_overud)
-            .setContentTitle("Overud 正在分析订单").setContentText("点击查看，或结束本次工作")
+            .setContentTitle("OfferPilot 正在分析订单").setContentText("点击查看，或结束本次工作")
             .setContentIntent(open).setOngoing(true)
             .addAction(Notification.Action.Builder(null, "关闭语音", mute).build())
             .addAction(Notification.Action.Builder(null, "结束工作", stop).build()).build()

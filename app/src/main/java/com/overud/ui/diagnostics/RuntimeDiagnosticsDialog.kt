@@ -51,7 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
                     Uri.parse("package:${context.packageName}")))
             }
         }.onFailure {
-            launchError = "无法打开该设置，请从系统设置中手动查找 Overud"
+            launchError = "无法打开该设置，请从系统设置中手动查找 OfferPilot"
         }
     }
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {

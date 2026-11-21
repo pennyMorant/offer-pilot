@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="320" viewBox="0 0 640 320">
+  <rect width="640" height="320" fill="#F1F4EC"/>
+  <defs>
+    <g id="mark">
+      <path d="M78 58A25 25 0 1 1 53 29" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
+      <path d="M56 25L83 25L83 52L74 43L57 60L48 51L65 34Z" fill="currentColor"/>
+    </g>
+    <clipPath id="round"><circle cx="54" cy="54" r="54"/></clipPath>
+    <clipPath id="square"><rect width="108" height="108" rx="26"/></clipPath>
+  </defs>
+  <g transform="translate(55 55) scale(1.6)" clip-path="url(#round)">
+    <rect width="108" height="108" fill="#102D29"/>
+    <use href="#mark" color="#D5F58A"/>
+  </g>
+  <g transform="translate(244 55) scale(1.6)" clip-path="url(#square)">
+    <rect width="108" height="108" fill="#102D29"/>
+    <use href="#mark" color="#D5F58A"/>
+  </g>
+  <g transform="translate(433 55) scale(1.6)" clip-path="url(#round)">
+    <rect width="108" height="108" fill="#DDE5FF"/>
+    <use href="#mark" color="#243B72"/>
+  </g>
+  <text x="320" y="278" text-anchor="middle" fill="#102D29" font-family="sans-serif" font-size="24" font-weight="600">OfferPilot</text>
+</svg>

@@ -85,7 +85,7 @@ fun SettingsScreen(
         }
         item { DeveloperTools(factory) }
         item {
-            Text("Overud 0.1.0 · Android 13–17 M3 Expressive", style = MaterialTheme.typography.bodySmall,
+            Text("OfferPilot 0.1.0 · Android 13–17 M3 Expressive", style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
