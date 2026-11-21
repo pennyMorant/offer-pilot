@@ -1,30 +1,33 @@
 package com.overud.ui.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
-/** Android 17 M3 Expressive grouped card shape: crisp 20dp outer corners, 4dp inner seams. */
+/** Grouped surfaces use theme corners so theme changes remain consistent. */
+@Composable
 fun groupedItemShape(index: Int, count: Int): Shape {
-    val outer = 20.dp
-    val inner = 4.dp
+    val outer = MaterialTheme.shapes.large
+    val inner = MaterialTheme.shapes.extraSmall.topStart
     return when {
-        count <= 1 -> RoundedCornerShape(outer)
-        index == 0 -> RoundedCornerShape(topStart = outer, topEnd = outer, bottomStart = inner, bottomEnd = inner)
-        index == count - 1 -> RoundedCornerShape(topStart = inner, topEnd = inner, bottomStart = outer, bottomEnd = outer)
-        else -> RoundedCornerShape(inner)
+        count <= 1 -> outer
+        index == 0 -> RoundedCornerShape(topStart = outer.topStart, topEnd = outer.topEnd, bottomStart = inner, bottomEnd = inner)
+        index == count - 1 -> RoundedCornerShape(topStart = inner, topEnd = inner, bottomStart = outer.bottomStart, bottomEnd = outer.bottomEnd)
+        else -> MaterialTheme.shapes.extraSmall
     }
 }
 
@@ -35,7 +38,7 @@ fun ToolBadge(
     contentColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
     modifier: Modifier = Modifier,
 ) {
-    Surface(color = containerColor, contentColor = contentColor, shape = RoundedCornerShape(8.dp), modifier = modifier) {
+    Surface(color = containerColor, contentColor = contentColor, shape = MaterialTheme.shapes.small, modifier = modifier) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
@@ -55,7 +58,7 @@ fun ToolMetricTile(
 ) {
     val bg = if (highlight) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
     val fg = if (highlight) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-    Surface(color = bg, contentColor = fg, shape = RoundedCornerShape(14.dp), modifier = modifier) {
+    Surface(color = bg, contentColor = fg, shape = MaterialTheme.shapes.medium, modifier = modifier) {
         Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(label, style = MaterialTheme.typography.labelMedium,
                 color = if (highlight) fg.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -72,13 +75,17 @@ fun ToolSectionRow(
     detail: String,
     index: Int,
     count: Int,
+    expanded: Boolean? = null,
     onClick: () -> Unit,
 ) {
     val shape = groupedItemShape(index, count)
     Surface(
+        onClick = onClick,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = shape,
-        modifier = Modifier.fillMaxWidth().clip(shape).clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp).semantics {
+            expanded?.let { stateDescription = if (it) "已展开" else "已收起" }
+        },
     ) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
@@ -88,16 +95,17 @@ fun ToolSectionRow(
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
             ) {
-                Icon(icon, contentDescription = null, modifier = Modifier.padding(8.dp).size(18.dp))
+                Icon(icon, contentDescription = null, modifier = Modifier.padding(12.dp).size(24.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
-                Text(detail, style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(detail, style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null,
+            Icon(if (expanded == null) Icons.AutoMirrored.Rounded.KeyboardArrowRight
+                else if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
         }
     }

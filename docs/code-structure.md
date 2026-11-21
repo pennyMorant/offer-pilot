@@ -143,6 +143,10 @@ UI 统一遵循 Android 17 上的 Material 3 Expressive：根主题使用 `Mater
 新增和改造的按钮采用 Expressive `shapes` API，内容展开收起从 `MaterialTheme.motionScheme` 取得动效参数。
 交互目标至少 48dp，主要授权按钮至少 56dp 高；状态必须同时提供图标和文字，不能只靠颜色区分。
 
+设置页内容在对应入口下方展开；`ui/settings/SettingsSection.kt` 封装主题动效与外观单选项（上限 150 行）。
+单选与开关整行只保留一个可访问的操作节点；城市和平台选项可换行，长内容可滚动，避免固定高度裁剪文字。
+Debug 设置入口与子页面遵循相同标准，`DeveloperToolLinks.kt` 为仅 Debug 的工具入口组件（上限 150 行）。
+
 ```text
 ui/
 ├── navigation/

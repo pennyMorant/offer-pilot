@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 
 @Composable
 fun DiagnosticOverview(rows: List<RuntimeDiagnosticRow>) {
@@ -38,7 +40,8 @@ fun DiagnosticOverview(rows: List<RuntimeDiagnosticRow>) {
 @Composable
 fun DiagnosticSectionHeader(group: DiagnosticGroup, rows: List<RuntimeDiagnosticRow>, expanded: Boolean, onToggle: () -> Unit) {
     val attention = rows.count { it.tone == DiagnosticTone.ATTENTION }
-    Surface(onClick = onToggle, shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface) {
+    Surface(onClick = onToggle, shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier.heightIn(min = 64.dp).semantics { stateDescription = if (expanded) "已展开" else "已收起" }) {
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {

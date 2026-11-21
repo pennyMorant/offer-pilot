@@ -10,21 +10,22 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.overud.ui.components.ToggleRow
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable fun VoiceSettingsCard(viewModel: VoiceViewModel) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val status by viewModel.status.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         ToggleRow("驾驶语音播报", "开始工作后播报新报价与关键配送状态；开关立即保存", settings.enabled,
             onChange = viewModel::enabled)
         ToggleRow("播报 Prop 22 情景补差", "只在已启用估算且字段足够时播报，不代表实际到账",
             settings.includeProp22, onChange = viewModel::prop22)
-        Text(status, style = MaterialTheme.typography.bodySmall)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilledTonalButton(onClick = viewModel::preview) { Text("试听中文") }
-            OutlinedButton(onClick = viewModel::stop) { Text("停止当前播报") }
-        }
-        TextButton(onClick = {
+        Text(status, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        FilledTonalButton(onClick = viewModel::preview, shapes = ButtonDefaults.shapes(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("试听中文") }
+        OutlinedButton(onClick = viewModel::stop, shapes = ButtonDefaults.shapes(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("停止当前播报") }
+        TextButton(shapes = ButtonDefaults.shapes(), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), onClick = {
             runCatching { context.startActivity(Intent("com.android.settings.TTS_SETTINGS")) }
                 .onFailure { runCatching { context.startActivity(Intent(Settings.ACTION_SETTINGS)) } }
         }) { Text("系统文字转语音设置") }

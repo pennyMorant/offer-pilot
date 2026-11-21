@@ -1,8 +1,6 @@
 package com.overud.ui.rules
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -18,21 +16,22 @@ private val laWagePresets = listOf(
     "West Hollywood" to "19.65",
 )
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable fun Prop22Fields(input: Prop22Input, saving: Boolean, onChange: (Prop22Input) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         ToggleRow("启用加州 Prop 22 估算", "确认用于加州取餐；两个平台共用此设置，仅作参考",
             input.enabled, enabled = !saving) { onChange(input.copy(enabled = it)) }
         if (input.enabled) {
-            Text("大洛杉矶常见城市时薪速选（可手动修改）", style = MaterialTheme.typography.labelMedium,
+            Text("大洛杉矶常见城市时薪速选（可手动修改）", style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 laWagePresets.forEach { (city, wage) ->
                     FilterChip(
                         selected = input.wage == wage,
                         enabled = !saving,
                         onClick = { onChange(input.copy(wage = wage)) },
-                        label = { Text("$city $$wage", style = MaterialTheme.typography.labelMedium) },
+                        label = { Text("$city $$wage") },
+                        modifier = Modifier.heightIn(min = 48.dp),
                     )
                 }
             }
