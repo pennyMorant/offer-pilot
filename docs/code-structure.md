@@ -184,6 +184,12 @@ ui/
 
 ## 6. 测试保持精简
 
+首次运行权限引导位于 `ui/permissions`：`PermissionSetupState.kt` 为模型（上限 120 行），
+`PermissionSetupViewModel.kt` 管理引导进度与授权状态（上限 200 行），
+`PermissionSetupDialog.kt` 只呈现引导界面（上限 150 行），
+`PermissionSetupLauncher.kt` 封装系统授权与设置页跳转（上限 200 行）。
+Activity 负责注册与装配；引导结束不启动工作或自动接单。
+
 用户没有要求时不主动运行测试或模拟器。保留现有 `ValueEngineTest.kt`；本轮仅更新业务类的包引用和评估入口，未增加用例。
 
 后续若用户需要维护核心测试，最多按价值规则、报价解析、接单状态三类组织，每个文件上限 120 行；只覆盖金额/单位错误、报价混淆、重复接单、未知结果等会影响实际订单的边界。不新增 UI 截图测试、为简单数据类写测试、追求覆盖率指标或重复生产实现。
