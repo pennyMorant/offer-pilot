@@ -388,3 +388,12 @@ CI 默认只编译 Debug APK，不默认运行测试。现有用例不删除、�
 - 图像测试、节点诊断、文本规则调试 UI 与专属 ViewModel 改放 `app/src/debug/java`，继承原文件上限。ImportedImageRecognizer、NodeDiagnosticReader 也迁到 debug。
 - `debug` 与 `release` 分别提供 DeveloperViewModels.kt（上限 120 行）、DeveloperTools.kt（上限 150 行）；公共源集禁止引用测试专属页面或 ViewModel。
 - 规则页不再承载外观、语音或权限设置。根导航统一处理未保存草稿离开提示。
+
+## 25. 悬浮窗轮廓与内容安全区
+
+- overlay/OverlayWindowLayout.kt：公开 WindowMetrics / WindowInsets 的圆角、状态栏和挖孔适配，以及窗口生命周期，上限 150 行。
+- 展开态默认顶部与左右内缩 8dp；顶部圆角按系统报告半径减去边距计算，横向挖孔区域另外避让。
+- 读取不到圆角时以 32dp 屏幕半径回退，不硬编码 Pixel 型号。密度或方向变化时重新读取尺寸与安全区。
+- 状态栏区域只绘制背景，平台、评分、金额和操作全部排在其下方；不新增特权窗口或无障碍权限。
+- OverlayViews.kt 只保存 View 引用，上限 120 行；OfferOverlayViews.kt 创建视图，OfferOverlayColors.kt 应用颜色，OverlayOfferContent.kt 绑定报价展示，各上限 150 行。
+- OfferOverlay.kt 保留工作状态订阅和既有动作分发，上限 150 行；布局适配不修改接单条件和执行流程。

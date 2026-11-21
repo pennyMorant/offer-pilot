@@ -1,67 +1,44 @@
 package com.overud.overlay
 
 import android.content.Context
-import android.graphics.Color
-import android.graphics.PixelFormat
 import android.provider.Settings
-import android.transition.AutoTransition
-import android.transition.TransitionManager
-import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
-import androidx.compose.ui.graphics.toArgb
 import com.overud.di.AppContainer
 import com.overud.model.*
-import com.overud.ui.components.money
-import com.overud.ui.components.offerAmountPresentation
 import com.overud.ui.theme.appearanceColors
 import com.overud.ui.theme.isDark
 import com.overud.valuation.StrategyAdvisor
-import com.overud.valuation.ValueEngine
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import java.util.Locale
-import kotlin.math.roundToLong
 
 /** iOS Dynamic Island style top-camera floating overlay for live offer alerts and quick actions. */
 class OfferOverlay(private val context: Context, private val runtime: AppContainer) {
     private val manager = context.getSystemService(WindowManager::class.java)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var view: View? = null
+    private var window: OverlayWindowLayout? = null
     private val collapsedOfferId = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     private var lastOfferId: String? = null
 
     fun show() {
-        if (!Settings.canDrawOverlays(context)) return
+        if (view != null || !Settings.canDrawOverlays(context)) return
         val density = context.resources.displayMetrics.density
         fun dp(v: Int) = (v * density).toInt()
-        val metrics = runCatching { manager.currentWindowMetrics }.getOrNull()
-        val screenW = metrics?.bounds?.width() ?: context.resources.displayMetrics.widthPixels
-        val cutout = runCatching { metrics?.windowInsets?.displayCutout?.boundingRects?.firstOrNull() }.getOrNull()
-        val centeredCutout = cutout != null && kotlin.math.abs(cutout.centerX() - screenW / 2) <= screenW / 6
-        val cutoutW = if (centeredCutout) cutout.width() else dp(8)
-        val cutoutH = if (centeredCutout) cutout.height() else dp(24)
-        val cutoutTop = if (centeredCutout) cutout.top.coerceAtLeast(dp(4)) else dp(8)
-
-        val v = buildOverlayViews(context, cutoutW, cutoutH,
+        val v = buildOverlayViews(context,
             onPause = { runtime.setAutomatic(false) }, onDecline = { runtime.declineCurrentOffer() })
-        val params = WindowManager.LayoutParams(
-            dp(168), WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-            PixelFormat.TRANSLUCENT,
-        ).apply {
-            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-            y = cutoutTop
-            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
-        }
+        val layout = OverlayWindowLayout(context, manager, v)
 
         v.topRow.setOnClickListener {
             val currentId = lastOfferId ?: return@setOnClickListener
             collapsedOfferId.value = if (collapsedOfferId.value == currentId) null else currentId
         }
-        runCatching { manager.addView(v.root, params); view = v.root }.onFailure { scope.cancel() }
+        runCatching { layout.attach(); window = layout; view = v.root }.onFailure {
+            layout.close()
+            scope.cancel()
+            return
+        }
 
         scope.launch {
             combine(runtime.state, runtime.appearance.state, collapsedOfferId) { state, appearance, collapsed ->
@@ -92,86 +69,13 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                     val hasActivity = (state.deliveryPhase == DeliveryPhase.ACTIVE && otherActive != null) ||
                         (bgAlert != null && state.deliveryPhase == DeliveryPhase.AVAILABLE) ||
                         (state.deliveryPhase == DeliveryPhase.AVAILABLE && recentComplete && otherCompleted != null)
-                    val targetWidth = when {
-                        isExpandedOffer -> dp(338)
-                        offer != null || hasActivity || state.autoAcceptEnabled -> dp(248)
-                        else -> dp(168)
-                    }
-                    if (params.width != targetWidth) {
-                        TransitionManager.beginDelayedTransition(v.root, AutoTransition().apply { duration = 180 })
-                        params.width = targetWidth
-                        runCatching { manager.updateViewLayout(v.root, params) }
-                    }
+                    layout.update(isExpandedOffer, when {
+                        offer != null || hasActivity || state.autoAcceptEnabled -> 248
+                        else -> 168
+                    })
                     applyIslandColors(v, colors, alert, state.decision?.eligible == true, dp(1))
 
-                    val modeDot = when {
-                        state.automatic -> "● 自动"
-                        state.autoAcceptEnabled -> "◐ 待命"
-                        else -> "● 监测"
-                    }
-                    if (offer != null) {
-                        val score = state.decision?.valuation?.score
-                        val scoreText = score?.let { " ${it}分" }.orEmpty()
-                        v.leftBadge.stylePill(
-                            if (score != null && score >= 70) colors.primaryContainer.toArgb() else Color.rgb(38, 42, 48),
-                            if (score != null && score >= 70) colors.onPrimaryContainer.toArgb() else Color.WHITE,
-                        )
-                        v.leftBadge.text = "${offer.platform.label}$scoreText"
-                        val mi = offer.distanceMeters?.takeIf { offer.hasVerifiedDistance() }?.let {
-                            String.format(Locale.US, "%.1f mi", it / ValueEngine.METERS_PER_MILE)
-                        } ?: "—"
-                        val min = offer.durationSeconds?.takeIf { offer.hasVerifiedDuration() }?.let { "${it / 60} min" } ?: "—"
-                        v.rightBadge.stylePill(Color.TRANSPARENT, Color.rgb(176, 182, 190))
-                        v.rightBadge.text = if (isExpandedOffer) modeDot else offerAmountPresentation(offer)
-
-                        v.heroRow.visibility = if (isExpandedOffer) View.VISIBLE else View.GONE
-                        v.metricsRow.visibility = if (isExpandedOffer) View.VISIBLE else View.GONE
-                        val valuation = state.decision?.valuation
-                        v.amountText.text = offerAmountPresentation(offer)
-                        v.heroRouteText.text = "$min · $mi"
-                        v.perMileTile.text = "${valuation?.centsPerMile?.let { money(it.roundToLong()) } ?: "—"}/mi"
-                        val hr = valuation?.contributionCentsPerHour ?: valuation?.grossCentsPerHour
-                        v.hourlyTile.text = "${hr?.let { money(it.roundToLong()) } ?: "—"}/h"
-                        val eligible = state.decision?.eligible == true
-                        v.verdictTile.stylePill(
-                            if (eligible) colors.primaryContainer.toArgb() else colors.errorContainer.toArgb(),
-                            if (eligible) colors.onPrimaryContainer.toArgb() else colors.onErrorContainer.toArgb(),
-                        )
-                        v.verdictTile.text = if (eligible) "通过" else "拦截"
-                        val tags = advice?.tags?.take(3)?.joinToString(" · ").orEmpty()
-                        val routePlaces = listOfNotNull(
-                            offer.merchant?.take(22) ?: offer.pickupAddress?.take(22),
-                            offer.destination?.take(24),
-                        ).joinToString(" → ")
-                        val reason = state.decision?.reasons?.firstOrNull() ?: "全部条件通过"
-                        val notes = valuation?.scoreNotes?.take(2)?.joinToString(" · ").orEmpty()
-                        val verdictLine = listOf(reason, notes).filter(String::isNotBlank).joinToString(" · ")
-                        val cycle = advice?.cycleCentsPerHour?.let { "含等单周期 ${money(it.roundToLong())}/h" }.orEmpty()
-                        val prop = com.overud.ui.components.prop22Compact(valuation?.prop22).trim()
-                        val destHint = com.overud.ui.components.destinationPresentation(state.destinationAssessment, Locale.getDefault()).title
-                        val extraLine = listOf(cycle, prop, destHint).filter(String::isNotBlank).joinToString(" · ")
-                        v.tagsText.visibility = if (isExpandedOffer && tags.isNotBlank()) View.VISIBLE else View.GONE
-                        v.tagsText.text = tags
-                        v.routeText.visibility = if (isExpandedOffer && routePlaces.isNotBlank()) View.VISIBLE else View.GONE
-                        v.routeText.text = routePlaces
-                        v.infoBox.visibility = if (isExpandedOffer) View.VISIBLE else View.GONE
-                        v.verdictText.text = if (eligible) "✓ $verdictLine" else "• $verdictLine"
-                        v.extraText.visibility = if (extraLine.isNotBlank()) View.VISIBLE else View.GONE
-                        v.extraText.text = extraLine
-                    } else {
-                        v.heroRow.visibility = View.GONE
-                        v.metricsRow.visibility = View.GONE
-                        v.tagsText.visibility = View.GONE
-                        v.routeText.visibility = View.GONE
-                        v.infoBox.visibility = View.GONE
-                        v.leftBadge.stylePill(
-                            if (state.automatic) colors.primaryContainer.toArgb() else Color.TRANSPARENT,
-                            if (state.automatic) colors.onPrimaryContainer.toArgb() else Color.rgb(160, 230, 180),
-                        )
-                        v.leftBadge.text = modeDot
-                        v.rightBadge.stylePill(Color.TRANSPARENT, Color.rgb(215, 220, 226))
-                        v.rightBadge.text = if (state.deliveryPhase == DeliveryPhase.ACTIVE) "配送中" else "OVERUD"
-                    }
+                    renderOfferContent(v, state, colors, isExpandedOffer, advice)
 
                     v.pauseBtn.visibility = if (state.autoAcceptEnabled) View.VISIBLE else View.GONE
                     v.declineBtn.visibility = if (isExpandedOffer && state.decision?.eligible == false &&
@@ -198,5 +102,10 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
         }
     }
 
-    fun close() { scope.cancel(); view?.let { runCatching { manager.removeView(it) } }; view = null }
+    fun close() {
+        scope.cancel()
+        window?.close()
+        window = null
+        view = null
+    }
 }

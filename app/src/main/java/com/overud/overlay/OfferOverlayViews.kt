@@ -9,49 +9,21 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.compose.material3.ColorScheme
-import androidx.compose.ui.graphics.toArgb
-
-internal class OverlayViews(
-    val root: LinearLayout,
-    val cardBg: GradientDrawable,
-    val topRow: LinearLayout,
-    val leftBadge: TextView,
-    val cameraGap: View,
-    val rightBadge: TextView,
-    val heroRow: LinearLayout,
-    val amountText: TextView,
-    val heroRouteText: TextView,
-    val metricsRow: LinearLayout,
-    val perMileTile: TextView,
-    val hourlyTile: TextView,
-    val verdictTile: TextView,
-    val tagsText: TextView,
-    val routeText: TextView,
-    val infoBox: LinearLayout,
-    val verdictText: TextView,
-    val extraText: TextView,
-    val actionsRow: LinearLayout,
-    val pauseBtn: TextView,
-    val declineBtn: TextView,
-    val switchBtn: TextView,
-)
 
 internal fun buildOverlayViews(
     context: Context,
-    cutoutWidthPx: Int,
-    cutoutHeightPx: Int,
     onPause: () -> Unit,
     onDecline: () -> Unit,
 ): OverlayViews {
     val d = context.resources.displayMetrics.density
     fun dp(v: Int) = (v * d).toInt()
-    val cardBg = GradientDrawable().apply { cornerRadius = dp(26).toFloat() }
+    val cardBg = GradientDrawable().apply { setColor(Color.BLACK) }
     val root = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(14), dp(7), dp(14), dp(10))
+        setPadding(dp(16), dp(16), dp(16), dp(16))
+        clipToOutline = true
         background = cardBg
-        elevation = dp(12).toFloat()
+        elevation = dp(4).toFloat()
     }
     fun pill(size: Float) = TextView(context).apply {
         textSize = size; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; maxLines = 1
@@ -74,14 +46,11 @@ internal fun buildOverlayViews(
     }
 
     val leftBadge = pill(11f)
-    val cameraGap = View(context).apply {
-        layoutParams = LinearLayout.LayoutParams(cutoutWidthPx.coerceAtLeast(dp(8)), cutoutHeightPx.coerceAtLeast(dp(20)))
-    }
     val rightBadge = pill(11f).apply { gravity = Gravity.END }
     val topRow = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+        minimumHeight = dp(48)
         addView(leftBadge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-        addView(cameraGap)
         addView(rightBadge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
     }
 
@@ -145,36 +114,8 @@ internal fun buildOverlayViews(
     root.addView(topRow); root.addView(heroRow); root.addView(metricsRow); root.addView(tagsText)
     root.addView(routeText); root.addView(infoBox); root.addView(actionsRow)
     return OverlayViews(
-        root, cardBg, topRow, leftBadge, cameraGap, rightBadge, heroRow, amountText, heroRouteText,
+        root, cardBg, topRow, leftBadge, rightBadge, heroRow, amountText, heroRouteText,
         metricsRow, perMileTile, hourlyTile, verdictTile, tagsText, routeText, infoBox, verdictText, extraText,
         actionsRow, pauseBtn, declineBtn, switchBtn,
     )
-}
-
-internal fun TextView.stylePill(bg: Int, fg: Int) {
-    (background as? GradientDrawable)?.setColor(bg)
-    setTextColor(fg)
-}
-
-internal fun applyIslandColors(v: OverlayViews, colors: ColorScheme, alert: Boolean, eligible: Boolean, strokePx: Int) {
-    v.cardBg.setColor(Color.BLACK)
-    v.cardBg.setStroke(if (alert) strokePx * 2 else 0, if (alert) colors.error.toArgb() else Color.TRANSPARENT)
-    val fgColor = Color.WHITE
-    v.amountText.setTextColor(if (alert) colors.error.toArgb() else fgColor)
-    v.heroRouteText.setTextColor(if (alert) colors.error.toArgb() else Color.rgb(232, 236, 242))
-    v.tagsText.setTextColor(if (alert) colors.error.toArgb() else colors.tertiary.toArgb())
-    v.routeText.setTextColor(Color.rgb(228, 232, 238))
-    (v.infoBox.background as? GradientDrawable)?.setColor(Color.rgb(18, 20, 24))
-    v.verdictText.setTextColor(when {
-        alert -> colors.error.toArgb()
-        eligible -> colors.primary.toArgb()
-        else -> Color.rgb(245, 190, 120)
-    })
-    v.extraText.setTextColor(Color.rgb(162, 168, 178))
-    val tileBg = Color.rgb(22, 24, 28)
-    v.perMileTile.stylePill(tileBg, fgColor)
-    v.hourlyTile.stylePill(tileBg, fgColor)
-    v.pauseBtn.stylePill(colors.primaryContainer.toArgb(), colors.onPrimaryContainer.toArgb())
-    v.declineBtn.stylePill(colors.errorContainer.toArgb(), colors.onErrorContainer.toArgb())
-    v.switchBtn.stylePill(colors.tertiaryContainer.toArgb(), colors.onTertiaryContainer.toArgb())
 }
