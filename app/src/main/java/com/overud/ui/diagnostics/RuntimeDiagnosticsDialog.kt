@@ -6,8 +6,13 @@ import android.provider.Settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -29,6 +34,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
     val owner = LocalLifecycleOwner.current
     val context = LocalContext.current
     var launchError by remember { mutableStateOf<String?>(null) }
+    var expanded by rememberSaveable {
+        mutableStateOf(listOf(DiagnosticGroup.CONNECTION.name, DiagnosticGroup.PERMISSIONS.name))
+    }
     DisposableEffect(owner, viewModel) {
         val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh() }
         owner.lifecycle.addObserver(observer)
@@ -55,27 +63,42 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
         }
     }
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.fillMaxWidth().fillMaxHeight(0.94f).padding(12.dp), shape = MaterialTheme.shapes.large) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("运行状态与权限", style = MaterialTheme.typography.titleLarge)
-                Text("打开页面只读取状态，不开始工作、不自动授权。设置变更后返回会刷新。",
-                    style = MaterialTheme.typography.bodySmall)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = viewModel::refresh) { Text("刷新状态") }
-                    TextButton(onClick = onDismiss) { Text("关闭") }
+        Surface(
+            Modifier.systemBarsPadding().padding(12.dp).widthIn(max = 680.dp).fillMaxWidth().fillMaxHeight(0.96f),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            Column {
+                Row(Modifier.fillMaxWidth().padding(start = 24.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("连接与权限", style = MaterialTheme.typography.titleLarge)
+                        Text("检查连接 · 管理授权", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    IconButton(onClick = viewModel::refresh) { Icon(Icons.Rounded.Refresh, "刷新状态") }
+                    IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, "关闭连接与权限") }
                 }
-                launchError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(rows, key = { it.title }) { row ->
-                        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.medium) {
-                            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text(row.title, style = MaterialTheme.typography.titleSmall)
-                                Text(row.status, style = MaterialTheme.typography.bodyLarge)
-                                Text(row.detail, style = MaterialTheme.typography.bodySmall)
-                                row.action?.let { target -> TextButton(onClick = { action(target) }) {
-                                    Text(if (target == DiagnosticAction.SHEVERY) "检查并授权" else "打开对应设置")
-                                } }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item("overview") { DiagnosticOverview(rows) }
+                    launchError?.let { error -> item("error") {
+                        Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.large) {
+                            Text(error, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onErrorContainer)
+                        }
+                    } }
+                    DiagnosticGroup.entries.forEach { group ->
+                        val groupRows = rows.filter { it.group == group }
+                            .sortedBy { if (it.tone == DiagnosticTone.ATTENTION) 0 else 1 }
+                        val open = group.name in expanded
+                        item("header_${group.name}") {
+                            DiagnosticSectionHeader(group, groupRows, open) {
+                                expanded = if (open) expanded - group.name else expanded + group.name
                             }
+                        }
+                        if (open) items(groupRows, key = { it.title }) { row ->
+                            DiagnosticStatusCard(row, ::action)
                         }
                     }
                 }

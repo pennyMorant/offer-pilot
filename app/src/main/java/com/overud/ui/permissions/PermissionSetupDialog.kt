@@ -69,7 +69,7 @@ fun PermissionSetupDialog(
                         }
                     }
                     if (summary && state.granted.size < SetupPermission.entries.size) {
-                        Text("未开启的项目可在「设置 → 运行状态与权限」中继续设置。",
+                        Text("未开启的项目可在「设置 → 连接与权限」中继续设置。",
                             style = MaterialTheme.typography.bodyMedium)
                     }
                 }

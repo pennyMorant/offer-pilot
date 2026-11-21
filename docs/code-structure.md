@@ -190,6 +190,12 @@ ui/
 `PermissionSetupLauncher.kt` 封装系统授权与设置页跳转（上限 200 行）。
 Activity 负责注册与装配；引导结束不启动工作或自动接单。
 
+连接与权限页面位于 `ui/diagnostics`：`RuntimeDiagnosticState.kt` 定义状态分组、语义与操作（上限 120 行），
+`RuntimeDiagnosticRows.kt` 从工作、连接和设备状态生成展示项（上限 150 行），
+`RuntimeDiagnosticsDialog.kt` 负责页面组合与系统设置操作分发，
+`DiagnosticOverview.kt`、`DiagnosticStatusCard.kt` 负责概览、分组标题与状态卡片（均上限 150 行）。
+页面以 ViewModel 状态为依据，不根据状态文案猜测是否已授权；未工作时的采集待机不作为连接故障。
+
 用户没有要求时不主动运行测试或模拟器。保留现有 `ValueEngineTest.kt`；本轮仅更新业务类的包引用和评估入口，未增加用例。
 
 后续若用户需要维护核心测试，最多按价值规则、报价解析、接单状态三类组织，每个文件上限 120 行；只覆盖金额/单位错误、报价混淆、重复接单、未知结果等会影响实际订单的边界。不新增 UI 截图测试、为简单数据类写测试、追求覆盖率指标或重复生产实现。
