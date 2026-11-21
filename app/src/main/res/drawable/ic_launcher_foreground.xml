@@ -4,6 +4,13 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Launcher viewport is the central 72dp; keep the mark about 50dp wide. -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.8"
+        android:scaleY="0.8"
+        android:translateX="0.5">
     <path
         android:fillColor="#00000000"
         android:strokeColor="#D5F58A"
@@ -12,5 +19,6 @@
         android:pathData="M78,58A25,25 0,1 1,53 29" />
     <path
         android:fillColor="#D5F58A"
-        android:pathData="M56,25L83,25L83,52L74,43L57,60L48,51L65,34Z" />
+        android:pathData="M56,29L79,29L79,52L71,44L57,58L48,49L63,36Z" />
+    </group>
 </vector>

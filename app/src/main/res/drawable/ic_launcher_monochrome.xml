@@ -4,6 +4,13 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Match the color foreground geometry, including its launcher-safe padding. -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.8"
+        android:scaleY="0.8"
+        android:translateX="0.5">
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FF000000"
@@ -12,5 +19,6 @@
         android:pathData="M78,58A25,25 0,1 1,53 29" />
     <path
         android:fillColor="#FF000000"
-        android:pathData="M56,25L83,25L83,52L74,43L57,60L48,51L65,34Z" />
+        android:pathData="M56,29L79,29L79,52L71,44L57,58L48,49L63,36Z" />
+    </group>
 </vector>

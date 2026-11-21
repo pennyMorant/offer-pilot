@@ -1,24 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="320" viewBox="0 0 640 320">
+  <title>OfferPilot launcher icon padding</title>
+  <desc>Color and themed icons cropped to the central 72dp launcher viewport, with an approximately 50dp mark.</desc>
   <rect width="640" height="320" fill="#F1F4EC"/>
   <defs>
-    <g id="mark">
+    <g id="mark" transform="translate(11.3 10.8) scale(0.8)">
       <path d="M78 58A25 25 0 1 1 53 29" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
-      <path d="M56 25L83 25L83 52L74 43L57 60L48 51L65 34Z" fill="currentColor"/>
+      <path d="M56 29L79 29L79 52L71 44L57 58L48 49L63 36Z" fill="currentColor"/>
     </g>
-    <clipPath id="round"><circle cx="54" cy="54" r="54"/></clipPath>
-    <clipPath id="square"><rect width="108" height="108" rx="26"/></clipPath>
+    <clipPath id="round"><circle cx="54" cy="54" r="36"/></clipPath>
+    <clipPath id="square"><rect x="18" y="18" width="72" height="72" rx="18"/></clipPath>
   </defs>
-  <g transform="translate(55 55) scale(1.6)" clip-path="url(#round)">
+  <svg x="55" y="55" width="172.8" height="172.8" viewBox="18 18 72 72">
+  <g clip-path="url(#round)">
     <rect width="108" height="108" fill="#102D29"/>
     <use href="#mark" color="#D5F58A"/>
   </g>
-  <g transform="translate(244 55) scale(1.6)" clip-path="url(#square)">
+  </svg>
+  <svg x="244" y="55" width="172.8" height="172.8" viewBox="18 18 72 72">
+  <g clip-path="url(#square)">
     <rect width="108" height="108" fill="#102D29"/>
     <use href="#mark" color="#D5F58A"/>
   </g>
-  <g transform="translate(433 55) scale(1.6)" clip-path="url(#round)">
+  </svg>
+  <svg x="433" y="55" width="172.8" height="172.8" viewBox="18 18 72 72">
+  <g clip-path="url(#round)">
     <rect width="108" height="108" fill="#DDE5FF"/>
     <use href="#mark" color="#243B72"/>
   </g>
+  </svg>
   <text x="320" y="278" text-anchor="middle" fill="#102D29" font-family="sans-serif" font-size="24" font-weight="600">OfferPilot</text>
 </svg>
