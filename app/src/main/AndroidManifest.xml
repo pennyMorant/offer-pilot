@@ -16,7 +16,8 @@
         <package android:name="com.doordash.driverapp" />
         <package android:name="com.hamondev.shevery" />
     </queries>
-    <application android:name=".OverudApp" android:label="Overud" android:icon="@drawable/ic_overud"
+    <application android:name=".OverudApp" android:label="Overud" android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:allowBackup="false" android:dataExtractionRules="@xml/data_extraction_rules" android:supportsRtl="true" android:theme="@style/Theme.Overud">
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
