@@ -138,6 +138,11 @@ data/
 
 ### UI
 
+UI 统一遵循 Android 17 上的 Material 3 Expressive：根主题使用 `MaterialExpressiveTheme`，
+保留官方默认形状与字体层级，不在全局压缩字号或圆角；动态色与深浅色由统一主题提供。
+新增和改造的按钮采用 Expressive `shapes` API，内容展开收起从 `MaterialTheme.motionScheme` 取得动效参数。
+交互目标至少 48dp，主要授权按钮至少 56dp 高；状态必须同时提供图标和文字，不能只靠颜色区分。
+
 ```text
 ui/
 ├── navigation/

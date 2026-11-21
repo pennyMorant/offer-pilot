@@ -23,6 +23,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable fun RuntimeDiagnosticsDialog(
     viewModel: RuntimeDiagnosticsViewModel,
     onOverlay: () -> Unit,
@@ -76,8 +77,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
                         Text("检查连接 · 管理授权", style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    IconButton(onClick = viewModel::refresh) { Icon(Icons.Rounded.Refresh, "刷新状态") }
-                    IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, "关闭连接与权限") }
+                    FilledTonalIconButton(onClick = viewModel::refresh, shapes = IconButtonDefaults.shapes()) {
+                        Icon(Icons.Rounded.Refresh, "刷新状态")
+                    }
+                    IconButton(onClick = onDismiss, shapes = IconButtonDefaults.shapes()) {
+                        Icon(Icons.Rounded.Close, "关闭连接与权限")
+                    }
                 }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(16.dp),

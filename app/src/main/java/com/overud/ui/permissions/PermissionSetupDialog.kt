@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PermissionSetupDialog(
     state: PermissionSetupState,
@@ -75,12 +76,14 @@ fun PermissionSetupDialog(
                 }
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Button(
+                        shapes = ButtonDefaults.shapes(),
                         onClick = { if (welcome) onStart() else if (summary) onFinish() else current?.let(onRequest) },
-                        enabled = !state.busy, modifier = Modifier.fillMaxWidth(),
+                        enabled = !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
                     ) { Text(if (state.busy) "等待授权结果…" else if (welcome) "开始设置" else if (summary) "进入 OfferPilot" else current?.action.orEmpty()) }
                     if (!summary) TextButton(
+                        shapes = ButtonDefaults.shapes(),
                         onClick = if (welcome) onFinish else onSkip,
-                        enabled = !state.busy, modifier = Modifier.fillMaxWidth(),
+                        enabled = !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                     ) { Text(if (welcome) "稍后再设置" else "跳过此项") }
                 }
             }

@@ -2,15 +2,10 @@ package com.overud.ui.theme
 
 import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.overud.data.preferences.AppearanceSettings
 import com.overud.data.preferences.ThemeMode
 
@@ -64,32 +59,9 @@ fun appearanceColors(context: Context, settings: AppearanceSettings, dark: Boole
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun OverudTheme(settings: AppearanceSettings = AppearanceSettings(), content: @Composable () -> Unit) {
-    val tabular = "tnum"
     MaterialExpressiveTheme(
         colorScheme = appearanceColors(LocalContext.current, settings, settings.isDark(isSystemInDarkTheme())),
         motionScheme = MotionScheme.expressive(),
-        shapes = Shapes(
-            extraSmall = RoundedCornerShape(6.dp),
-            small = RoundedCornerShape(10.dp),
-            medium = RoundedCornerShape(16.dp),
-            large = RoundedCornerShape(20.dp),
-            extraLarge = RoundedCornerShape(24.dp),
-        ),
-        typography = Typography(
-            displayMedium = TextStyle(fontSize = 40.sp, lineHeight = 46.sp, fontWeight = FontWeight.Bold,
-                letterSpacing = (-0.8).sp, fontFeatureSettings = tabular),
-            headlineLarge = TextStyle(fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold,
-                letterSpacing = (-0.5).sp, fontFeatureSettings = tabular),
-            headlineSmall = TextStyle(fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.SemiBold,
-                letterSpacing = (-0.2).sp, fontFeatureSettings = tabular),
-            titleLarge = TextStyle(fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.SemiBold),
-            titleMedium = TextStyle(fontSize = 15.sp, lineHeight = 21.sp, fontWeight = FontWeight.SemiBold,
-                fontFeatureSettings = tabular),
-            labelLarge = TextStyle(fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold,
-                fontFeatureSettings = tabular),
-            labelMedium = TextStyle(fontSize = 11.sp, lineHeight = 15.sp, fontWeight = FontWeight.Medium,
-                fontFeatureSettings = tabular),
-        ),
         content = content,
     )
 }
