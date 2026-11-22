@@ -58,15 +58,16 @@ fun DailyReviewPage(
             }
         }
         item {
-            Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.large,
+            Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge,
                 modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Bottom) {
                         Column {
                             Text("推送总量", style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("${summary.totalCount} 单", style = MaterialTheme.typography.displayMedium)
+                            Text("${summary.totalCount} 单",
+                                style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = "tnum"))
                         }
                         Column(horizontalAlignment = Alignment.End) {
                             Text("好单 ${summary.goodPercent}% · 垃圾单 ${summary.lowPercent}%",

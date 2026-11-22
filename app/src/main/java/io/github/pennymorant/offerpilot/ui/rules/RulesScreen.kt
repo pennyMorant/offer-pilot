@@ -1,7 +1,13 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package io.github.pennymorant.offerpilot.ui.rules
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,10 +19,12 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.pennymorant.offerpilot.model.Platform
 import io.github.pennymorant.offerpilot.ui.components.ToggleRow
+import io.github.pennymorant.offerpilot.ui.components.ToolBadge
 import io.github.pennymorant.offerpilot.ui.components.ToolSectionRow
 
 @Composable
@@ -45,17 +53,30 @@ fun RulesScreen(viewModel: RulesViewModel) {
         ) {
             item { RuleScopeSelector(state, viewModel::selectScope, viewModel::inheritShared) }
             if (section != null) item {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    IconButton(onClick = { section = null }) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FilledTonalIconButton(
+                        onClick = { section = null },
+                        shapes = IconButtonDefaults.shapes(),
+                        modifier = Modifier.size(40.dp),
+                    ) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回", modifier = Modifier.size(20.dp))
                     }
-                    Text(section.orEmpty(), style = MaterialTheme.typography.titleLarge)
+                    Text(section.orEmpty(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                 }
             }
             if (section == null) {
                 item {
-                    Text(if (dirty) "当前草稿（未保存）" else "已保存规则", style = MaterialTheme.typography.labelLarge,
-                        color = if (dirty) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ToolBadge(
+                            text = if (dirty) "草稿未保存" else "已保存规则",
+                            containerColor = if (dirty) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = if (dirty) MaterialTheme.colorScheme.onPrimaryContainer
+                                else MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                        Text("开启的条件须同时满足", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
                 item {
                     val inheriting = state.scope != null && state.inheritShared
@@ -86,8 +107,8 @@ fun RulesScreen(viewModel: RulesViewModel) {
                 }
             } else if (section == "平台与范围") {
                 item {
-                    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.large) {
-                        Column(Modifier.padding(14.dp)) {
+                    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge) {
+                        Column(Modifier.padding(18.dp)) {
                             Platform.entries.forEach { platform ->
                                 ToggleRow(platform.label, "使用已保存要求", platform in state.platforms, enabled = !state.saving) {
                                     viewModel.platform(platform, it)
@@ -99,8 +120,8 @@ fun RulesScreen(viewModel: RulesViewModel) {
             } else if (state.scope != null && state.inheritShared) {
                 item { Text("此平台跟随公共要求，请切换至公共要求编辑。") }
             } else item {
-                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.large) {
-                    Box(Modifier.fillMaxWidth().padding(14.dp)) {
+                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge) {
+                    Box(Modifier.fillMaxWidth().padding(18.dp)) {
                         when (section) {
                             "最低收益" -> EarningsFields(state, viewModel::edit, viewModel::condition, viewModel::hourlyBasis)
                             "价值评分" -> ValueScoreFields(state, viewModel::edit)
@@ -112,23 +133,29 @@ fun RulesScreen(viewModel: RulesViewModel) {
                 }
             }
         }
-        AnimatedVisibility(visible = dirty || state.error != null || state.saving) {
+        AnimatedVisibility(
+            visible = dirty || state.error != null || state.saving,
+            enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                expandVertically(MaterialTheme.motionScheme.defaultSpatialSpec()),
+            exit = fadeOut(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                shrinkVertically(MaterialTheme.motionScheme.defaultSpatialSpec()),
+        ) {
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             ) {
-                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     state.error?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
                     Button(
                         onClick = viewModel::save,
                         enabled = !state.saving && dirty,
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth().height(46.dp),
+                        shapes = ButtonDefaults.shapes(),
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
                     ) {
-                        Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(if (state.saving) "正在保存…" else "保存接单要求", style = MaterialTheme.typography.labelLarge)
+                        Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(if (state.saving) "正在保存…" else "保存接单要求", style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
