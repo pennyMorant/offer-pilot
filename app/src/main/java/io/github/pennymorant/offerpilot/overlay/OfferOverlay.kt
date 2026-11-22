@@ -78,15 +78,15 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
             combine(runtime.state, runtime.appearance.state, collapsedOfferId, runtime.appInForeground) {
                 state, appearance, collapsed, inApp -> Quad(state, appearance, collapsed, inApp)
             }.collectLatest { (state, appearance, collapsed, inApp) ->
-                if (inApp) {
+                val offer = state.latest
+                val isDemoOffer = offer?.id?.startsWith("demo-") == true
+                if (inApp && !isDemoOffer) {
                     v.root.visibility = View.GONE
                     return@collectLatest
                 }
-                v.root.visibility = View.VISIBLE
                 val systemDark = context.resources.configuration.uiMode and
                     android.content.res.Configuration.UI_MODE_NIGHT_MASK == android.content.res.Configuration.UI_MODE_NIGHT_YES
                 val colors = appearanceColors(context, appearance, appearance.isDark(systemDark))
-                val offer = state.latest
                 if (offer?.id != lastOfferId) {
                     lastOfferId = offer?.id
                     if (collapsedOfferId.value != null) collapsedOfferId.value = null
