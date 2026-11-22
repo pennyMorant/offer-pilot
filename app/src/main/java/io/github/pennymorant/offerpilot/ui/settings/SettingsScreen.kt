@@ -31,8 +31,8 @@ fun SettingsScreen(
 
     LazyColumn(
         Modifier.widthIn(max = 760.dp).fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         item("appearance") {
             ToolSectionRow(Icons.Rounded.Palette, "外观",
@@ -67,9 +67,9 @@ fun SettingsScreen(
         item("permissions") {
             ToolSectionRow(Icons.Rounded.Security, "连接与权限", "Shevery、通知、悬浮窗与定位", 3, 4, onClick = onPermissions)
         }
-        item("developer") { DeveloperTools(factory) }
+        item("developer") { Box(Modifier.padding(top = 10.dp)) { DeveloperTools(factory) } }
         item("version") {
-            Text("OfferPilot 0.1.0 · Android 13–17", modifier = Modifier.padding(vertical = 16.dp),
+            Text("OfferPilot 1.0.0 · Android 13–17", modifier = Modifier.padding(vertical = 16.dp),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
