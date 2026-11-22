@@ -92,30 +92,37 @@ fun SettingsScreen(
                     }
                 }
                 item("entries") {
+                    val count = if (hasDeveloperTools) 5 else 4
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         ToolSectionRow(
                             Icons.Rounded.RecordVoiceOver, "驾驶语音",
                             if (voiceSettings.enabled) "已开启 · 实时播报订单与配送状态" else "已关闭 · 点击配置语音与试听",
-                            0, 4, onClick = { onSection("驾驶语音") },
+                            0, count, onClick = { onSection("驾驶语音") },
                         )
                         ToolSectionRow(
                             Icons.Rounded.AccountBalance, "Prop 22 估算",
                             if (prop22.enabled) "已开启 · 最低时薪 $${prop22.wage}/h" else "未启用 · 加州保底估算参考",
-                            1, 4, onClick = { onSection("Prop 22 估算") },
+                            1, count, onClick = { onSection("Prop 22 估算") },
                         )
                         ToolSectionRow(
                             Icons.Rounded.Bolt, "自动接单（实验）",
                             if (dashboardState.autoAcceptEnabled) "已开启 · 满足全部条件时执行" else "已关闭 · 降低平台风控风险",
-                            2, 4, onClick = { onSection("自动接单（实验）") },
+                            2, count, onClick = { onSection("自动接单（实验）") },
                         )
                         ToolSectionRow(
                             Icons.Rounded.Security, "连接与权限",
                             "Shevery、通知、悬浮窗与定位状态",
-                            3, 4, onClick = { onSection("连接与权限") },
+                            3, count, onClick = { onSection("连接与权限") },
                         )
+                        if (hasDeveloperTools) {
+                            ToolSectionRow(
+                                Icons.Rounded.BugReport, "开发工具",
+                                "图片识别、节点诊断、规则调试与模拟弹窗",
+                                4, count, onClick = { onSection("开发工具") },
+                            )
+                        }
                     }
                 }
-                item("developer") { DeveloperTools(factory) }
             } else {
                 item("sub_content") {
                     when (currentSection) {
@@ -123,6 +130,7 @@ fun SettingsScreen(
                         "Prop 22 估算" -> Prop22SettingsPage(prop22, ruleState.saving, ruleState.error, rules::updateProp22, rules::save)
                         "自动接单（实验）" -> AutoAcceptSettingsPage(dashboardState, onAutomatic)
                         "连接与权限" -> DiagnosticsContent(diagnostics, onOverlayPermission, onNotificationPermission, onLocationPermission)
+                        "开发工具" -> DeveloperTools(factory)
                     }
                 }
             }

@@ -19,6 +19,8 @@ import io.github.pennymorant.offerpilot.ui.imagetest.ImageTestDialog
 import io.github.pennymorant.offerpilot.ui.rules.RulePreviewDialog
 import io.github.pennymorant.offerpilot.work.assessOffer
 
+internal const val hasDeveloperTools = true
+
 private var debugOverlay: OfferOverlay? = null
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -29,39 +31,47 @@ fun DeveloperTools(factory: OverudViewModelFactory) {
     val context = LocalContext.current
     val container = remember(context) { (context.applicationContext as OverudApp).container }
 
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text("开发工具 · 仅测试版本", style = MaterialTheme.typography.titleMedium)
-        DeveloperToolLinks { selected = it }
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilledTonalButton(shapes = ButtonDefaults.shapes(),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
-                if (!Settings.canDrawOverlays(context)) {
-                    context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                    return@FilledTonalButton
-                }
-                if (!container.state.value.working && debugOverlay == null) {
-                    debugOverlay = OfferOverlay(context, container).also { it.show() }
-                    container.registerDebugOverlayCleanup { debugOverlay?.close(); debugOverlay = null }
-                }
-                val now = System.currentTimeMillis()
-                val demo = when (simStep % 4) {
-                    0 -> demoExclusiveOffer(now)
-                    1 -> demoRadarOffer(now)
-                    2 -> demoFakePreferredOffer(now)
-                    else -> demoDoorDashShopOffer(now)
-                }
-                simStep++
-                container.session.update {
-                    it.copy(latest = demo, decision = it.assessOffer(demo, now), message = "测试模式：模拟订单检测弹窗")
-                }
-            }) { Text("模拟订单弹窗") }
-            OutlinedButton(shapes = ButtonDefaults.shapes(),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), onClick = {
-                debugOverlay?.close()
-                debugOverlay = null
-                container.session.update { it.copy(latest = null, decision = null, message = "已清除模拟弹窗") }
-            }) { Text("清除模拟") }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge,
+            modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                DeveloperToolLinks { selected = it }
+            }
+        }
+        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge,
+            modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("弹窗与通知联调", style = MaterialTheme.typography.titleMedium)
+                FilledTonalButton(shapes = ButtonDefaults.shapes(),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
+                    if (!Settings.canDrawOverlays(context)) {
+                        context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        return@FilledTonalButton
+                    }
+                    if (!container.state.value.working && debugOverlay == null) {
+                        debugOverlay = OfferOverlay(context, container).also { it.show() }
+                        container.registerDebugOverlayCleanup { debugOverlay?.close(); debugOverlay = null }
+                    }
+                    val now = System.currentTimeMillis()
+                    val demo = when (simStep % 4) {
+                        0 -> demoExclusiveOffer(now)
+                        1 -> demoRadarOffer(now)
+                        2 -> demoFakePreferredOffer(now)
+                        else -> demoDoorDashShopOffer(now)
+                    }
+                    simStep++
+                    container.session.update {
+                        it.copy(latest = demo, decision = it.assessOffer(demo, now), message = "测试模式：模拟订单检测弹窗")
+                    }
+                }) { Text("模拟订单弹窗") }
+                OutlinedButton(shapes = ButtonDefaults.shapes(),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), onClick = {
+                    debugOverlay?.close()
+                    debugOverlay = null
+                    container.session.update { it.copy(latest = null, decision = null, message = "已清除模拟弹窗") }
+                }) { Text("清除模拟") }
+            }
         }
     }
     when (selected) {
