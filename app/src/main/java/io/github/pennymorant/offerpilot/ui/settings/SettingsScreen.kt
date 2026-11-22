@@ -1,101 +1,131 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package io.github.pennymorant.offerpilot.ui.settings
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.github.pennymorant.offerpilot.data.preferences.ThemeMode
 import io.github.pennymorant.offerpilot.di.OverudViewModelFactory
-import io.github.pennymorant.offerpilot.ui.components.ToggleRow
 import io.github.pennymorant.offerpilot.ui.components.ToolSectionRow
 import io.github.pennymorant.offerpilot.ui.dashboard.DashboardUiState
-import io.github.pennymorant.offerpilot.ui.rules.*
+import io.github.pennymorant.offerpilot.ui.diagnostics.DiagnosticsContent
+import io.github.pennymorant.offerpilot.ui.diagnostics.RuntimeDiagnosticsViewModel
+import io.github.pennymorant.offerpilot.ui.rules.RulesViewModel
+import io.github.pennymorant.offerpilot.ui.rules.VoiceViewModel
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsScreen(
     factory: OverudViewModelFactory,
     rules: RulesViewModel,
     voice: VoiceViewModel,
+    diagnostics: RuntimeDiagnosticsViewModel,
     dashboardState: DashboardUiState,
+    section: String?,
+    onSection: (String?) -> Unit,
     onAutomatic: (Boolean) -> Unit,
-    onPermissions: () -> Unit,
+    onOverlayPermission: () -> Unit,
+    onNotificationPermission: () -> Unit,
+    onLocationPermission: () -> Unit,
 ) {
     val appearance: AppearanceViewModel = viewModel(factory = factory)
     val theme by appearance.state.collectAsStateWithLifecycle()
     val prop22 by rules.prop22.collectAsStateWithLifecycle()
     val ruleState by rules.state.collectAsStateWithLifecycle()
-    var section by rememberSaveable { mutableStateOf<String?>(null) }
+    val voiceSettings by voice.settings.collectAsStateWithLifecycle()
+    val effectsSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
 
-    LazyColumn(
-        Modifier.widthIn(max = 760.dp).fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        item("appearance") {
-            ToolSectionRow(Icons.Rounded.Palette, "外观",
-                "${theme.mode.label} · ${if (theme.dynamic) "系统动态色" else "品牌配色"}", 0, 5, section == "theme") {
-                section = if (section == "theme") null else "theme"
-            }
-        }
-        item("appearance_content") {
-            SettingsSection(section == "theme") { ThemeSettingsCard(theme, appearance::mode, appearance::dynamic) }
-        }
-        item("voice") {
-            ToolSectionRow(Icons.Rounded.RecordVoiceOver, "驾驶语音", "订单提醒、播报内容与试听", 1, 5, section == "voice") {
-                section = if (section == "voice") null else "voice"
-            }
-        }
-        item("voice_content") { SettingsSection(section == "voice") { VoiceSettingsCard(voice) } }
-        item("prop22") {
-            ToolSectionRow(Icons.Rounded.AccountBalance, "Prop 22 估算", "最低时薪、小费假设与机动车", 2, 5, section == "prop22") {
-                section = if (section == "prop22") null else "prop22"
-            }
-        }
-        item("prop22_content") {
-            SettingsSection(section == "prop22") {
-                Prop22Fields(prop22, ruleState.saving, rules::updateProp22)
-                ruleState.error?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error) }
-                Button(onClick = rules::save, enabled = !ruleState.saving, shapes = ButtonDefaults.shapes(),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                    Text(if (ruleState.saving) "正在保存…" else "保存估算参数")
+    AnimatedContent(
+        targetState = section,
+        transitionSpec = { fadeIn(effectsSpec) togetherWith fadeOut(effectsSpec) },
+        label = "settingsSection",
+        modifier = Modifier.widthIn(max = 760.dp).fillMaxSize(),
+    ) { currentSection ->
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp, end = 16.dp, top = 10.dp,
+                bottom = if (currentSection == null) 104.dp else 28.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            if (currentSection == null) {
+                item("brand") { SettingsBrandCard() }
+                item("display_mode") {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        shape = MaterialTheme.shapes.extraLarge,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("显示模式", style = MaterialTheme.typography.titleMedium)
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                            ) {
+                                ThemeMode.entries.forEachIndexed { index, mode ->
+                                    val shapes = when (index) {
+                                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                        ThemeMode.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                    }
+                                    ToggleButton(
+                                        checked = theme.mode == mode,
+                                        onCheckedChange = { appearance.mode(mode) },
+                                        shapes = shapes,
+                                        modifier = Modifier.weight(1f),
+                                    ) { Text(mode.label, style = MaterialTheme.typography.labelLarge, maxLines = 1) }
+                                }
+                            }
+                        }
+                    }
+                }
+                item("entries") {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        ToolSectionRow(
+                            Icons.Rounded.RecordVoiceOver, "驾驶语音",
+                            if (voiceSettings.enabled) "已开启 · 实时播报订单与配送状态" else "已关闭 · 点击配置语音与试听",
+                            0, 4, onClick = { onSection("驾驶语音") },
+                        )
+                        ToolSectionRow(
+                            Icons.Rounded.AccountBalance, "Prop 22 估算",
+                            if (prop22.enabled) "已开启 · 最低时薪 $${prop22.wage}/h" else "未启用 · 加州保底估算参考",
+                            1, 4, onClick = { onSection("Prop 22 估算") },
+                        )
+                        ToolSectionRow(
+                            Icons.Rounded.Bolt, "自动接单（实验）",
+                            if (dashboardState.autoAcceptEnabled) "已开启 · 满足全部条件时执行" else "已关闭 · 降低平台风控风险",
+                            2, 4, onClick = { onSection("自动接单（实验）") },
+                        )
+                        ToolSectionRow(
+                            Icons.Rounded.Security, "连接与权限",
+                            "Shevery、通知、悬浮窗与定位状态",
+                            3, 4, onClick = { onSection("连接与权限") },
+                        )
+                    }
+                }
+                item("developer") { DeveloperTools(factory) }
+            } else {
+                item("sub_content") {
+                    when (currentSection) {
+                        "驾驶语音" -> VoiceSettingsPage(voice)
+                        "Prop 22 估算" -> Prop22SettingsPage(prop22, ruleState.saving, ruleState.error, rules::updateProp22, rules::save)
+                        "自动接单（实验）" -> AutoAcceptSettingsPage(dashboardState, onAutomatic)
+                        "连接与权限" -> DiagnosticsContent(diagnostics, onOverlayPermission, onNotificationPermission, onLocationPermission)
+                    }
                 }
             }
-        }
-        item("auto_accept") {
-            ToolSectionRow(Icons.Rounded.Bolt, "自动接单（实验）",
-                if (dashboardState.autoAcceptEnabled) "已开启 · 仅所有启用条件满足时执行" else "已关闭 · 降低平台风控风险",
-                3, 5, section == "auto") {
-                section = if (section == "auto") null else "auto"
-            }
-        }
-        item("auto_accept_content") {
-            SettingsSection(section == "auto") {
-                ToggleRow(
-                    "启用自动接单",
-                    "需先开启工作；结束工作、重启或修改规则会自动关闭",
-                    dashboardState.autoAcceptEnabled,
-                    enabled = dashboardState.autoAcceptEnabled || (dashboardState.working &&
-                        dashboardState.connection.serviceReady && !dashboardState.pending && !dashboardState.policySaving),
-                    onChange = onAutomatic,
-                )
-                Text("风控提示：自动点击接单可能触发平台风控检测，默认关闭；日常建议仅使用悬浮窗分析与语音播报。",
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        item("permissions") {
-            ToolSectionRow(Icons.Rounded.Security, "连接与权限", "Shevery、通知、悬浮窗与定位", 4, 5, onClick = onPermissions)
-        }
-        item("developer") { Box(Modifier.padding(top = 10.dp)) { DeveloperTools(factory) } }
-        item("version") {
-            Text("OfferPilot 1.0.0 · Android 13–17", modifier = Modifier.padding(vertical = 16.dp),
-                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

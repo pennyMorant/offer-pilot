@@ -52,9 +52,7 @@ fun AppearanceSettings.isDark(systemDark: Boolean) = when (mode) {
 }
 
 fun appearanceColors(context: Context, settings: AppearanceSettings, dark: Boolean): ColorScheme =
-    if (settings.dynamic) {
-        if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    } else if (dark) Dark else Light
+    if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

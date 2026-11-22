@@ -3,10 +3,13 @@
 package io.github.pennymorant.offerpilot.ui.navigation
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -69,26 +72,43 @@ fun BottomNavigationDock(
             ) {
                 Destination.entries.forEach { destination ->
                     val isSelected = selected == destination
-                    Surface(
-                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                    val itemBg by animateColorAsState(
+                        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer
                             else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0f),
+                        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+                        label = "navItemBg",
+                    )
+                    Surface(
+                        color = itemBg,
                         contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
                             else MaterialTheme.colorScheme.onSurfaceVariant,
                         shape = CircleShape,
-                        modifier = Modifier.heightIn(min = 48.dp).clip(CircleShape)
+                        modifier = Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp).clip(CircleShape)
                             .clickable { onSelect(destination) },
                     ) {
                         Row(
-                            Modifier.heightIn(min = 48.dp).padding(horizontal = 14.dp),
+                            Modifier.heightIn(min = 48.dp)
+                                .padding(horizontal = if (isSelected) 16.dp else 14.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.Center,
                         ) {
                             Icon(
                                 if (isSelected) destination.selectedIcon else destination.unselectedIcon,
                                 contentDescription = destination.label,
                                 modifier = Modifier.size(20.dp),
                             )
-                            Text(destination.label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+                            AnimatedVisibility(
+                                visible = isSelected,
+                                enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                                    expandHorizontally(MaterialTheme.motionScheme.defaultSpatialSpec()),
+                                exit = fadeOut(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                                    shrinkHorizontally(MaterialTheme.motionScheme.defaultSpatialSpec()),
+                            ) {
+                                Row {
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(destination.label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+                                }
+                            }
                         }
                     }
                 }
