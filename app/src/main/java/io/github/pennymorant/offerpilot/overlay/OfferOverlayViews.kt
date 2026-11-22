@@ -17,7 +17,7 @@ internal fun buildOverlayViews(
 ): OverlayViews {
     val d = context.resources.displayMetrics.density
     fun dp(v: Int) = (v * d).toInt()
-    val cardBg = GradientDrawable().apply { setColor(Color.rgb(11, 13, 16)) }
+    val cardBg = GradientDrawable().apply { setColor(Color.BLACK) }
     val root = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(14), dp(6), dp(14), dp(6))

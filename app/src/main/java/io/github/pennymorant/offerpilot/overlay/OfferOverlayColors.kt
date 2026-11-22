@@ -12,11 +12,8 @@ internal fun TextView.stylePill(bg: Int, fg: Int) {
 }
 
 internal fun applyIslandColors(v: OverlayViews, colors: ColorScheme, alert: Boolean, eligible: Boolean, strokePx: Int) {
-    v.cardBg.setColor(Color.rgb(11, 13, 16))
-    v.cardBg.setStroke(
-        if (alert) strokePx * 2 else strokePx,
-        if (alert) colors.error.toArgb() else Color.argb(38, 255, 255, 255),
-    )
+    v.cardBg.setColor(Color.BLACK)
+    v.cardBg.setStroke(if (alert) strokePx * 2 else 0, if (alert) colors.error.toArgb() else Color.TRANSPARENT)
     val fgColor = Color.WHITE
     v.amountText.setTextColor(if (alert) colors.error.toArgb() else fgColor)
     v.heroRouteText.setTextColor(if (alert) colors.error.toArgb() else Color.rgb(212, 218, 226))
