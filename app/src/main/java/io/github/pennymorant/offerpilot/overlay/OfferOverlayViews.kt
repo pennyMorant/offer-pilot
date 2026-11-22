@@ -17,52 +17,54 @@ internal fun buildOverlayViews(
 ): OverlayViews {
     val d = context.resources.displayMetrics.density
     fun dp(v: Int) = (v * d).toInt()
-    val cardBg = GradientDrawable().apply { setColor(Color.BLACK) }
+    val cardBg = GradientDrawable().apply { setColor(Color.rgb(11, 13, 16)) }
     val root = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(16), dp(16), dp(16), dp(16))
+        setPadding(dp(14), dp(6), dp(14), dp(6))
         clipToOutline = true
         background = cardBg
-        elevation = dp(4).toFloat()
+        elevation = dp(6).toFloat()
     }
     fun pill(size: Float) = TextView(context).apply {
-        textSize = size; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; maxLines = 1
-        setPadding(dp(8), dp(3), dp(8), dp(3))
-        background = GradientDrawable().apply { cornerRadius = dp(10).toFloat() }
+        textSize = size; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"
+        maxLines = 1; ellipsize = TextUtils.TruncateAt.END
+        setPadding(dp(9), dp(4), dp(9), dp(4))
+        background = GradientDrawable().apply { cornerRadius = dp(999).toFloat() }
     }
     fun tile() = TextView(context).apply {
-        textSize = 11.5f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"
+        textSize = 12f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"
         gravity = Gravity.CENTER; maxLines = 1
-        setPadding(dp(6), dp(5), dp(6), dp(5))
-        background = GradientDrawable().apply { cornerRadius = dp(10).toFloat() }
-        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(4) }
+        setPadding(dp(8), dp(7), dp(8), dp(7))
+        background = GradientDrawable().apply { cornerRadius = dp(14).toFloat() }
+        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(6) }
     }
     fun actionPill(onClick: () -> Unit) = TextView(context).apply {
-        textSize = 11.5f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER; maxLines = 1
-        setPadding(dp(10), dp(6), dp(10), dp(6))
-        background = GradientDrawable().apply { cornerRadius = dp(12).toFloat() }
-        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(4) }
+        textSize = 12f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER; maxLines = 1
+        setPadding(dp(12), dp(9), dp(12), dp(9))
+        background = GradientDrawable().apply { cornerRadius = dp(999).toFloat() }
+        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(6) }
         setOnClickListener { onClick() }
     }
 
-    val leftBadge = pill(11f)
-    val rightBadge = pill(11f).apply { gravity = Gravity.END }
+    val leftBadge = pill(11.5f)
+    val cutoutSpacer = View(context).apply { visibility = View.GONE }
+    val rightBadge = pill(11.5f).apply { gravity = Gravity.END }
     val topRow = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
-        minimumHeight = dp(48)
         addView(leftBadge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        addView(cutoutSpacer, LinearLayout.LayoutParams(0, 1))
         addView(rightBadge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
     }
 
     val amountText = TextView(context).apply {
-        textSize = 24f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; maxLines = 1
+        textSize = 28f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; maxLines = 1
     }
     val heroRouteText = TextView(context).apply {
-        textSize = 15.5f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; maxLines = 1; gravity = Gravity.END
+        textSize = 15f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"; maxLines = 1; gravity = Gravity.END
     }
     val heroRow = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
-        setPadding(0, dp(6), 0, dp(5))
+        setPadding(0, dp(8), 0, dp(8))
         addView(amountText, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         addView(heroRouteText)
     }
@@ -72,32 +74,32 @@ internal fun buildOverlayViews(
     val verdictTile = tile()
     val metricsRow = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL
-        setPadding(0, 0, 0, dp(6))
+        setPadding(0, 0, 0, dp(8))
         addView(perMileTile); addView(hourlyTile); addView(verdictTile)
     }
 
     val tagsText = TextView(context).apply {
-        textSize = 11f; typeface = Typeface.DEFAULT_BOLD; maxLines = 1; ellipsize = TextUtils.TruncateAt.END
-        setPadding(0, 0, 0, dp(3))
+        textSize = 11.5f; typeface = Typeface.DEFAULT_BOLD; maxLines = 1; ellipsize = TextUtils.TruncateAt.END
+        setPadding(0, 0, 0, dp(4))
     }
     val routeText = TextView(context).apply {
         textSize = 11.5f; maxLines = 1; ellipsize = TextUtils.TruncateAt.END
-        setPadding(0, 0, 0, dp(5))
+        setPadding(0, 0, 0, dp(6))
     }
     val verdictText = TextView(context).apply {
-        textSize = 11.5f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"
+        textSize = 12f; typeface = Typeface.DEFAULT_BOLD; fontFeatureSettings = "tnum"
         maxLines = 2; ellipsize = TextUtils.TruncateAt.END
     }
     val extraText = TextView(context).apply {
-        textSize = 10.5f; fontFeatureSettings = "tnum"; maxLines = 2; ellipsize = TextUtils.TruncateAt.END
-        setPadding(0, dp(2), 0, 0)
+        textSize = 11f; fontFeatureSettings = "tnum"; maxLines = 1; ellipsize = TextUtils.TruncateAt.END
+        setPadding(0, dp(3), 0, 0)
     }
     val infoBox = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(10), dp(7), dp(10), dp(7))
-        background = GradientDrawable().apply { cornerRadius = dp(12).toFloat() }
+        setPadding(dp(12), dp(9), dp(12), dp(9))
+        background = GradientDrawable().apply { cornerRadius = dp(16).toFloat() }
         layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-            bottomMargin = dp(6)
+            bottomMargin = dp(8)
         }
         addView(verdictText); addView(extraText)
     }
@@ -114,7 +116,7 @@ internal fun buildOverlayViews(
     root.addView(topRow); root.addView(heroRow); root.addView(metricsRow); root.addView(tagsText)
     root.addView(routeText); root.addView(infoBox); root.addView(actionsRow)
     return OverlayViews(
-        root, cardBg, topRow, leftBadge, rightBadge, heroRow, amountText, heroRouteText,
+        root, cardBg, topRow, leftBadge, cutoutSpacer, rightBadge, heroRow, amountText, heroRouteText,
         metricsRow, perMileTile, hourlyTile, verdictTile, tagsText, routeText, infoBox, verdictText, extraText,
         actionsRow, pauseBtn, declineBtn, switchBtn,
     )

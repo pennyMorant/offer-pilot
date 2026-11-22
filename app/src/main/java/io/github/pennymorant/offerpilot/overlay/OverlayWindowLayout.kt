@@ -11,6 +11,8 @@ import android.view.RoundedCorner
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
+import android.view.animation.OvershootInterpolator
+import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -51,7 +53,10 @@ internal class OverlayWindowLayout(
     fun update(expanded: Boolean, compactWidthDp: Int) {
         if (this.expanded == expanded && this.compactWidthDp == compactWidthDp) return
         if (attached && views.root.isLaidOut) {
-            TransitionManager.beginDelayedTransition(views.root, AutoTransition().apply { duration = 180 })
+            TransitionManager.beginDelayedTransition(
+                views.root,
+                AutoTransition().apply { duration = 220; interpolator = OvershootInterpolator(0.55f) },
+            )
         }
         this.expanded = expanded
         this.compactWidthDp = compactWidthDp
@@ -62,23 +67,45 @@ internal class OverlayWindowLayout(
         val metrics = manager.maximumWindowMetrics
         val insets = metrics.windowInsets
         val cutout = insets.displayCutout
+        val screenWidth = metrics.bounds.width()
+        val centerCutout = cutout?.boundingRects?.firstOrNull { rect ->
+            rect.width() > 0 && abs(rect.centerX() - screenWidth / 2) <= dp(48)
+        }
         val edge = dp(8)
         val side = edge + maxOf(cutout?.safeInsetLeft ?: 0, cutout?.safeInsetRight ?: 0)
-        val availableWidth = (metrics.bounds.width() - side * 2).coerceAtLeast(1)
-        val targetWidth = if (expanded) availableWidth else dp(compactWidthDp).coerceAtMost(availableWidth)
+        val availableWidth = (screenWidth - side * 2).coerceAtLeast(1)
+        val baseCompact = dp(compactWidthDp)
+        val targetWidth = if (expanded) availableWidth else {
+            val withCutout = if (centerCutout != null) maxOf(baseCompact, centerCutout.width() + dp(164)) else baseCompact
+            withCutout.coerceAtMost(availableWidth)
+        }
         val statusBottom = maxOf(insets.getInsetsIgnoringVisibility(WindowInsets.Type.statusBars()).top,
             cutout?.safeInsetTop ?: 0, dp(24))
-        val topPadding = statusBottom - edge + dp(8)
-        val changed = params.width != targetWidth || params.y != edge
+        val targetY = if (!expanded && centerCutout != null) (centerCutout.top - dp(4)).coerceAtLeast(dp(2)) else edge
+        val changed = params.width != targetWidth || params.y != targetY
         params.width = targetWidth
-        params.y = edge
-        // Equal top/side gaps yield concentric arcs: inner radius = display radius - gap.
+        params.y = targetY
         val cornerGap = maxOf(edge, side)
         fun radius(position: Int) = ((insets.getRoundedCorner(position)?.radius ?: dp(32)) - cornerGap)
             .coerceAtLeast(0).toFloat()
         topLeft = radius(RoundedCorner.POSITION_TOP_LEFT)
         topRight = radius(RoundedCorner.POSITION_TOP_RIGHT)
-        if (views.root.paddingTop != topPadding) views.root.setPadding(dp(16), topPadding, dp(16), dp(16))
+        if (!expanded && centerCutout != null) {
+            val spacerWidth = centerCutout.width() + dp(12)
+            if (views.cutoutSpacer.visibility != View.VISIBLE || views.cutoutSpacer.layoutParams.width != spacerWidth) {
+                views.cutoutSpacer.visibility = View.VISIBLE
+                views.cutoutSpacer.layoutParams = views.cutoutSpacer.layoutParams.apply { width = spacerWidth }
+            }
+            views.root.setPadding(dp(12), dp(5), dp(12), dp(5))
+        } else {
+            if (views.cutoutSpacer.visibility != View.GONE) views.cutoutSpacer.visibility = View.GONE
+            val topPadding = if (expanded) (statusBottom - edge + dp(6)).coerceAtLeast(dp(12)) else dp(7)
+            val horiz = if (expanded) dp(16) else dp(14)
+            val bottom = if (expanded) dp(16) else dp(7)
+            if (views.root.paddingTop != topPadding || views.root.paddingLeft != horiz) {
+                views.root.setPadding(horiz, topPadding, horiz, bottom)
+            }
+        }
         applyCorners()
         if (attached && changed) runCatching { manager.updateViewLayout(views.root, params) }
     }
