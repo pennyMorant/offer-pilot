@@ -6,7 +6,7 @@ android {
     namespace = "com.overud"
     compileSdk = 37
     defaultConfig {
-        applicationId = "com.overud"
+        applicationId = "io.github.pennymorant.offerpilot"
         minSdk = 33
         targetSdk = 37
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
