@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package io.github.pennymorant.offerpilot.ui.analysis
 
 import androidx.compose.foundation.background
@@ -6,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,22 +41,35 @@ fun DailyReviewPage(
     val summary = state.summary
     var confirmClear by remember { mutableStateOf(false) }
     LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        Modifier.widthIn(max = 760.dp).fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 104.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item {
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                DailyDateRange.entries.forEach { item ->
-                    FilterChip(selected = state.range == item, onClick = { onRange(item) },
-                        label = { Text(item.label, style = MaterialTheme.typography.labelLarge) })
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                    DailyDateRange.entries.forEachIndexed { idx, item ->
+                        val shapes = when (idx) {
+                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                            DailyDateRange.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                        }
+                        ToggleButton(
+                            checked = state.range == item,
+                            onCheckedChange = { onRange(item) },
+                            shapes = shapes,
+                            modifier = Modifier.weight(1f),
+                        ) { Text(item.label, style = MaterialTheme.typography.labelLarge, maxLines = 1) }
+                    }
                 }
-                FilterChip(selected = state.platform == null, onClick = { onPlatform(null) },
-                    label = { Text("全部平台", style = MaterialTheme.typography.labelLarge) })
-                Platform.entries.forEach { p ->
-                    FilterChip(selected = state.platform == p, onClick = { onPlatform(p) },
-                        label = { Text(p.label, style = MaterialTheme.typography.labelLarge) })
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FilterChip(selected = state.platform == null, onClick = { onPlatform(null) },
+                        label = { Text("全部平台", style = MaterialTheme.typography.labelLarge) })
+                    Platform.entries.forEach { p ->
+                        FilterChip(selected = state.platform == p, onClick = { onPlatform(p) },
+                            label = { Text(p.label, style = MaterialTheme.typography.labelLarge) })
+                    }
                 }
             }
         }
@@ -153,28 +169,37 @@ fun DailyReviewPage(
 @Composable
 private fun QualityRatioBar(good: Int, normal: Int, low: Int) {
     val total = (good + normal + low).coerceAtLeast(1)
-    Row(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
-        .background(MaterialTheme.colorScheme.surfaceContainerHighest)) {
+    Row(Modifier.fillMaxWidth().height(10.dp).clip(CircleShape)
+        .background(MaterialTheme.colorScheme.surfaceContainerHighest), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         if (good > 0) Box(Modifier.weight(good.toFloat() / total).fillMaxHeight().background(MaterialTheme.colorScheme.primary))
-        if (normal > 0) Box(Modifier.weight(normal.toFloat() / total).fillMaxHeight().background(MaterialTheme.colorScheme.tertiary))
-        if (low > 0) Box(Modifier.weight(low.toFloat() / total).fillMaxHeight().background(MaterialTheme.colorScheme.error))
+        if (normal > 0) Box(Modifier.weight(normal.toFloat() / total).fillMaxHeight().background(MaterialTheme.colorScheme.secondary))
+        if (low > 0) Box(Modifier.weight(low.toFloat() / total).fillMaxHeight().background(MaterialTheme.colorScheme.outlineVariant))
     }
 }
 
 @Composable
 private fun HourlyVolumeStrip(counts: List<Int>) {
     val peak = counts.maxOrNull()?.coerceAtLeast(1) ?: 1
-    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text("24 小时推单分布（峰值 $peak 单）", style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(Modifier.fillMaxWidth().height(22.dp), horizontalArrangement = Arrangement.spacedBy(2.dp),
+        Row(Modifier.fillMaxWidth().height(34.dp), horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalAlignment = Alignment.Bottom) {
             counts.forEach { count ->
-                val frac = (count.toFloat() / peak).coerceIn(0.08f, 1f)
-                Box(Modifier.weight(1f).fillMaxHeight(if (count == 0) 0.08f else frac)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(if (count == 0) MaterialTheme.colorScheme.surfaceContainerHighest
-                        else MaterialTheme.colorScheme.primary))
+                val frac = (count.toFloat() / peak).coerceIn(0.10f, 1f)
+                val barColor = when {
+                    count == 0 -> MaterialTheme.colorScheme.surfaceContainerHighest
+                    count >= peak * 0.7f -> MaterialTheme.colorScheme.primary
+                    else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.48f)
+                }
+                Box(Modifier.weight(1f).fillMaxHeight(if (count == 0) 0.10f else frac)
+                    .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 2.dp, bottomEnd = 2.dp))
+                    .background(barColor))
+            }
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            listOf("0", "6", "12", "18", "24").forEach { hour ->
+                Text(hour, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -188,7 +213,7 @@ private fun LoggedOfferRow(item: LoggedOfferItem, index: Int, count: Int) {
     val mins = if (item.durationSeconds > 0) "${item.durationSeconds / 60} min" else "—"
     val (qLabel, qBg, qFg) = when (item.quality) {
         OrderQuality.GOOD -> Triple("好单", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
-        OrderQuality.LOW -> Triple("垃圾单", MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
+        OrderQuality.LOW -> Triple("低价", MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.colorScheme.onSurfaceVariant)
         OrderQuality.NORMAL -> Triple("普通", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)
         OrderQuality.UNKNOWN -> Triple("未知", MaterialTheme.colorScheme.surfaceContainerHigh, MaterialTheme.colorScheme.onSurfaceVariant)
     }

@@ -3,18 +3,32 @@ package io.github.pennymorant.offerpilot.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun DeliveryCard(state: DeliveryCardState) {
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(state.title, style = MaterialTheme.typography.titleMedium)
-            Text(state.subtitle, style = MaterialTheme.typography.labelMedium)
-            Text(state.samples, style = MaterialTheme.typography.bodySmall)
-            Text(state.duration, style = MaterialTheme.typography.bodyLarge)
-            Text(state.comparison, style = MaterialTheme.typography.bodySmall)
+fun DeliveryCard(state: DeliveryCardState, index: Int = 0, count: Int = 1) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = groupedItemShape(index, count),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(state.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(state.subtitle, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                ToolBadge(text = state.samples)
+            }
+            Text(state.duration, style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
+                fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+            Text(state.comparison, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
