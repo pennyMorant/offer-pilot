@@ -61,8 +61,8 @@ internal fun renderOfferContent(
         v.hourlyTile.text = "${hr?.let { money(it.roundToLong()) } ?: "—"}/h"
         val eligible = state.decision?.eligible == true
         v.verdictTile.stylePill(
-            if (eligible) colors.primaryContainer.toArgb() else colors.errorContainer.toArgb(),
-            if (eligible) colors.onPrimaryContainer.toArgb() else colors.onErrorContainer.toArgb(),
+            if (eligible) colors.primaryContainer.toArgb() else Color.rgb(42, 46, 54),
+            if (eligible) colors.onPrimaryContainer.toArgb() else Color.rgb(212, 218, 226),
         )
         v.verdictTile.text = if (eligible) "通过" else "拦截"
         val tags = advice?.tags?.take(3)?.joinToString(" · ").orEmpty()

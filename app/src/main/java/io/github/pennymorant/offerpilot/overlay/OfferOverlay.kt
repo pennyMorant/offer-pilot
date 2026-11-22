@@ -67,6 +67,7 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                 else -> false
             }
         }
+        v.root.visibility = View.GONE
         runCatching { layout.attach(); window = layout; view = v.root }.onFailure {
             layout.close()
             scope.cancel()
@@ -105,6 +106,11 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                 val alert = advice?.fakePreferred == true
                 val isExpandedOffer = offer != null && collapsed != offer.id
                 expandedNow = isExpandedOffer
+                if (!isExpandedOffer) {
+                    v.root.visibility = View.GONE
+                    return@collectLatest
+                }
+                v.root.visibility = View.VISIBLE
                 val bgAlert = state.backgroundAlert?.takeIf {
                     System.currentTimeMillis() - it.receivedAt in 0..35_000L && it.platform != offer?.platform
                 }
@@ -113,7 +119,7 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                 val completed = state.lastCompletedPlatform
                 val otherCompleted = completed?.let { p -> Platform.entries.firstOrNull { it != p } }
                 val recentComplete = state.lastCompletedAt?.let { System.currentTimeMillis() - it in 0..90_000L } == true
-                layout.update(isExpandedOffer, 108)
+                layout.update(true, 108)
                 applyIslandColors(v, colors, alert, state.decision?.eligible == true, dp(1))
 
                 renderOfferContent(v, state, colors, isExpandedOffer, advice, arState.uberArPercent, arState.goldFloorPercent, bgAlert)

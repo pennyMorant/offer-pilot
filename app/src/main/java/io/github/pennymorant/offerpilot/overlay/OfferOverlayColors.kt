@@ -13,24 +13,20 @@ internal fun TextView.stylePill(bg: Int, fg: Int) {
 
 internal fun applyIslandColors(v: OverlayViews, colors: ColorScheme, alert: Boolean, eligible: Boolean, strokePx: Int) {
     v.cardBg.setColor(Color.BLACK)
-    v.cardBg.setStroke(if (alert) strokePx * 2 else 0, if (alert) colors.error.toArgb() else Color.TRANSPARENT)
+    v.cardBg.setStroke(0, Color.TRANSPARENT)
     val fgColor = Color.WHITE
-    v.amountText.setTextColor(if (alert) colors.error.toArgb() else fgColor)
-    v.heroRouteText.setTextColor(if (alert) colors.error.toArgb() else Color.rgb(212, 218, 226))
-    v.tagsText.setTextColor(if (alert) colors.error.toArgb() else colors.tertiary.toArgb())
+    v.amountText.setTextColor(fgColor)
+    v.heroRouteText.setTextColor(Color.rgb(212, 218, 226))
+    v.tagsText.setTextColor(colors.tertiary.toArgb())
     v.routeText.setTextColor(Color.rgb(196, 203, 214))
     (v.infoBox.background as? GradientDrawable)?.setColor(Color.rgb(22, 25, 31))
-    v.verdictText.setTextColor(when {
-        alert -> colors.error.toArgb()
-        eligible -> colors.primary.toArgb()
-        else -> Color.rgb(255, 196, 112)
-    })
+    v.verdictText.setTextColor(if (eligible) colors.primary.toArgb() else Color.rgb(212, 218, 226))
     v.extraText.setTextColor(Color.rgb(156, 163, 175))
     val tileBg = Color.rgb(22, 25, 31)
     v.perMileTile.stylePill(tileBg, fgColor)
     v.hourlyTile.stylePill(tileBg, fgColor)
     v.pauseBtn.stylePill(colors.primaryContainer.toArgb(), colors.onPrimaryContainer.toArgb())
-    v.declineBtn.stylePill(colors.errorContainer.toArgb(), colors.onErrorContainer.toArgb())
+    v.declineBtn.stylePill(Color.rgb(42, 46, 54), Color.WHITE)
     v.switchBtn.stylePill(colors.tertiaryContainer.toArgb(), colors.onTertiaryContainer.toArgb())
     v.closeBtn.stylePill(Color.rgb(34, 38, 46), Color.rgb(210, 216, 224))
 }
