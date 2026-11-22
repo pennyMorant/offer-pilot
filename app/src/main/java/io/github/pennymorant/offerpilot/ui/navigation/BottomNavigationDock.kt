@@ -60,10 +60,10 @@ fun BottomNavigationDock(
             shape = CircleShape,
             shadowElevation = 4.dp,
             tonalElevation = 2.dp,
-            modifier = Modifier.height(DockHeight),
+            modifier = Modifier.heightIn(min = DockHeight),
         ) {
             Row(
-                Modifier.fillMaxHeight().padding(6.dp),
+                Modifier.padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
@@ -75,11 +75,11 @@ fun BottomNavigationDock(
                         contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
                             else MaterialTheme.colorScheme.onSurfaceVariant,
                         shape = CircleShape,
-                        modifier = Modifier.fillMaxHeight().clip(CircleShape)
+                        modifier = Modifier.heightIn(min = 48.dp).clip(CircleShape)
                             .clickable { onSelect(destination) },
                     ) {
                         Row(
-                            Modifier.padding(horizontal = 14.dp),
+                            Modifier.heightIn(min = 48.dp).padding(horizontal = 14.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                         ) {
