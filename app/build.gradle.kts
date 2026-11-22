@@ -10,7 +10,8 @@ android {
         minSdk = 33
         targetSdk = 37
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
-        versionName = System.getenv("VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "0.1.0"
+        versionName = System.getenv("VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "1.0.0"
+        ndk { abiFilters += "arm64-v8a" }
     }
     buildFeatures { compose = true; aidl = true }
     compileOptions {
