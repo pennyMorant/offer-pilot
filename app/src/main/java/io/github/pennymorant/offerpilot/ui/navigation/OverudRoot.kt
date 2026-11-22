@@ -4,9 +4,7 @@ package io.github.pennymorant.offerpilot.ui.navigation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Settings
@@ -15,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -95,9 +92,9 @@ fun OverudRoot(
                 }
             } else {
                 AnimatedContent(selected, label = "navigation",
-                    modifier = Modifier.fillMaxSize().padding(bottom = 84.dp + padding.calculateBottomPadding())) { page ->
+                    modifier = Modifier.fillMaxSize().padding(bottom = 88.dp + padding.calculateBottomPadding())) { page ->
                     when (page) {
-                        Destination.DASHBOARD -> DashboardScreen(state, bridge, onWork, dashboard::setAutomatic, dashboard::authorize,
+                        Destination.DASHBOARD -> DashboardScreen(state, dashboard::setAutomatic,
                             { navigate { selected = Destination.RULES } }, { resolve = true }, dashboard::applyScene,
                             dashboard::adjustUberAr, dashboard::openPlatform)
                         Destination.ANALYSIS -> AnalysisScreen(
@@ -108,34 +105,15 @@ fun OverudRoot(
                         Destination.RULES -> RulesScreen(rules)
                     }
                 }
-                HorizontalFloatingToolbar(
-                    expanded = true,
-                    colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
-                    modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 14.dp),
-                ) {
-                    Destination.entries.forEach { destination ->
-                        val isSelected = selected == destination
-                        Surface(
-                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                                else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0f),
-                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
-                            shape = CircleShape,
-                            modifier = Modifier.clip(CircleShape)
-                                .clickable { navigate { selected = destination; settings = false } },
-                        ) {
-                            Row(
-                                Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            ) {
-                                Icon(if (isSelected) destination.selectedIcon else destination.unselectedIcon,
-                                    contentDescription = destination.label, modifier = Modifier.size(20.dp))
-                                Text(destination.label, style = MaterialTheme.typography.labelLarge)
-                            }
-                        }
-                    }
-                }
+                BottomNavigationDock(
+                    selected = selected,
+                    working = state.working,
+                    authorized = bridge.authorized,
+                    onSelect = { dest -> navigate { selected = dest; settings = false } },
+                    onWork = onWork,
+                    onAuthorize = dashboard::authorize,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
             }
         }
     }

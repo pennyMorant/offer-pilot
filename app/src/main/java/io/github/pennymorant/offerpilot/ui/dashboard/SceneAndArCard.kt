@@ -40,7 +40,7 @@ fun SceneAndArCard(
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("LA 策略档位", style = MaterialTheme.typography.titleMedium)
+                Text("策略档位", style = MaterialTheme.typography.titleMedium)
                 ToolBadge(text = activeScene?.label ?: "自定义参数")
             }
             Row(
