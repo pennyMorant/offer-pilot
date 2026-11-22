@@ -9,6 +9,7 @@ import android.view.RoundedCorner
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
+import android.view.animation.AccelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -55,6 +56,25 @@ internal class OverlayWindowLayout(
             .translationY(0f).scaleX(1f).scaleY(1f).alpha(1f)
             .setDuration(240)
             .setInterpolator(OvershootInterpolator(0.75f))
+            .start()
+    }
+
+    fun animateOut(onEnd: () -> Unit) {
+        val v = views.root
+        if (v.visibility != View.VISIBLE) { onEnd(); return }
+        v.animate().cancel()
+        val distance = (v.height.takeIf { it > 0 } ?: dp(220)) + dp(24)
+        v.animate()
+            .translationY(-distance.toFloat())
+            .alpha(0f)
+            .setDuration(200)
+            .setInterpolator(AccelerateInterpolator(1.3f))
+            .withEndAction {
+                v.visibility = View.GONE
+                v.translationY = 0f
+                v.alpha = 1f
+                onEnd()
+            }
             .start()
     }
 

@@ -3,7 +3,6 @@ package io.github.pennymorant.offerpilot.overlay
 import android.content.Context
 import android.content.res.Configuration
 import android.provider.Settings
-import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import io.github.pennymorant.offerpilot.di.AppContainer
@@ -14,7 +13,6 @@ import io.github.pennymorant.offerpilot.valuation.StrategyAdvisor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlin.math.abs
 
 /** Material 3 Expressive dynamic-color floating offer card covering the top status bar on live offers. */
 class OfferOverlay(private val context: Context, private val runtime: AppContainer) {
@@ -25,36 +23,39 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
     private val collapsedOfferId = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     private var lastOfferId: String? = null
     private var timeoutJob: Job? = null
+    private var dismissing = false
 
     fun show() {
         if (view != null || !Settings.canDrawOverlays(context)) return
         val density = context.resources.displayMetrics.density
         fun dp(v: Int) = (v * density).toInt()
+        var layoutRef: OverlayWindowLayout? = null
+        fun dismissCurrent() {
+            val targetId = lastOfferId ?: return
+            if (dismissing) return
+            dismissing = true
+            val l = layoutRef
+            if (l != null) {
+                l.animateOut {
+                    dismissing = false
+                    collapsedOfferId.value = targetId
+                }
+            } else {
+                dismissing = false
+                collapsedOfferId.value = targetId
+            }
+        }
         val v = buildOverlayViews(context,
             onPause = { runtime.setAutomatic(false) },
             onDecline = {
                 runtime.declineCurrentOffer()
-                lastOfferId?.let { collapsedOfferId.value = it }
-            })
+                dismissCurrent()
+            },
+            onSwipeUp = ::dismissCurrent)
         val layout = OverlayWindowLayout(context, manager, v)
+        layoutRef = layout
 
-        v.closeBtn.setOnClickListener { lastOfferId?.let { collapsedOfferId.value = it } }
-        var downX = 0f
-        var downY = 0f
-        v.root.setOnTouchListener { _, event ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> { downX = event.rawX; downY = event.rawY; false }
-                MotionEvent.ACTION_UP -> {
-                    val dx = event.rawX - downX
-                    val dy = event.rawY - downY
-                    if (abs(dx) > dp(48) || dy < -dp(36)) {
-                        lastOfferId?.let { collapsedOfferId.value = it }
-                        true
-                    } else false
-                }
-                else -> false
-            }
-        }
+        v.closeBtn.setOnClickListener { dismissCurrent() }
         v.root.visibility = View.GONE
         runCatching { layout.attach(); window = layout; view = v.root }.onFailure {
             layout.close(); scope.cancel(); return
@@ -72,15 +73,16 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                 }
                 if (offer.id != lastOfferId) {
                     lastOfferId = offer.id
+                    dismissing = false
                     if (collapsedOfferId.value != null) collapsedOfferId.value = null
                     timeoutJob?.cancel()
                     timeoutJob = scope.launch {
                         delay(30_000L)
-                        if (lastOfferId == offer.id) collapsedOfferId.value = offer.id
+                        if (lastOfferId == offer.id) dismissCurrent()
                     }
                 }
-                if (collapsed == offer.id) {
-                    v.root.visibility = View.GONE
+                if (collapsed == offer.id || dismissing) {
+                    if (!dismissing) v.root.visibility = View.GONE
                     return@collectLatest
                 }
                 val wasHidden = v.root.visibility != View.VISIBLE

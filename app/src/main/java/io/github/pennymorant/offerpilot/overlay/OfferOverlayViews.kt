@@ -5,19 +5,45 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.text.TextUtils
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import kotlin.math.abs
 
 internal fun buildOverlayViews(
     context: Context,
     onPause: () -> Unit,
     onDecline: () -> Unit,
+    onSwipeUp: () -> Unit,
 ): OverlayViews {
     val d = context.resources.displayMetrics.density
     fun dp(v: Int) = (v * d).toInt()
+    val swipeThreshold = dp(32).toFloat()
     val cardBg = GradientDrawable()
-    val root = LinearLayout(context).apply {
+    val root = object : LinearLayout(context) {
+        private var startX = 0f
+        private var startY = 0f
+        private var triggered = false
+        override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+            when (ev.actionMasked) {
+                MotionEvent.ACTION_DOWN -> { startX = ev.rawX; startY = ev.rawY; triggered = false }
+                MotionEvent.ACTION_MOVE -> if (!triggered) {
+                    val dx = ev.rawX - startX
+                    val dy = ev.rawY - startY
+                    if (dy < -swipeThreshold && abs(dy) > abs(dx)) {
+                        triggered = true
+                        onSwipeUp()
+                        val cancel = MotionEvent.obtain(ev).apply { action = MotionEvent.ACTION_CANCEL }
+                        super.dispatchTouchEvent(cancel)
+                        cancel.recycle()
+                        return true
+                    }
+                }
+            }
+            return if (triggered) true else super.dispatchTouchEvent(ev)
+        }
+    }.apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(18), dp(18), dp(18), dp(18))
         clipToOutline = true
