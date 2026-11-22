@@ -1,12 +1,11 @@
 package io.github.pennymorant.offerpilot.overlay
 
 import android.content.Context
-import android.content.Intent
+import android.content.res.Configuration
 import android.provider.Settings
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import io.github.pennymorant.offerpilot.MainActivity
 import io.github.pennymorant.offerpilot.di.AppContainer
 import io.github.pennymorant.offerpilot.model.*
 import io.github.pennymorant.offerpilot.ui.theme.appearanceColors
@@ -17,7 +16,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlin.math.abs
 
-/** iOS Dynamic Island style top-camera floating overlay for live offer alerts and quick actions. */
+/** Material 3 Expressive dynamic-color floating offer card covering the top status bar on live offers. */
 class OfferOverlay(private val context: Context, private val runtime: AppContainer) {
     private val manager = context.getSystemService(WindowManager::class.java)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -25,7 +24,6 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
     private var window: OverlayWindowLayout? = null
     private val collapsedOfferId = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     private var lastOfferId: String? = null
-    private var expandedNow = false
     private var timeoutJob: Job? = null
 
     fun show() {
@@ -40,20 +38,10 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
             })
         val layout = OverlayWindowLayout(context, manager, v)
 
-        v.closeBtn.setOnClickListener {
-            lastOfferId?.let { collapsedOfferId.value = it }
-        }
-        v.topRow.setOnClickListener {
-            if (expandedNow) {
-                lastOfferId?.let { collapsedOfferId.value = it }
-            } else {
-                openApp()
-            }
-        }
+        v.closeBtn.setOnClickListener { lastOfferId?.let { collapsedOfferId.value = it } }
         var downX = 0f
         var downY = 0f
         v.root.setOnTouchListener { _, event ->
-            if (!expandedNow) return@setOnTouchListener false
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> { downX = event.rawX; downY = event.rawY; false }
                 MotionEvent.ACTION_UP -> {
@@ -69,9 +57,7 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
         }
         v.root.visibility = View.GONE
         runCatching { layout.attach(); window = layout; view = v.root }.onFailure {
-            layout.close()
-            scope.cancel()
-            return
+            layout.close(); scope.cancel(); return
         }
 
         scope.launch {
@@ -79,64 +65,57 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                 state, appearance, collapsed, inApp -> Quad(state, appearance, collapsed, inApp)
             }.collectLatest { (state, appearance, collapsed, inApp) ->
                 val offer = state.latest
-                val isDemoOffer = offer?.id?.startsWith("demo-") == true
-                if (inApp && !isDemoOffer) {
+                val isDemo = offer?.id?.startsWith("demo-") == true
+                if (offer == null || (inApp && !isDemo)) {
                     v.root.visibility = View.GONE
                     return@collectLatest
                 }
-                val systemDark = context.resources.configuration.uiMode and
-                    android.content.res.Configuration.UI_MODE_NIGHT_MASK == android.content.res.Configuration.UI_MODE_NIGHT_YES
-                val colors = appearanceColors(context, appearance, appearance.isDark(systemDark))
-                if (offer?.id != lastOfferId) {
-                    lastOfferId = offer?.id
+                if (offer.id != lastOfferId) {
+                    lastOfferId = offer.id
                     if (collapsedOfferId.value != null) collapsedOfferId.value = null
                     timeoutJob?.cancel()
-                    if (offer != null) {
-                        timeoutJob = scope.launch {
-                            delay(30_000L)
-                            if (lastOfferId == offer.id) collapsedOfferId.value = offer.id
-                        }
+                    timeoutJob = scope.launch {
+                        delay(30_000L)
+                        if (lastOfferId == offer.id) collapsedOfferId.value = offer.id
                     }
                 }
-                val arState = runtime.arGuard.state.value
-                val advice = offer?.let {
-                    StrategyAdvisor.advise(it, state.decision, state.destinationAssessment,
-                        arState.uberArPercent, state.policy.effective(it.platform).preferredZones)
-                }
-                val alert = advice?.fakePreferred == true
-                val isExpandedOffer = offer != null && collapsed != offer.id
-                expandedNow = isExpandedOffer
-                if (!isExpandedOffer) {
+                if (collapsed == offer.id) {
                     v.root.visibility = View.GONE
                     return@collectLatest
                 }
-                v.root.visibility = View.VISIBLE
+                val wasHidden = v.root.visibility != View.VISIBLE
+                val systemDark = context.resources.configuration.uiMode and
+                    Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+                val dark = appearance.isDark(systemDark)
+                val colors = appearanceColors(context, appearance, dark)
+                val arState = runtime.arGuard.state.value
+                val advice = StrategyAdvisor.advise(offer, state.decision, state.destinationAssessment,
+                    arState.uberArPercent, state.policy.effective(offer.platform).preferredZones)
                 val bgAlert = state.backgroundAlert?.takeIf {
-                    System.currentTimeMillis() - it.receivedAt in 0..35_000L && it.platform != offer?.platform
+                    System.currentTimeMillis() - it.receivedAt in 0..35_000L && it.platform != offer.platform
                 }
                 val active = state.activePlatform
                 val otherActive = active?.let { p -> Platform.entries.firstOrNull { it != p } }
                 val completed = state.lastCompletedPlatform
                 val otherCompleted = completed?.let { p -> Platform.entries.firstOrNull { it != p } }
                 val recentComplete = state.lastCompletedAt?.let { System.currentTimeMillis() - it in 0..90_000L } == true
-                layout.update(true, 108)
-                applyIslandColors(v, colors, alert, state.decision?.eligible == true, dp(1))
 
-                renderOfferContent(v, state, colors, isExpandedOffer, advice, arState.uberArPercent, arState.goldFloorPercent, bgAlert)
+                applyExpressiveColors(v, colors, dark, state.decision?.eligible == true, dp(1))
+                renderOfferContent(v, state, colors, offer, advice)
 
-                v.pauseBtn.visibility = if (isExpandedOffer && state.autoAcceptEnabled) View.VISIBLE else View.GONE
-                v.declineBtn.visibility = if (isExpandedOffer && state.decision?.eligible == false) View.VISIBLE else View.GONE
+                v.pauseBtn.visibility = if (state.autoAcceptEnabled) View.VISIBLE else View.GONE
+                v.declineBtn.visibility = if (state.decision?.eligible == false) View.VISIBLE else View.GONE
                 when {
-                    isExpandedOffer && state.deliveryPhase == DeliveryPhase.ACTIVE && active != null && otherActive != null -> {
+                    state.deliveryPhase == DeliveryPhase.ACTIVE && active != null && otherActive != null -> {
                         v.switchBtn.visibility = View.VISIBLE; v.switchBtn.text = "去暂停 ${otherActive.label}"
                         v.switchBtn.setOnClickListener { runtime.launchOtherPlatform(active) }
                     }
-                    isExpandedOffer && bgAlert != null -> {
+                    bgAlert != null -> {
                         v.switchBtn.visibility = View.VISIBLE
                         v.switchBtn.text = "${bgAlert.platform.label}${bgAlert.amountPreview?.let { " $it" }.orEmpty()} · 查看"
                         v.switchBtn.setOnClickListener { runtime.launchPlatform(bgAlert.platform) }
                     }
-                    isExpandedOffer && state.deliveryPhase == DeliveryPhase.AVAILABLE && recentComplete && completed != null && otherCompleted != null -> {
+                    state.deliveryPhase == DeliveryPhase.AVAILABLE && recentComplete && completed != null && otherCompleted != null -> {
                         v.switchBtn.visibility = View.VISIBLE; v.switchBtn.text = "去恢复 ${otherCompleted.label}"
                         v.switchBtn.setOnClickListener { runtime.launchOtherPlatform(completed) }
                     }
@@ -144,15 +123,11 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                 }
                 v.actionsRow.visibility = if (v.pauseBtn.visibility == View.VISIBLE ||
                     v.declineBtn.visibility == View.VISIBLE || v.switchBtn.visibility == View.VISIBLE) View.VISIBLE else View.GONE
-            }
-        }
-    }
 
-    private fun openApp() {
-        runCatching {
-            context.startActivity(Intent(context, MainActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            })
+                layout.refresh()
+                v.root.visibility = View.VISIBLE
+                if (wasHidden) layout.animateIn()
+            }
         }
     }
 

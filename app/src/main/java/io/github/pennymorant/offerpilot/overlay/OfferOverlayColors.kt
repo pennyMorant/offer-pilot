@@ -11,22 +11,33 @@ internal fun TextView.stylePill(bg: Int, fg: Int) {
     setTextColor(fg)
 }
 
-internal fun applyIslandColors(v: OverlayViews, colors: ColorScheme, alert: Boolean, eligible: Boolean, strokePx: Int) {
-    v.cardBg.setColor(Color.BLACK)
-    v.cardBg.setStroke(0, Color.TRANSPARENT)
-    val fgColor = Color.WHITE
-    v.amountText.setTextColor(fgColor)
-    v.heroRouteText.setTextColor(Color.rgb(212, 218, 226))
+internal fun applyExpressiveColors(v: OverlayViews, colors: ColorScheme, dark: Boolean, eligible: Boolean, strokePx: Int) {
+    val outline = colors.outlineVariant.toArgb()
+    val softStroke = Color.argb(115, Color.red(outline), Color.green(outline), Color.blue(outline))
+    v.cardBg.setColor(colors.surfaceContainerHigh.toArgb())
+    v.cardBg.setStroke(strokePx, softStroke)
+
+    val onSurface = colors.onSurface.toArgb()
+    val onVariant = colors.onSurfaceVariant.toArgb()
+    val tileBg = if (dark) colors.surfaceContainer.toArgb() else colors.surfaceContainerLowest.toArgb()
+
+    v.amountText.setTextColor(onSurface)
+    v.heroRouteText.setTextColor(onVariant)
     v.tagsText.setTextColor(colors.tertiary.toArgb())
-    v.routeText.setTextColor(Color.rgb(196, 203, 214))
-    (v.infoBox.background as? GradientDrawable)?.setColor(Color.rgb(22, 25, 31))
-    v.verdictText.setTextColor(if (eligible) colors.primary.toArgb() else Color.rgb(212, 218, 226))
-    v.extraText.setTextColor(Color.rgb(156, 163, 175))
-    val tileBg = Color.rgb(22, 25, 31)
-    v.perMileTile.stylePill(tileBg, fgColor)
-    v.hourlyTile.stylePill(tileBg, fgColor)
+    v.routeText.setTextColor(onVariant)
+    (v.perMileBox.background as? GradientDrawable)?.setColor(tileBg)
+    (v.hourlyBox.background as? GradientDrawable)?.setColor(tileBg)
+    v.perMileLabel.setTextColor(onVariant)
+    v.hourlyLabel.setTextColor(onVariant)
+    v.perMileTile.setTextColor(onSurface)
+    v.hourlyTile.setTextColor(onSurface)
+
+    (v.infoBox.background as? GradientDrawable)?.setColor(colors.surfaceContainer.toArgb())
+    v.verdictText.setTextColor(if (eligible) colors.primary.toArgb() else onSurface)
+    v.extraText.setTextColor(onVariant)
+
+    v.closeBtn.stylePill(colors.surfaceContainerHighest.toArgb(), onVariant)
     v.pauseBtn.stylePill(colors.primaryContainer.toArgb(), colors.onPrimaryContainer.toArgb())
-    v.declineBtn.stylePill(Color.rgb(42, 46, 54), Color.WHITE)
+    v.declineBtn.stylePill(colors.secondaryContainer.toArgb(), colors.onSecondaryContainer.toArgb())
     v.switchBtn.stylePill(colors.tertiaryContainer.toArgb(), colors.onTertiaryContainer.toArgb())
-    v.closeBtn.stylePill(Color.rgb(34, 38, 46), Color.rgb(210, 216, 224))
 }
