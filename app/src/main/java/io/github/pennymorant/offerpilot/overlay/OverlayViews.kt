@@ -2,6 +2,8 @@ package io.github.pennymorant.offerpilot.overlay
 
 import android.graphics.drawable.GradientDrawable
 import android.view.View
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 
@@ -9,9 +11,13 @@ internal class OverlayViews(
     val root: LinearLayout,
     val cardBg: GradientDrawable,
     val topRow: LinearLayout,
+    val statusHalo: FrameLayout,
+    val statusDot: View,
     val leftBadge: TextView,
     val cutoutSpacer: View,
     val rightBadge: TextView,
+    val appLogo: ImageView,
+    val closeBtn: TextView,
     val heroRow: LinearLayout,
     val amountText: TextView,
     val heroRouteText: TextView,

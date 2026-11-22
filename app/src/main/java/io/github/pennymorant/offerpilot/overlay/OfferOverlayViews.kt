@@ -7,8 +7,11 @@ import android.graphics.drawable.GradientDrawable
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import io.github.pennymorant.offerpilot.R
 
 internal fun buildOverlayViews(
     context: Context,
@@ -46,14 +49,33 @@ internal fun buildOverlayViews(
         setOnClickListener { onClick() }
     }
 
+    val statusDot = View(context).apply {
+        background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(Color.rgb(74, 222, 128)) }
+    }
+    val statusHalo = FrameLayout(context).apply {
+        background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(Color.argb(64, 74, 222, 128)) }
+        addView(statusDot, FrameLayout.LayoutParams(dp(9), dp(9), Gravity.CENTER))
+    }
     val leftBadge = pill(11.5f)
     val cutoutSpacer = View(context).apply { visibility = View.GONE }
     val rightBadge = pill(11.5f).apply { gravity = Gravity.END }
+    val appLogo = ImageView(context).apply {
+        setImageResource(R.mipmap.ic_launcher_round)
+        scaleType = ImageView.ScaleType.FIT_CENTER
+    }
+    val closeBtn = TextView(context).apply {
+        text = "✕"; textSize = 11f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER
+        background = GradientDrawable().apply { shape = GradientDrawable.OVAL }
+        visibility = View.GONE
+    }
     val topRow = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+        addView(statusHalo, LinearLayout.LayoutParams(dp(18), dp(18)))
         addView(leftBadge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         addView(cutoutSpacer, LinearLayout.LayoutParams(0, 1))
         addView(rightBadge, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        addView(appLogo, LinearLayout.LayoutParams(dp(20), dp(20)))
+        addView(closeBtn, LinearLayout.LayoutParams(dp(26), dp(26)).apply { marginStart = dp(8) })
     }
 
     val amountText = TextView(context).apply {
@@ -116,7 +138,8 @@ internal fun buildOverlayViews(
     root.addView(topRow); root.addView(heroRow); root.addView(metricsRow); root.addView(tagsText)
     root.addView(routeText); root.addView(infoBox); root.addView(actionsRow)
     return OverlayViews(
-        root, cardBg, topRow, leftBadge, cutoutSpacer, rightBadge, heroRow, amountText, heroRouteText,
+        root, cardBg, topRow, statusHalo, statusDot, leftBadge, cutoutSpacer, rightBadge, appLogo, closeBtn,
+        heroRow, amountText, heroRouteText,
         metricsRow, perMileTile, hourlyTile, verdictTile, tagsText, routeText, infoBox, verdictText, extraText,
         actionsRow, pauseBtn, declineBtn, switchBtn,
     )

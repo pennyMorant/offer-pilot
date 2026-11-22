@@ -65,8 +65,16 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    override fun onStart() {
+        super.onStart()
+        (application as OverudApp).container.appInForeground.value = true
+    }
     override fun onResume() {
         super.onResume()
         (application as OverudApp).container.bridge.refresh()
+    }
+    override fun onStop() {
+        (application as OverudApp).container.appInForeground.value = false
+        super.onStop()
     }
 }

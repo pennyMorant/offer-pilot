@@ -36,6 +36,7 @@ class AppContainer(context: Context) {
     val session = WorkSessionController(bridge, PolicyStore(context), scope, mutex, DeviceInteractionGuard(context))
     val voice = io.github.pennymorant.offerpilot.speech.VoiceController(context, session, arGuard)
     val state = session.state
+    val appInForeground = kotlinx.coroutines.flow.MutableStateFlow(false)
     private val statistics = StatisticsRepository(database)
     val offerHistory = OfferHistoryRepository(database)
     val regions = RegionRecorder(session, RegionRepository(database))

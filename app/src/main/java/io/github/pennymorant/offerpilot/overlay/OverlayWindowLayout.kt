@@ -92,7 +92,7 @@ internal class OverlayWindowLayout(
         val availableWidth = (screenWidth - side * 2).coerceAtLeast(1)
         val baseCompact = dp(compactWidthDp)
         val targetWidth = if (expanded) availableWidth else {
-            val withCutout = if (cutoutWidth > 0) maxOf(baseCompact, cutoutWidth + dp(168)) else baseCompact
+            val withCutout = if (cutoutWidth > 0) maxOf(baseCompact, cutoutWidth + dp(84)) else baseCompact
             withCutout.coerceAtMost(availableWidth)
         }
         val statusBottom = maxOf(insets.getInsetsIgnoringVisibility(WindowInsets.Type.statusBars()).top,

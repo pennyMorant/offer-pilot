@@ -32,4 +32,5 @@ internal fun applyIslandColors(v: OverlayViews, colors: ColorScheme, alert: Bool
     v.pauseBtn.stylePill(colors.primaryContainer.toArgb(), colors.onPrimaryContainer.toArgb())
     v.declineBtn.stylePill(colors.errorContainer.toArgb(), colors.onErrorContainer.toArgb())
     v.switchBtn.stylePill(colors.tertiaryContainer.toArgb(), colors.onTertiaryContainer.toArgb())
+    v.closeBtn.stylePill(Color.rgb(34, 38, 46), Color.rgb(210, 216, 224))
 }
