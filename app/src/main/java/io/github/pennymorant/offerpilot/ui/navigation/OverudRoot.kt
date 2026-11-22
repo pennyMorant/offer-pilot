@@ -20,6 +20,7 @@ import io.github.pennymorant.offerpilot.di.OverudViewModelFactory
 import io.github.pennymorant.offerpilot.ui.analysis.AnalysisScreen
 import io.github.pennymorant.offerpilot.ui.analysis.AnalysisViewModel
 import io.github.pennymorant.offerpilot.ui.analysis.DailyReviewViewModel
+import io.github.pennymorant.offerpilot.ui.components.ToolBadge
 import io.github.pennymorant.offerpilot.ui.dashboard.DashboardScreen
 import io.github.pennymorant.offerpilot.ui.dashboard.DashboardViewModel
 import io.github.pennymorant.offerpilot.ui.diagnostics.RuntimeDiagnosticsDialog
@@ -51,69 +52,71 @@ fun OverudRoot(
     val dirty = remember(ruleState, prop22State) { rules.hasChanges() }
     val bridge = state.connection
     var selected by rememberSaveable { mutableStateOf(Destination.DASHBOARD) }
+    var rulesSection by rememberSaveable { mutableStateOf<String?>(null) }
     var settings by rememberSaveable { mutableStateOf(false) }
     var pendingNavigation by remember { mutableStateOf<(() -> Unit)?>(null) }
     fun navigate(action: () -> Unit) {
         if (rules.state.value.saving) return
         if (rules.hasChanges()) pendingNavigation = action else action()
     }
-    BackHandler(enabled = settings || dirty) { navigate { settings = false; selected = Destination.DASHBOARD } }
+    val inRulesSubPage = !settings && selected == Destination.RULES && rulesSection != null
+    BackHandler(enabled = settings || inRulesSubPage || dirty) {
+        if (inRulesSubPage) rulesSection = null
+        else navigate { settings = false; selected = Destination.DASHBOARD }
+    }
     var showRuntimeDiagnostics by rememberSaveable { mutableStateOf(false) }
     var resolve by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-                navigationIcon = {
-                    if (settings) {
-                        IconButton(onClick = { navigate { settings = false } }) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
-                        }
-                    }
+            OverudTopBar(
+                settings = settings,
+                inRulesSubPage = inRulesSubPage,
+                title = when {
+                    settings -> "设置"
+                    inRulesSubPage -> rulesSection.orEmpty()
+                    else -> selected.label
                 },
-                title = { Text(if (settings) "设置" else selected.label, style = MaterialTheme.typography.titleLarge) },
-                actions = {
-                    if (!settings) {
-                        FilledTonalIconButton(
-                            onClick = { navigate { settings = true } },
-                            modifier = Modifier.padding(end = 8.dp),
-                        ) { Icon(Icons.Rounded.Settings, contentDescription = "设置", modifier = Modifier.size(20.dp)) }
-                    }
-                },
+                scopeLabel = ruleState.scope?.label ?: "公共要求",
+                onBack = { if (inRulesSubPage) rulesSection = null else navigate { settings = false } },
+                onOpenSettings = { navigate { settings = true } },
             )
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()), contentAlignment = Alignment.TopCenter) {
             if (settings) {
                 Box(Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())) {
-                    SettingsScreen(factory, rules, voice) { showRuntimeDiagnostics = true }
+                    SettingsScreen(factory, rules, voice, state, dashboard::setAutomatic, { showRuntimeDiagnostics = true })
                 }
             } else {
+                val bottomInset = if (inRulesSubPage) padding.calculateBottomPadding()
+                    else 88.dp + padding.calculateBottomPadding()
                 AnimatedContent(selected, label = "navigation",
-                    modifier = Modifier.fillMaxSize().padding(bottom = 88.dp + padding.calculateBottomPadding())) { page ->
+                    modifier = Modifier.fillMaxSize().padding(bottom = bottomInset)) { page ->
                     when (page) {
-                        Destination.DASHBOARD -> DashboardScreen(state, dashboard::setAutomatic,
-                            { navigate { selected = Destination.RULES } }, { resolve = true }, dashboard::applyScene,
+                        Destination.DASHBOARD -> DashboardScreen(state,
+                            { resolve = true }, dashboard::applyScene,
                             dashboard::adjustUberAr, dashboard::openPlatform)
                         Destination.ANALYSIS -> AnalysisScreen(
                             analysis, dailyState, analysisViewModel::select,
                             dailyReviewViewModel::selectRange, dailyReviewViewModel::selectPlatform,
                             dailyReviewViewModel::selectFilter, dailyReviewViewModel::clearAll,
                         )
-                        Destination.RULES -> RulesScreen(rules)
+                        Destination.RULES -> RulesScreen(rules, rulesSection) { rulesSection = it }
                     }
                 }
-                BottomNavigationDock(
-                    selected = selected,
-                    working = state.working,
-                    authorized = bridge.authorized,
-                    onSelect = { dest -> navigate { selected = dest; settings = false } },
-                    onWork = onWork,
-                    onAuthorize = dashboard::authorize,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
+                if (!inRulesSubPage) {
+                    BottomNavigationDock(
+                        selected = selected,
+                        working = state.working,
+                        authorized = bridge.authorized,
+                        onSelect = { dest -> navigate { selected = dest; rulesSection = null; settings = false } },
+                        onWork = onWork,
+                        onAuthorize = dashboard::authorize,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
+                }
             }
         }
     }

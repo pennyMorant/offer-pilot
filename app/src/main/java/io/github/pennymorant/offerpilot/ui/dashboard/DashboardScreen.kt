@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Radar
+import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,8 +25,6 @@ import io.github.pennymorant.offerpilot.ui.components.OfferCard
 @Composable
 fun DashboardScreen(
     state: DashboardUiState,
-    onAutomatic: (Boolean) -> Unit,
-    onRules: () -> Unit,
     onResolve: () -> Unit,
     onScene: (DrivingScene) -> Unit,
     onAdjustAr: (Int) -> Unit,
@@ -75,10 +74,28 @@ fun DashboardScreen(
                 }
             }
         }
+        item { WorkSessionCard(state) }
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                WorkSessionCard(state)
-                AutoAcceptCard(state, onAutomatic, onRules, onResolve)
+            AnimatedVisibility(
+                visible = state.pending,
+                enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                    expandVertically(MaterialTheme.motionScheme.defaultSpatialSpec()),
+                exit = fadeOut(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                    shrinkVertically(MaterialTheme.motionScheme.defaultSpatialSpec()),
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    shape = MaterialTheme.shapes.extraLarge,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Icon(Icons.Rounded.WarningAmber, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Text("订单状态待核对", style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+                        FilledTonalButton(onClick = onResolve, shapes = ButtonDefaults.shapes()) { Text("核对") }
+                    }
+                }
             }
         }
         item {

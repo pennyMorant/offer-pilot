@@ -12,7 +12,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.pennymorant.offerpilot.di.OverudViewModelFactory
+import io.github.pennymorant.offerpilot.ui.components.ToggleRow
 import io.github.pennymorant.offerpilot.ui.components.ToolSectionRow
+import io.github.pennymorant.offerpilot.ui.dashboard.DashboardUiState
 import io.github.pennymorant.offerpilot.ui.rules.*
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -21,6 +23,8 @@ fun SettingsScreen(
     factory: OverudViewModelFactory,
     rules: RulesViewModel,
     voice: VoiceViewModel,
+    dashboardState: DashboardUiState,
+    onAutomatic: (Boolean) -> Unit,
     onPermissions: () -> Unit,
 ) {
     val appearance: AppearanceViewModel = viewModel(factory = factory)
@@ -36,7 +40,7 @@ fun SettingsScreen(
     ) {
         item("appearance") {
             ToolSectionRow(Icons.Rounded.Palette, "外观",
-                "${theme.mode.label} · ${if (theme.dynamic) "系统动态色" else "品牌配色"}", 0, 4, section == "theme") {
+                "${theme.mode.label} · ${if (theme.dynamic) "系统动态色" else "品牌配色"}", 0, 5, section == "theme") {
                 section = if (section == "theme") null else "theme"
             }
         }
@@ -44,13 +48,13 @@ fun SettingsScreen(
             SettingsSection(section == "theme") { ThemeSettingsCard(theme, appearance::mode, appearance::dynamic) }
         }
         item("voice") {
-            ToolSectionRow(Icons.Rounded.RecordVoiceOver, "驾驶语音", "订单提醒、播报内容与试听", 1, 4, section == "voice") {
+            ToolSectionRow(Icons.Rounded.RecordVoiceOver, "驾驶语音", "订单提醒、播报内容与试听", 1, 5, section == "voice") {
                 section = if (section == "voice") null else "voice"
             }
         }
         item("voice_content") { SettingsSection(section == "voice") { VoiceSettingsCard(voice) } }
         item("prop22") {
-            ToolSectionRow(Icons.Rounded.AccountBalance, "Prop 22 估算", "最低时薪、小费假设与机动车", 2, 4, section == "prop22") {
+            ToolSectionRow(Icons.Rounded.AccountBalance, "Prop 22 估算", "最低时薪、小费假设与机动车", 2, 5, section == "prop22") {
                 section = if (section == "prop22") null else "prop22"
             }
         }
@@ -64,8 +68,29 @@ fun SettingsScreen(
                 }
             }
         }
+        item("auto_accept") {
+            ToolSectionRow(Icons.Rounded.Bolt, "自动接单（实验）",
+                if (dashboardState.autoAcceptEnabled) "已开启 · 仅所有启用条件满足时执行" else "已关闭 · 降低平台风控风险",
+                3, 5, section == "auto") {
+                section = if (section == "auto") null else "auto"
+            }
+        }
+        item("auto_accept_content") {
+            SettingsSection(section == "auto") {
+                ToggleRow(
+                    "启用自动接单",
+                    "需先开启工作；结束工作、重启或修改规则会自动关闭",
+                    dashboardState.autoAcceptEnabled,
+                    enabled = dashboardState.autoAcceptEnabled || (dashboardState.working &&
+                        dashboardState.connection.serviceReady && !dashboardState.pending && !dashboardState.policySaving),
+                    onChange = onAutomatic,
+                )
+                Text("风控提示：自动点击接单可能触发平台风控检测，默认关闭；日常建议仅使用悬浮窗分析与语音播报。",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
         item("permissions") {
-            ToolSectionRow(Icons.Rounded.Security, "连接与权限", "Shevery、通知、悬浮窗与定位", 3, 4, onClick = onPermissions)
+            ToolSectionRow(Icons.Rounded.Security, "连接与权限", "Shevery、通知、悬浮窗与定位", 4, 5, onClick = onPermissions)
         }
         item("developer") { Box(Modifier.padding(top = 10.dp)) { DeveloperTools(factory) } }
         item("version") {

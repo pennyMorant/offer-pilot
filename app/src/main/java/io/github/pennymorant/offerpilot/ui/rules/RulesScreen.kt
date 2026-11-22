@@ -31,11 +31,14 @@ import io.github.pennymorant.offerpilot.model.Platform
 import io.github.pennymorant.offerpilot.ui.components.ToolBadge
 
 @Composable
-fun RulesScreen(viewModel: RulesViewModel) {
+fun RulesScreen(
+    viewModel: RulesViewModel,
+    section: String?,
+    onSection: (String?) -> Unit,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var section by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(state.error) {
-        if (state.error != null) section = when (state.fieldErrors.keys.firstOrNull()) {
+        if (state.error != null) onSection(when (state.fieldErrors.keys.firstOrNull()) {
             RuleField.MINIMUM, RuleField.MILE, RuleField.HOUR, RuleField.COST,
             RuleField.MINIMUM_CONTRIBUTION -> "最低收益"
             RuleField.TARGET_CONTRIBUTION, RuleField.TARGET_CONTRIBUTION_MILE,
@@ -44,9 +47,8 @@ fun RulesScreen(viewModel: RulesViewModel) {
             RuleField.REGION_PERCENT, RuleField.REGION_SAMPLES -> "目的地区域"
             RuleField.MAX_SHOP_ITEMS, RuleField.RADAR_EXTRA_SCORE -> "订单偏好"
             else -> section
-        }
+        })
     }
-    BackHandler(section != null) { section = null }
     val dirty = viewModel.hasChanges()
     val effectsSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
 
@@ -59,31 +61,21 @@ fun RulesScreen(viewModel: RulesViewModel) {
         ) { currentSection ->
             LazyColumn(
                 Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 104.dp),
+                contentPadding = PaddingValues(
+                    start = 16.dp, end = 16.dp, top = 10.dp,
+                    bottom = if (currentSection == null) 104.dp else 24.dp,
+                ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (currentSection == null) {
                     item { RuleScopeSelector(state, viewModel::selectScope, viewModel::inheritShared) }
                     item { RuleOverviewHero(state, dirty, viewModel::save, viewModel::discardChanges) }
-                    item { RuleBentoGrid(state) { section = it } }
+                    item { RuleBentoGrid(state) { onSection(it) } }
                     item {
                         Text("开启的条件须同时满足；保存后自动接单保持关闭。",
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 } else {
-                    item {
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            FilledTonalIconButton(
-                                onClick = { section = null },
-                                shapes = IconButtonDefaults.shapes(),
-                                modifier = Modifier.size(40.dp),
-                            ) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回", modifier = Modifier.size(20.dp)) }
-                            Text(currentSection, style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                            ToolBadge(text = state.scope?.label ?: "公共要求")
-                        }
-                    }
                     if (currentSection == "平台与范围") {
                         item { PlatformToggleCards(state, viewModel::platform) }
                     } else if (state.scope != null && state.inheritShared) {

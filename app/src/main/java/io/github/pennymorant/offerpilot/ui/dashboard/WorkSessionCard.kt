@@ -28,7 +28,7 @@ fun WorkSessionCard(state: DashboardUiState) {
     )
     val fg = if (state.working) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
     val effectsSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
-    Surface(color = bg, contentColor = fg, shape = groupedItemShape(0, 2), modifier = Modifier.fillMaxWidth()) {
+    Surface(color = bg, contentColor = fg, shape = MaterialTheme.shapes.extraLarge, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AnimatedContent(
