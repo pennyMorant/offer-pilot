@@ -1,5 +1,6 @@
 package io.github.pennymorant.offerpilot.ui.permissions
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -17,6 +19,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import io.github.pennymorant.offerpilot.ui.components.ToolBadge
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -51,8 +54,12 @@ fun PermissionSetupDialog(
                         else current?.explanation.orEmpty(), style = MaterialTheme.typography.bodyLarge)
                     if (welcome || summary) PermissionChecklist(state)
                     else if (current != null) {
-                        LinearProgressIndicator(progress = { (current.ordinal + 1f) / SetupPermission.entries.size },
-                            modifier = Modifier.fillMaxWidth())
+                        val progress by animateFloatAsState(
+                            targetValue = (current.ordinal + 1f) / SetupPermission.entries.size,
+                            animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+                            label = "permProgress",
+                        )
+                        LinearWavyProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
                         Text("设置 ${current.ordinal + 1} / ${SetupPermission.entries.size}",
                             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.large) {
@@ -100,8 +107,13 @@ private fun PermissionChecklist(state: PermissionSetupState) {
                 Icon(if (granted) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
                     contentDescription = null, tint = if (granted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
                 Text(step.title, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                Text(if (granted) "已开启" else if (state.stage == SetupStage.SUMMARY) "稍后设置" else "待授权",
-                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ToolBadge(
+                    text = if (granted) "已开启" else if (state.stage == SetupStage.SUMMARY) "稍后设置" else "待授权",
+                    containerColor = if (granted) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerHighest,
+                    contentColor = if (granted) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
