@@ -1,0 +1,26 @@
+package io.github.pennymorant.offerpilot.model
+
+data class Offer(
+    val id: String,
+    val platform: Platform,
+    val observedAt: Long,
+    val amountCents: Long?,
+    val distanceMeters: Long?,
+    val durationSeconds: Long?,
+    val merchant: String? = null,
+    val destination: String? = null,
+    val pickupMeters: Long? = null,
+    val currency: String = "USD",
+    val isStacked: Boolean = false,
+    val isAddon: Boolean = false,
+    val reliable: Boolean = false,
+    val rawText: String = "",
+    val evidence: QuoteEvidence? = null,
+    val serviceKind: OfferService = OfferService.UNKNOWN,
+    val pickupAddress: String? = null,
+    val includesTip: Boolean? = null,
+    val firstObservedAt: Long = observedAt,
+    val channel: OfferChannel = OfferChannel.UNKNOWN,
+    val preferredTag: Boolean = false,
+    val itemCount: Int? = null,
+)

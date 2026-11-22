@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 android {
-    namespace = "com.overud"
+    namespace = "io.github.pennymorant.offerpilot"
     compileSdk = 37
     defaultConfig {
         applicationId = "io.github.pennymorant.offerpilot"

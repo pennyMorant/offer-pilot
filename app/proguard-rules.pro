@@ -1,1 +1,1 @@
--keep class com.overud.bridge.PrivilegedService { *; }
+-keep class io.github.pennymorant.offerpilot.bridge.PrivilegedService { *; }
