@@ -19,6 +19,9 @@ internal fun renderOfferContent(
     colors: ColorScheme,
     isExpandedOffer: Boolean,
     advice: StrategyAdvice?,
+    uberArPercent: Int,
+    goldFloorPercent: Int,
+    bgAlert: BackgroundOfferAlert?,
 ) {
     val offer = state.latest
     val alert = advice?.fakePreferred == true
@@ -86,8 +89,20 @@ internal fun renderOfferContent(
             if (state.automatic) colors.primaryContainer.toArgb() else Color.TRANSPARENT,
             if (state.automatic) colors.onPrimaryContainer.toArgb() else Color.rgb(160, 230, 180),
         )
-        v.leftBadge.text = modeDot
-        v.rightBadge.stylePill(Color.TRANSPARENT, Color.rgb(215, 220, 226))
-        v.rightBadge.text = if (state.deliveryPhase == DeliveryPhase.ACTIVE) "配送中" else "OfferPilot"
+        v.leftBadge.text = if (state.deliveryPhase == DeliveryPhase.ACTIVE) "● 配送中" else modeDot
+        val arLow = uberArPercent < goldFloorPercent
+        val rightText = when {
+            bgAlert != null -> "${bgAlert.platform.label} ${bgAlert.amountPreview ?: "来单"}"
+            state.deliveryPhase == DeliveryPhase.ACTIVE -> "${state.activePlatform?.label ?: "当前订单"} · 履约"
+            state.sessionExclusiveSeen > 0 -> "接 ${state.sessionExclusiveAccepted}/${state.sessionExclusiveSeen} · AR ${uberArPercent}%"
+            else -> "AR ${uberArPercent}% · ≥${money(state.policy.minimumCents)}"
+        }
+        val rightColor = when {
+            bgAlert != null -> colors.tertiary.toArgb()
+            arLow -> colors.error.toArgb()
+            else -> Color.rgb(215, 220, 226)
+        }
+        v.rightBadge.stylePill(Color.TRANSPARENT, rightColor)
+        v.rightBadge.text = rightText
     }
 }

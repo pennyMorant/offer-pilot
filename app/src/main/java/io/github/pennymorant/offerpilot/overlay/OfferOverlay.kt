@@ -52,9 +52,10 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         lastOfferId = offer?.id
                         if (collapsedOfferId.value != null) collapsedOfferId.value = null
                     }
+                    val arState = runtime.arGuard.state.value
                     val advice = offer?.let {
                         StrategyAdvisor.advise(it, state.decision, state.destinationAssessment,
-                            runtime.arGuard.state.value.uberArPercent, state.policy.effective(it.platform).preferredZones)
+                            arState.uberArPercent, state.policy.effective(it.platform).preferredZones)
                     }
                     val alert = advice?.fakePreferred == true
                     val isExpandedOffer = offer != null && collapsed != offer.id
@@ -70,12 +71,12 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         (bgAlert != null && state.deliveryPhase == DeliveryPhase.AVAILABLE) ||
                         (state.deliveryPhase == DeliveryPhase.AVAILABLE && recentComplete && otherCompleted != null)
                     layout.update(isExpandedOffer, when {
-                        offer != null || hasActivity || state.autoAcceptEnabled -> 248
-                        else -> 168
+                        offer != null || hasActivity || state.autoAcceptEnabled -> 256
+                        else -> 228
                     })
                     applyIslandColors(v, colors, alert, state.decision?.eligible == true, dp(1))
 
-                    renderOfferContent(v, state, colors, isExpandedOffer, advice)
+                    renderOfferContent(v, state, colors, isExpandedOffer, advice, arState.uberArPercent, arState.goldFloorPercent, bgAlert)
 
                     v.pauseBtn.visibility = if (state.autoAcceptEnabled) View.VISIBLE else View.GONE
                     v.declineBtn.visibility = if (isExpandedOffer && state.decision?.eligible == false &&
