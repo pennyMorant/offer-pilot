@@ -1,7 +1,13 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package io.github.pennymorant.offerpilot.ui.dashboard
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Tune
@@ -23,13 +29,13 @@ fun AutoAcceptCard(
 ) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = groupedItemShape(1, 2),
         modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Surface(
                     color = if (state.automatic) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
                     contentColor = if (state.automatic) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    shape = RoundedCornerShape(10.dp),
-                ) { Icon(Icons.Rounded.Bolt, contentDescription = null, modifier = Modifier.padding(8.dp).size(18.dp)) }
+                    shape = MaterialTheme.shapes.medium,
+                ) { Icon(Icons.Rounded.Bolt, contentDescription = null, modifier = Modifier.padding(10.dp).size(20.dp)) }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text("自动接单", style = MaterialTheme.typography.titleMedium)
                     Text(
@@ -53,23 +59,32 @@ fun AutoAcceptCard(
                 )
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilledTonalButton(onClick = onRules, shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)) {
-                    Icon(Icons.Rounded.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
+                FilledTonalButton(
+                    onClick = onRules,
+                    shapes = ButtonDefaults.shapes(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                ) {
+                    Icon(Icons.Rounded.Tune, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
                     Text("规则参数", style = MaterialTheme.typography.labelLarge)
                 }
-                if (state.pending) {
+                AnimatedVisibility(
+                    visible = state.pending,
+                    enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                        expandHorizontally(MaterialTheme.motionScheme.defaultSpatialSpec()),
+                    exit = fadeOut(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                        shrinkHorizontally(MaterialTheme.motionScheme.defaultSpatialSpec()),
+                ) {
                     Button(
                         onClick = onResolve,
-                        shape = RoundedCornerShape(12.dp),
+                        shapes = ButtonDefaults.shapes(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer,
                             contentColor = MaterialTheme.colorScheme.onErrorContainer,
                         ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
                     ) {
-                        Icon(Icons.Rounded.WarningAmber, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Rounded.WarningAmber, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
                         Text("核对配送状态", style = MaterialTheme.typography.labelLarge)
                     }

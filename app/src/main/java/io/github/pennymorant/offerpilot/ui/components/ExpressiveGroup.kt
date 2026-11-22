@@ -1,6 +1,7 @@
 package io.github.pennymorant.offerpilot.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
@@ -21,7 +22,7 @@ import androidx.compose.ui.unit.dp
 /** Grouped surfaces use theme corners so theme changes remain consistent. */
 @Composable
 fun groupedItemShape(index: Int, count: Int): Shape {
-    val outer = MaterialTheme.shapes.large
+    val outer = MaterialTheme.shapes.extraLarge
     val inner = MaterialTheme.shapes.extraSmall.topStart
     return when {
         count <= 1 -> outer
@@ -38,13 +39,13 @@ fun ToolBadge(
     contentColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
     modifier: Modifier = Modifier,
 ) {
-    Surface(color = containerColor, contentColor = contentColor, shape = MaterialTheme.shapes.small, modifier = modifier) {
+    Surface(color = containerColor, contentColor = contentColor, shape = CircleShape, modifier = modifier) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
         )
     }
 }

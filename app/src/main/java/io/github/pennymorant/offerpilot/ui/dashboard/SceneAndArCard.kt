@@ -1,21 +1,26 @@
+@file:OptIn(
+    androidx.compose.material3.ExperimentalMaterial3Api::class,
+    androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class,
+)
+
 package io.github.pennymorant.offerpilot.ui.dashboard
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.pennymorant.offerpilot.data.preferences.ArGuardState
 import io.github.pennymorant.offerpilot.model.DrivingScene
 import io.github.pennymorant.offerpilot.ui.components.ToolBadge
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SceneAndArCard(
     activeScene: DrivingScene?,
@@ -25,30 +30,42 @@ fun SceneAndArCard(
     onScene: (DrivingScene) -> Unit,
     onAdjustAr: (Int) -> Unit,
 ) {
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.large,
+    val animatedAr by animateFloatAsState(
+        targetValue = (arGuard.uberArPercent / 50f).coerceIn(0f, 1f),
+        animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+        label = "arProgress",
+    )
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge,
         modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("LA 策略档位", style = MaterialTheme.typography.titleMedium)
                 ToolBadge(text = activeScene?.label ?: "自定义参数")
             }
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+            ) {
                 DrivingScene.entries.forEachIndexed { index, scene ->
-                    SegmentedButton(
-                        selected = activeScene == scene,
-                        onClick = { onScene(scene) },
-                        shape = SegmentedButtonDefaults.itemShape(index, DrivingScene.entries.size),
-                        icon = {},
-                        label = {
-                            val short = when (scene) {
-                                DrivingScene.PEAK_CHERRY_PICK -> "高峰挑单"
-                                DrivingScene.OFF_PEAK_GOLD -> "平峰金卡"
-                                DrivingScene.LA_RAIN_PROP22 -> "雨天保底"
-                            }
-                            Text(short, style = MaterialTheme.typography.labelLarge, maxLines = 1)
-                        },
-                    )
+                    val shapes = when (index) {
+                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                        DrivingScene.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                    }
+                    val short = when (scene) {
+                        DrivingScene.PEAK_CHERRY_PICK -> "高峰挑单"
+                        DrivingScene.OFF_PEAK_GOLD -> "平峰金卡"
+                        DrivingScene.LA_RAIN_PROP22 -> "雨天保底"
+                    }
+                    ToggleButton(
+                        checked = activeScene == scene,
+                        onCheckedChange = { onScene(scene) },
+                        shapes = shapes,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(short, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+                    }
                 }
             }
             activeScene?.let {
@@ -57,23 +74,27 @@ fun SceneAndArCard(
             }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Gold AR 护航", style = MaterialTheme.typography.labelLarge)
-                        Text("${arGuard.uberArPercent}%", style = MaterialTheme.typography.titleMedium,
+                        Text(
+                            "${arGuard.uberArPercent}%",
+                            style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+                            fontWeight = FontWeight.SemiBold,
                             color = if (arGuard.uberArPercent < arGuard.goldFloorPercent)
-                                MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+                                MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                        )
                     }
-                    LinearProgressIndicator(
-                        progress = { (arGuard.uberArPercent / 50f).coerceIn(0f, 1f) },
+                    LinearWavyProgressIndicator(
+                        progress = { animatedAr },
                         color = when {
                             arGuard.uberArPercent < arGuard.goldFloorPercent -> MaterialTheme.colorScheme.error
                             arGuard.uberArPercent < arGuard.goldFloorPercent + 5 -> MaterialTheme.colorScheme.tertiary
                             else -> MaterialTheme.colorScheme.primary
                         },
                         trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        modifier = Modifier.fillMaxWidth().padding(end = 10.dp).height(6.dp).clip(RoundedCornerShape(4.dp)),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     Text(arGuard.hint, style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -83,12 +104,20 @@ fun SceneAndArCard(
                             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                     }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    FilledTonalIconButton(onClick = { onAdjustAr(-1) }, modifier = Modifier.size(34.dp)) {
-                        Icon(Icons.Rounded.Remove, contentDescription = "-1%", modifier = Modifier.size(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FilledTonalIconButton(
+                        onClick = { onAdjustAr(-1) },
+                        shapes = IconButtonDefaults.shapes(),
+                        modifier = Modifier.size(40.dp),
+                    ) {
+                        Icon(Icons.Rounded.Remove, contentDescription = "-1%", modifier = Modifier.size(18.dp))
                     }
-                    FilledTonalIconButton(onClick = { onAdjustAr(1) }, modifier = Modifier.size(34.dp)) {
-                        Icon(Icons.Rounded.Add, contentDescription = "+1%", modifier = Modifier.size(16.dp))
+                    FilledTonalIconButton(
+                        onClick = { onAdjustAr(1) },
+                        shapes = IconButtonDefaults.shapes(),
+                        modifier = Modifier.size(40.dp),
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = "+1%", modifier = Modifier.size(18.dp))
                     }
                 }
             }
