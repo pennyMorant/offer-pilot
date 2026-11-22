@@ -70,15 +70,13 @@ fun RulesScreen(
                 if (currentSection == null) {
                     item { RuleScopeSelector(state, viewModel::selectScope, viewModel::inheritShared) }
                     item { RuleOverviewHero(state, dirty, viewModel::save, viewModel::discardChanges) }
-                    item { RuleBentoGrid(state) { onSection(it) } }
+                    item { RuleBentoGrid(state, viewModel::platform) { onSection(it) } }
                     item {
                         Text("开启的条件须同时满足；保存后自动接单保持关闭。",
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 } else {
-                    if (currentSection == "平台与范围") {
-                        item { PlatformToggleCards(state, viewModel::platform) }
-                    } else if (state.scope != null && state.inheritShared) {
+                    if (state.scope != null && state.inheritShared) {
                         item {
                             Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge,
                                 modifier = Modifier.fillMaxWidth()) {
@@ -136,39 +134,6 @@ fun RulesScreen(
                             Text(if (state.saving) "正在保存…" else "保存接单要求", style = MaterialTheme.typography.titleMedium)
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PlatformToggleCards(state: RulesUiState, onToggle: (Platform, Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Platform.entries.forEach { platform ->
-            val enabled = platform in state.platforms
-            val bg by animateColorAsState(
-                targetValue = if (enabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
-                animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(), label = "platBg",
-            )
-            val fg = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-            Surface(
-                onClick = { onToggle(platform, !enabled) },
-                enabled = !state.saving,
-                color = bg,
-                contentColor = fg,
-                shape = MaterialTheme.shapes.extraLarge,
-                modifier = Modifier.weight(1f).heightIn(min = 112.dp),
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(platform.label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Icon(if (enabled) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
-                            contentDescription = null, modifier = Modifier.size(22.dp))
-                    }
-                    Text(if (enabled) "已启用自动评估" else "已暂停该平台",
-                        style = MaterialTheme.typography.bodySmall, color = fg.copy(alpha = 0.78f))
                 }
             }
         }

@@ -95,7 +95,7 @@ fun OverudRoot(
                 AnimatedContent(selected, label = "navigation",
                     modifier = Modifier.fillMaxSize().padding(bottom = bottomInset)) { page ->
                     when (page) {
-                        Destination.DASHBOARD -> DashboardScreen(state,
+                        Destination.DASHBOARD -> DashboardScreen(state, dailyState.summary,
                             { resolve = true }, dashboard::applyScene,
                             dashboard::adjustUberAr, dashboard::openPlatform)
                         Destination.ANALYSIS -> AnalysisScreen(

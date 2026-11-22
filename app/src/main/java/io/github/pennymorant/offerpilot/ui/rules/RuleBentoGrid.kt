@@ -2,21 +2,63 @@
 
 package io.github.pennymorant.offerpilot.ui.rules
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.pennymorant.offerpilot.model.Platform
 import io.github.pennymorant.offerpilot.ui.components.ToolBadge
 
 @Composable
-fun RuleBentoGrid(state: RulesUiState, onOpen: (String) -> Unit) {
+fun RuleBentoGrid(
+    state: RulesUiState,
+    onTogglePlatform: (Platform, Boolean) -> Unit,
+    onOpen: (String) -> Unit,
+) {
     val inheriting = state.scope != null && state.inheritShared
     val scoreNum = state.minimumScore.trim().toIntOrNull()?.coerceIn(0, 100) ?: 70
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Platform.entries.forEach { platform ->
+                val enabled = platform in state.platforms
+                val bg by animateColorAsState(
+                    targetValue = if (enabled) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerLow,
+                    animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+                    label = "inlinePlatBg",
+                )
+                val fg = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                Surface(
+                    onClick = { onTogglePlatform(platform, !enabled) },
+                    enabled = !state.saving,
+                    color = bg,
+                    contentColor = fg,
+                    shape = MaterialTheme.shapes.extraLarge,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(platform.label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Text(if (enabled) "已启用" else "已关闭", style = MaterialTheme.typography.bodySmall,
+                                color = fg.copy(alpha = 0.78f))
+                        }
+                        Icon(if (enabled) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
+                            contentDescription = null, modifier = Modifier.size(22.dp))
+                    }
+                }
+            }
+        }
         if (!inheriting) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 BentoTile(
@@ -64,48 +106,25 @@ fun RuleBentoGrid(state: RulesUiState, onOpen: (String) -> Unit) {
                     onClick = { onOpen("目的地区域") },
                 )
             }
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            val totalRows = if (inheriting) 1 else 2
             WideRuleRow(
-                icon = Icons.Rounded.Apps,
-                title = "平台与范围",
+                icon = Icons.Rounded.Tune,
+                title = "订单偏好与过滤",
                 index = 0,
-                count = totalRows,
-                onClick = { onOpen("平台与范围") },
+                count = 1,
+                onClick = { onOpen("订单偏好") },
             ) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Platform.entries.forEach { p ->
-                        val on = p in state.platforms
-                        ToolBadge(
-                            text = if (on) "${p.label} ✓" else "${p.label} 关闭",
-                            containerColor = if (on) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                            contentColor = if (on) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                val tags = buildList {
+                    if (state.allowTripRadar) add("雷达单")
+                    if (state.allowShopAndPay) add("商超")
+                    if (state.allowPackage) add("包裹")
+                    if (state.stacked) add("叠单")
+                    if (state.addon) add("追加")
                 }
-            }
-            if (!inheriting) {
-                WideRuleRow(
-                    icon = Icons.Rounded.Tune,
-                    title = "订单偏好与过滤",
-                    index = 1,
-                    count = totalRows,
-                    onClick = { onOpen("订单偏好") },
-                ) {
-                    val tags = buildList {
-                        if (state.allowTripRadar) add("雷达单")
-                        if (state.allowShopAndPay) add("商超")
-                        if (state.allowPackage) add("包裹")
-                        if (state.stacked) add("叠单")
-                        if (state.addon) add("追加")
-                    }
-                    val kwCount = listOf(state.excluded, state.excludedMerchants, state.preferredZones)
-                        .sumOf { s -> s.split(',', '，').count { it.trim().isNotEmpty() } }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        tags.forEach { ToolBadge(text = it) }
-                        if (kwCount > 0) ToolBadge(text = "$kwCount 个关键词")
-                    }
+                val kwCount = listOf(state.excluded, state.excludedMerchants, state.preferredZones)
+                    .sumOf { s -> s.split(',', '，').count { it.trim().isNotEmpty() } }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    tags.forEach { ToolBadge(text = it) }
+                    if (kwCount > 0) ToolBadge(text = "$kwCount 个关键词")
                 }
             }
         }

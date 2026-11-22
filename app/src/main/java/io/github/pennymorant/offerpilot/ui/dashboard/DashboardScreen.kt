@@ -11,13 +11,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NotificationsActive
-import androidx.compose.material.icons.rounded.Radar
 import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.github.pennymorant.offerpilot.analytics.DailyOfferSummary
 import io.github.pennymorant.offerpilot.model.DrivingScene
 import io.github.pennymorant.offerpilot.model.Platform
 import io.github.pennymorant.offerpilot.ui.components.OfferCard
@@ -25,6 +25,7 @@ import io.github.pennymorant.offerpilot.ui.components.OfferCard
 @Composable
 fun DashboardScreen(
     state: DashboardUiState,
+    dailySummary: DailyOfferSummary,
     onResolve: () -> Unit,
     onScene: (DrivingScene) -> Unit,
     onAdjustAr: (Int) -> Unit,
@@ -98,39 +99,13 @@ fun DashboardScreen(
                 }
             }
         }
-        item {
-            state.latest?.let {
-                OfferCard(it, state.decision, state.destinationAssessment, state.arGuard.uberArPercent,
-                    state.policy.effective(it.platform).preferredZones)
-            } ?: Surface(
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shape = MaterialTheme.shapes.extraLarge,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.primary,
-                        shape = MaterialTheme.shapes.large,
-                    ) {
-                        Icon(Icons.Rounded.Radar, contentDescription = null, modifier = Modifier.padding(12.dp).size(24.dp))
-                    }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(if (state.working) "等待报价弹窗…" else "实时报价仪表盘", style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            if (state.working) "打开 Uber Eats 或 DoorDash 报价页面，将自动计算真实收益。"
-                            else "点击右下角按钮开始工作。",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
+        item { TodayShiftCard(dailySummary, onOpenPlatform) }
+        item { SceneAndArCard(state.activeScene, state.arGuard, state.sessionExclusiveSeen, state.sessionExclusiveAccepted, onScene, onAdjustAr) }
+        state.latest?.let { offer ->
+            item {
+                OfferCard(offer, state.decision, state.destinationAssessment, state.arGuard.uberArPercent,
+                    state.policy.effective(offer.platform).preferredZones)
             }
         }
-        item { SceneAndArCard(state.activeScene, state.arGuard, state.sessionExclusiveSeen, state.sessionExclusiveAccepted, onScene, onAdjustAr) }
     }
 }
