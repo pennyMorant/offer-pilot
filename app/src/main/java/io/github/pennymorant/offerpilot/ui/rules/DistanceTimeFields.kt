@@ -11,12 +11,12 @@ fun DistanceTimeFields(
     onField: (RuleField, String) -> Unit,
     onCondition: (RuleCondition, Boolean) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         RuleConditionField("最大总里程", state.distance, "mi", RuleCondition.MAXIMUM_DISTANCE,
-            RuleField.DISTANCE, state, onField, onCondition)
+            RuleField.DISTANCE, state, onField, onCondition, index = 0, count = 3)
         RuleConditionField("最长订单耗时", state.time, "min", RuleCondition.MAXIMUM_DURATION,
-            RuleField.TIME, state, onField, onCondition)
+            RuleField.TIME, state, onField, onCondition, index = 1, count = 3)
         RuleConditionField("最大取餐距离", state.pickup, "mi", RuleCondition.MAXIMUM_PICKUP,
-            RuleField.PICKUP, state, onField, onCondition)
+            RuleField.PICKUP, state, onField, onCondition, index = 2, count = 3)
     }
 }

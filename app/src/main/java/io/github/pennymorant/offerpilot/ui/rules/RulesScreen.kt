@@ -3,14 +3,15 @@
 package io.github.pennymorant.offerpilot.ui.rules
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
@@ -26,6 +27,7 @@ import io.github.pennymorant.offerpilot.model.Platform
 import io.github.pennymorant.offerpilot.ui.components.ToggleRow
 import io.github.pennymorant.offerpilot.ui.components.ToolBadge
 import io.github.pennymorant.offerpilot.ui.components.ToolSectionRow
+import io.github.pennymorant.offerpilot.ui.components.groupedItemShape
 
 @Composable
 fun RulesScreen(viewModel: RulesViewModel) {
@@ -45,84 +47,103 @@ fun RulesScreen(viewModel: RulesViewModel) {
     }
     BackHandler(section != null) { section = null }
     val dirty = viewModel.hasChanges()
+    val effectsSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize()) {
-        LazyColumn(
-            Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            item { RuleScopeSelector(state, viewModel::selectScope, viewModel::inheritShared) }
-            if (section != null) item {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    FilledTonalIconButton(
-                        onClick = { section = null },
-                        shapes = IconButtonDefaults.shapes(),
-                        modifier = Modifier.size(40.dp),
-                    ) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回", modifier = Modifier.size(20.dp))
-                    }
-                    Text(section.orEmpty(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-                }
-            }
-            if (section == null) {
-                item {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ToolBadge(
-                            text = if (dirty) "草稿未保存" else "已保存规则",
-                            containerColor = if (dirty) MaterialTheme.colorScheme.primaryContainer
-                                else MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = if (dirty) MaterialTheme.colorScheme.onPrimaryContainer
-                                else MaterialTheme.colorScheme.onSecondaryContainer,
-                        )
-                        Text("开启的条件须同时满足", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                item {
-                    val inheriting = state.scope != null && state.inheritShared
-                    val rows = buildList {
-                        add(Triple(Icons.Rounded.Apps, "平台与范围", state.platforms.joinToString { it.label }))
-                        if (!inheriting) {
-                            add(Triple(Icons.Rounded.AttachMoney, "最低收益", state.incomeSummary()))
-                            add(Triple(Icons.Rounded.StarRate, "价值评分", state.scoreSummary()))
-                            add(Triple(Icons.Rounded.Route, "距离与时间", state.routeSummary()))
-                            add(Triple(Icons.Rounded.LocationOn, "目的地区域",
-                                if (state.regionalEnabled) "优质占比 ${state.regionalGoodPercent}% · 至少 ${state.regionalSamples} 样本" else "未启用"))
-                            add(Triple(Icons.Rounded.FilterList, "订单偏好", state.preferencesSummary()))
+        AnimatedContent(
+            targetState = section,
+            transitionSpec = { fadeIn(effectsSpec) togetherWith fadeOut(effectsSpec) },
+            label = "rulesSection",
+            modifier = Modifier.weight(1f),
+        ) { currentSection ->
+            LazyColumn(
+                Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (currentSection == null) {
+                    item { RuleScopeSelector(state, viewModel::selectScope, viewModel::inheritShared) }
+                    item {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ToolBadge(
+                                text = if (dirty) "草稿未保存" else "已保存规则",
+                                containerColor = if (dirty) MaterialTheme.colorScheme.primaryContainer
+                                    else MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = if (dirty) MaterialTheme.colorScheme.onPrimaryContainer
+                                    else MaterialTheme.colorScheme.onSecondaryContainer,
+                            )
+                            Text("开启的条件须同时满足", style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        rows.forEachIndexed { idx, (icon, title, detail) ->
-                            ToolSectionRow(icon, title, detail, idx, rows.size) { section = title }
+                    item {
+                        val inheriting = state.scope != null && state.inheritShared
+                        val rows = buildList {
+                            add(Triple(Icons.Rounded.Apps, "平台与范围", state.platforms.joinToString { it.label }))
+                            if (!inheriting) {
+                                add(Triple(Icons.Rounded.AttachMoney, "最低收益", state.incomeSummary()))
+                                add(Triple(Icons.Rounded.StarRate, "价值评分", state.scoreSummary()))
+                                add(Triple(Icons.Rounded.Route, "距离与时间", state.routeSummary()))
+                                add(Triple(Icons.Rounded.LocationOn, "目的地区域",
+                                    if (state.regionalEnabled) "优质占比 ${state.regionalGoodPercent}% · 至少 ${state.regionalSamples} 样本" else "未启用"))
+                                add(Triple(Icons.Rounded.FilterList, "订单偏好", state.preferencesSummary()))
+                            }
                         }
-                    }
-                }
-                if (state.scope != null && state.inheritShared) item {
-                    Text("此平台继承公共要求。关闭继承后可单独编辑。", style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                item {
-                    Text("开启的条件须同时满足；保存后自动接单保持关闭。",
-                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            } else if (section == "平台与范围") {
-                item {
-                    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge) {
-                        Column(Modifier.padding(18.dp)) {
-                            Platform.entries.forEach { platform ->
-                                ToggleRow(platform.label, "使用已保存要求", platform in state.platforms, enabled = !state.saving) {
-                                    viewModel.platform(platform, it)
-                                }
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            rows.forEachIndexed { idx, (icon, title, detail) ->
+                                ToolSectionRow(icon, title, detail, idx, rows.size) { section = title }
                             }
                         }
                     }
-                }
-            } else if (state.scope != null && state.inheritShared) {
-                item { Text("此平台跟随公共要求，请切换至公共要求编辑。") }
-            } else item {
-                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge) {
-                    Box(Modifier.fillMaxWidth().padding(18.dp)) {
-                        when (section) {
+                    if (state.scope != null && state.inheritShared) item {
+                        Text("此平台继承公共要求。关闭继承后可单独编辑。", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    item {
+                        Text("保存后自动接单保持关闭，需手动确认开启。",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                } else {
+                    item {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            FilledTonalIconButton(
+                                onClick = { section = null },
+                                shapes = IconButtonDefaults.shapes(),
+                                modifier = Modifier.size(40.dp),
+                            ) {
+                                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回", modifier = Modifier.size(20.dp))
+                            }
+                            Text(currentSection, style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                            ToolBadge(text = state.scope?.label ?: "公共要求")
+                        }
+                    }
+                    if (currentSection == "平台与范围") {
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Platform.entries.forEachIndexed { idx, platform ->
+                                    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                        shape = groupedItemShape(idx, Platform.entries.size), modifier = Modifier.fillMaxWidth()) {
+                                        Box(Modifier.padding(horizontal = 18.dp, vertical = 6.dp)) {
+                                            ToggleRow(platform.label, "使用已保存要求", platform in state.platforms, enabled = !state.saving) {
+                                                viewModel.platform(platform, it)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if (state.scope != null && state.inheritShared) {
+                        item {
+                            Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge,
+                                modifier = Modifier.fillMaxWidth()) {
+                                Text("此平台跟随公共要求，请返回关闭继承或切换至公共要求编辑。",
+                                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(18.dp))
+                            }
+                        }
+                    } else item {
+                        when (currentSection) {
                             "最低收益" -> EarningsFields(state, viewModel::edit, viewModel::condition, viewModel::hourlyBasis)
                             "价值评分" -> ValueScoreFields(state, viewModel::edit)
                             "距离与时间" -> DistanceTimeFields(state, viewModel::edit, viewModel::condition)
@@ -142,10 +163,11 @@ fun RulesScreen(viewModel: RulesViewModel) {
         ) {
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = 2.dp,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
-                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     state.error?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
                     Button(
                         onClick = viewModel::save,
