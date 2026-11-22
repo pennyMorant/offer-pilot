@@ -1,77 +1,118 @@
+@file:OptIn(
+    androidx.compose.material3.ExperimentalMaterial3Api::class,
+    androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class,
+)
+
 package io.github.pennymorant.offerpilot.ui.diagnostics
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.pennymorant.offerpilot.ui.components.ToggleRow
+import io.github.pennymorant.offerpilot.ui.components.ToolBadge
+import io.github.pennymorant.offerpilot.ui.components.groupedItemShape
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable fun NodeDiagnosticDialog(viewModel: NodeDiagnosticViewModel, onDismiss: () -> Unit) {
+@Composable
+fun NodeDiagnosticDialog(viewModel: NodeDiagnosticViewModel, onDismiss: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     DisposableEffect(viewModel) {
         viewModel.open()
         onDispose { viewModel.close() }
     }
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.systemBarsPadding().padding(12.dp).widthIn(max = 680.dp).fillMaxWidth().fillMaxHeight(0.94f),
-            shape = MaterialTheme.shapes.extraLarge) {
-            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                item {
-                    NodeDiagnosticHeader(state, viewModel::captureAfterDelay, onDismiss)
-                }
-                    state.pageSummary?.let { item { Text(it) } }
-                    if (state.nodes.isNotEmpty()) {
-                        item { Text("节点示意图（非截图）：灰框为可见节点，主题辅色粗框为 OCR 区域，主色框为选中节点") }
-                        item { NodeRegionDiagram(state) }
-                        item { Text("报价容器：${state.selectedRoot.takeIf { it >= 0 } ?: "整页回退"}；" +
-                            "OCR：${if (state.ocrBounds != null) "局部区域候选" else "未定位，整屏回退候选"}") }
-                        item { Text("动作标签候选：${state.actionCandidates.joinToString { "#$it" }.ifEmpty { "未找到" }}。" +
-                            "候选不代表可以执行，还需唯一按钮、父节点及完整订单复核。") }
-                        item { ToggleRow("显示节点文字", "可能包含商家或地址，仅本次查看", state.showText,
-                            onChange = viewModel::showText) }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        LazyColumn(
+            Modifier.fillMaxWidth().fillMaxHeight(0.92f),
+            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("临时节点诊断", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                    FilledTonalIconButton(onClick = onDismiss, shapes = IconButtonDefaults.shapes(), modifier = Modifier.size(40.dp)) {
+                        Icon(Icons.Rounded.Close, contentDescription = "关闭并清空", modifier = Modifier.size(20.dp))
                     }
-                    items(state.nodes, key = { it.index }) { node ->
-                        Surface(Modifier.fillMaxWidth().clickable { viewModel.select(node.index) },
-                            color = if (node.index == state.selectedNode) MaterialTheme.colorScheme.secondaryContainer
-                                else MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.small) {
-                            Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("#${node.index} ← ${node.parentIndex} · 可见 ${node.visible} · 启用 ${node.enabled} · 点击 ${node.clickable}")
-                                Text(node.viewId ?: "无资源 ID", style = MaterialTheme.typography.bodySmall)
-                                Text("${node.bounds.left},${node.bounds.top} — ${node.bounds.right},${node.bounds.bottom}",
+                }
+            }
+            item {
+                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge,
+                    modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("诊断期间不自动接单、不计入统计；关闭后自动清空。",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Button(
+                            onClick = viewModel::captureAfterDelay, enabled = !state.busy,
+                            shapes = ButtonDefaults.shapes(), modifier = Modifier.fillMaxWidth().height(56.dp),
+                        ) {
+                            Icon(Icons.Rounded.Timer, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(if (state.countdown > 0) "${state.countdown} 秒后抓取…" else "5 秒后抓取当前窗口",
+                                style = MaterialTheme.typography.titleMedium)
+                        }
+                        ToolBadge(text = state.message)
+                    }
+                }
+            }
+            state.pageSummary?.let { summary ->
+                item {
+                    Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = MaterialTheme.shapes.large,
+                        modifier = Modifier.fillMaxWidth()) {
+                        Text(summary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(14.dp))
+                    }
+                }
+            }
+            if (state.nodes.isNotEmpty()) {
+                item {
+                    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge,
+                        modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("节点布局示意（非截图）", style = MaterialTheme.typography.titleMedium)
+                            NodeRegionDiagram(state)
+                            Text("容器：${state.selectedRoot.takeIf { it >= 0 } ?: "整页"} · " +
+                                "OCR：${if (state.ocrBounds != null) "局部候选" else "整屏回退"} · " +
+                                "动作候选：${state.actionCandidates.joinToString { "#$it" }.ifEmpty { "无" }}",
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            ToggleRow("显示节点文字", "仅本次诊断查看，关闭即清空", state.showText, onChange = viewModel::showText)
+                        }
+                    }
+                }
+                itemsIndexed(state.nodes, key = { _, n -> n.index }) { idx, node ->
+                    val selected = node.index == state.selectedNode
+                    Surface(
+                        onClick = { viewModel.select(node.index) },
+                        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+                        shape = groupedItemShape(idx, state.nodes.size),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("#${node.index} ← ${node.parentIndex} · 可见=${node.visible} · 点击=${node.clickable}",
+                                style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"))
+                            Text("${node.viewId ?: "无资源 ID"} · [${node.bounds.left},${node.bounds.top}–${node.bounds.right},${node.bounds.bottom}]",
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (state.showText) SelectionContainer {
+                                Text("文字：${node.text.orEmpty()} | 描述：${node.description.orEmpty()}",
                                     style = MaterialTheme.typography.bodySmall)
-                                if (state.showText) SelectionContainer {
-                                    Text("文字：${node.text.orEmpty()}\n描述：${node.description.orEmpty()}",
-                                        style = MaterialTheme.typography.bodySmall)
-                                }
                             }
                         }
                     }
+                }
             }
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun NodeDiagnosticHeader(state: NodeDiagnosticState, onCapture: () -> Unit, onDismiss: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("临时节点诊断", style = MaterialTheme.typography.titleLarge)
-        Text("诊断期间不自动接单、不将抓取内容计入统计。关闭清空；已有平台订单不会取消。",
-            style = MaterialTheme.typography.bodySmall)
-        Button(onClick = onCapture, enabled = !state.busy, shapes = ButtonDefaults.shapes(),
-            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("5 秒后抓取") }
-        TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes(),
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("关闭并清空") }
-        Text(if (state.countdown > 0) "${state.countdown} 秒后抓取 · ${state.message}" else state.message)
     }
 }

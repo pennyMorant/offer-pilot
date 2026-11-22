@@ -1,39 +1,86 @@
+@file:OptIn(
+    androidx.compose.material3.ExperimentalMaterial3Api::class,
+    androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class,
+)
+
 package io.github.pennymorant.offerpilot.ui.rules
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.pennymorant.offerpilot.model.Platform
-import io.github.pennymorant.offerpilot.ui.components.VehicleCostSummary
 import io.github.pennymorant.offerpilot.ui.components.Prop22Summary
+import io.github.pennymorant.offerpilot.ui.components.ToolBadge
+import io.github.pennymorant.offerpilot.ui.components.VehicleCostSummary
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalLayoutApi::class)
-@Composable fun RulePreviewDialog(viewModel: RulePreviewViewModel, onDismiss: () -> Unit) {
+@Composable
+fun RulePreviewDialog(viewModel: RulePreviewViewModel, onDismiss: () -> Unit) {
     val preview by viewModel.preview.collectAsStateWithLifecycle()
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("规则预览") }, text = {
-        Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("仅分析输入文本，不会接单，也不会写入真实订单记录。")
-            Text("按所选平台的已保存要求预览；未保存的草稿不参与判断。", style = MaterialTheme.typography.bodySmall)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Platform.entries.forEach { item ->
-                    FilterChip(selected = preview.platform == item,
-                        onClick = { viewModel.updatePreview(platform = item) }, label = { Text(item.label) })
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                .padding(start = 18.dp, end = 18.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("文本规则调试", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                FilledTonalIconButton(onClick = onDismiss, shapes = IconButtonDefaults.shapes(), modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Rounded.Close, contentDescription = "关闭", modifier = Modifier.size(20.dp))
                 }
             }
-            OutlinedTextField(value = preview.text, onValueChange = { viewModel.updatePreview(text = it) },
-                label = { Text("报价文本") }, minLines = 4, maxLines = 8, modifier = Modifier.fillMaxWidth())
-            Text("文本预览不查询目的地区域；启用区域要求时，区域条件保留为证据不足。",
-                style = MaterialTheme.typography.bodySmall)
-            preview.pageSummary?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-            Text(preview.explanation)
-            preview.valuation?.let { VehicleCostSummary(it) }
-            Prop22Summary(preview.valuation?.prop22)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                Platform.entries.forEachIndexed { idx, item ->
+                    val shapes = if (idx == 0) ButtonGroupDefaults.connectedLeadingButtonShapes()
+                        else ButtonGroupDefaults.connectedTrailingButtonShapes()
+                    ToggleButton(
+                        checked = preview.platform == item,
+                        onCheckedChange = { viewModel.updatePreview(platform = item) },
+                        shapes = shapes, modifier = Modifier.weight(1f),
+                    ) { Text(item.label, style = MaterialTheme.typography.labelLarge, maxLines = 1) }
+                }
+            }
+            Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge,
+                modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = preview.text,
+                        onValueChange = { viewModel.updatePreview(text = it) },
+                        label = { Text("输入模拟报价文本") },
+                        shape = MaterialTheme.shapes.large,
+                        minLines = 4,
+                        maxLines = 8,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text("仅按已保存规则评估，不接单、不入库、不查目的地区域。",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge,
+                modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("评估结果", style = MaterialTheme.typography.titleMedium)
+                    preview.pageSummary?.let { ToolBadge(text = it) }
+                    Text(preview.explanation, style = MaterialTheme.typography.bodyMedium)
+                    preview.valuation?.let { VehicleCostSummary(it) }
+                    Prop22Summary(preview.valuation?.prop22)
+                }
+            }
         }
-    }, confirmButton = { TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes(),
-        modifier = Modifier.heightIn(min = 48.dp)) { Text("完成") } })
+    }
 }
