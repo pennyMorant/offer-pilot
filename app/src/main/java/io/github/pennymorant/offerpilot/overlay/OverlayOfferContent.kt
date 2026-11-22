@@ -89,19 +89,18 @@ internal fun renderOfferContent(
             if (state.automatic) colors.primaryContainer.toArgb() else Color.TRANSPARENT,
             if (state.automatic) colors.onPrimaryContainer.toArgb() else Color.rgb(160, 230, 180),
         )
-        v.leftBadge.text = if (state.deliveryPhase == DeliveryPhase.ACTIVE) "● 配送中" else modeDot
-        val arLow = uberArPercent < goldFloorPercent
+        v.leftBadge.text = when {
+            state.automatic -> "● 自动"
+            state.deliveryPhase == DeliveryPhase.ACTIVE -> "● 配送中"
+            state.autoAcceptEnabled -> "◐ 待命"
+            else -> "● 工作中"
+        }
         val rightText = when {
-            bgAlert != null -> "${bgAlert.platform.label} ${bgAlert.amountPreview ?: "来单"}"
-            state.deliveryPhase == DeliveryPhase.ACTIVE -> "${state.activePlatform?.label ?: "当前订单"} · 履约"
-            state.sessionExclusiveSeen > 0 -> "接 ${state.sessionExclusiveAccepted}/${state.sessionExclusiveSeen} · AR ${uberArPercent}%"
-            else -> "AR ${uberArPercent}% · ≥${money(state.policy.minimumCents)}"
+            bgAlert != null -> "${bgAlert.platform.label} 来单"
+            state.deliveryPhase == DeliveryPhase.ACTIVE -> "履约中"
+            else -> "监测中"
         }
-        val rightColor = when {
-            bgAlert != null -> colors.tertiary.toArgb()
-            arLow -> colors.error.toArgb()
-            else -> Color.rgb(215, 220, 226)
-        }
+        val rightColor = if (bgAlert != null) colors.tertiary.toArgb() else Color.rgb(190, 198, 208)
         v.rightBadge.stylePill(Color.TRANSPARENT, rightColor)
         v.rightBadge.text = rightText
     }

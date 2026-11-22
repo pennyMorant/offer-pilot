@@ -71,8 +71,8 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                         (bgAlert != null && state.deliveryPhase == DeliveryPhase.AVAILABLE) ||
                         (state.deliveryPhase == DeliveryPhase.AVAILABLE && recentComplete && otherCompleted != null)
                     layout.update(isExpandedOffer, when {
-                        offer != null || hasActivity || state.autoAcceptEnabled -> 256
-                        else -> 228
+                        offer != null || hasActivity || state.autoAcceptEnabled -> 236
+                        else -> 184
                     })
                     applyIslandColors(v, colors, alert, state.decision?.eligible == true, dp(1))
 
