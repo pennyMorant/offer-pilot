@@ -32,12 +32,7 @@ fun DeveloperTools(factory: OverudViewModelFactory) {
     val container = remember(context) { (context.applicationContext as OverudApp).container }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge,
-            modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                DeveloperToolLinks { selected = it }
-            }
-        }
+        DeveloperToolLinks { selected = it }
         Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge,
             modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
