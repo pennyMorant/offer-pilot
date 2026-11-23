@@ -35,8 +35,11 @@ fun TodayShiftCard(
                 ) {
                     Text("今日行情快报", style = MaterialTheme.typography.titleMedium)
                     ToolBadge(
-                        text = if (summary.totalCount > 0) "${summary.totalCount} 单 · 好单 ${summary.goodPercent}%"
-                            else "暂无推送",
+                        text = when {
+                            summary.decidedCount > 0 -> "接 ${summary.acceptedCount} · 拒 ${summary.declinedCount}"
+                            summary.totalCount > 0 -> "${summary.totalCount} 单 · 好单 ${summary.goodPercent}%"
+                            else -> "暂无推送"
+                        },
                         containerColor = if (summary.totalCount > 0) MaterialTheme.colorScheme.primaryContainer
                             else MaterialTheme.colorScheme.surfaceContainerHigh,
                         contentColor = if (summary.totalCount > 0) MaterialTheme.colorScheme.onPrimaryContainer
@@ -56,8 +59,8 @@ fun TodayShiftCard(
                         highlight = summary.totalCount > 0,
                     )
                     ToolMetricTile(
-                        label = "达标率",
-                        value = if (summary.totalCount > 0) "${summary.eligiblePercent}%" else "—",
+                        label = "接单率",
+                        value = if (summary.decidedCount > 0) "${summary.acceptedPercent}%" else "—",
                         modifier = Modifier.weight(0.85f),
                     )
                 }

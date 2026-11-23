@@ -19,12 +19,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import io.github.pennymorant.offerpilot.analytics.LoggedOfferItem
 import io.github.pennymorant.offerpilot.analytics.OrderQuality
-import io.github.pennymorant.offerpilot.model.OfferChannel
-import io.github.pennymorant.offerpilot.model.Platform
-import io.github.pennymorant.offerpilot.ui.components.ToolBadge
-import io.github.pennymorant.offerpilot.ui.components.ToolMetricTile
-import io.github.pennymorant.offerpilot.ui.components.groupedItemShape
-import io.github.pennymorant.offerpilot.ui.components.money
+import io.github.pennymorant.offerpilot.model.*
+import io.github.pennymorant.offerpilot.ui.components.*
 import io.github.pennymorant.offerpilot.valuation.ValueEngine
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -88,8 +84,9 @@ fun DailyReviewPage(
                         Column(horizontalAlignment = Alignment.End) {
                             Text("好单 ${summary.goodPercent}% · 垃圾单 ${summary.lowPercent}%",
                                 style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                            if (summary.acceptedCount > 0) {
-                                Text("已接 ${summary.acceptedCount}单 (${money(summary.acceptedAmountCents)}) · ${summary.acceptedPercent}%",
+                            if (summary.decidedCount > 0) {
+                                val arText = if (summary.exclusiveDecidedCount > 0) " · 专属AR ${summary.exclusiveArPercent}%" else ""
+                                Text("接 ${summary.acceptedCount} (${money(summary.acceptedAmountCents)}) · 拒 ${summary.declinedCount}$arText",
                                     style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
                             }
                         }
@@ -226,7 +223,11 @@ private fun LoggedOfferRow(item: LoggedOfferItem, index: Int, count: Int) {
                     Text(money(item.amountCents), style = MaterialTheme.typography.titleMedium)
                     ToolBadge(item.platform.label)
                     ToolBadge(qLabel, qBg, qFg)
-                    if (item.accepted) ToolBadge("已接", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
+                    when (item.outcome) {
+                        OfferOutcome.ACCEPTED -> ToolBadge("已接", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
+                        OfferOutcome.DECLINED -> ToolBadge("已拒", MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.colorScheme.onSurfaceVariant)
+                        OfferOutcome.PENDING -> Unit
+                    }
                     if (item.fakePreferred) ToolBadge("假好单", MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
                     else if (item.channel == OfferChannel.TRIP_RADAR) ToolBadge("雷达")
                 }

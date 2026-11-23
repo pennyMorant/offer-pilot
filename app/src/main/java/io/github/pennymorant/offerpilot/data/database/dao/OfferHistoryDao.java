@@ -18,8 +18,14 @@ public abstract class OfferHistoryDao {
     @Query("SELECT DISTINCT localDate FROM offer_history ORDER BY localDate DESC LIMIT 90")
     public abstract List<String> recentDates();
 
-    @Query("UPDATE offer_history SET accepted = 1 WHERE offerId = :offerId")
+    @Query("SELECT outcome FROM offer_history WHERE offerId = :offerId LIMIT 1")
+    public abstract String outcomeOf(String offerId);
+
+    @Query("UPDATE offer_history SET accepted = 1, outcome = 'ACCEPTED' WHERE offerId = :offerId")
     public abstract void markAccepted(String offerId);
+
+    @Query("UPDATE offer_history SET accepted = 0, outcome = 'DECLINED' WHERE offerId = :offerId AND outcome = 'PENDING'")
+    public abstract void markDeclined(String offerId);
 
     @Query("DELETE FROM offer_history WHERE observedAt < :cutoffMillis")
     public abstract void pruneBefore(long cutoffMillis);

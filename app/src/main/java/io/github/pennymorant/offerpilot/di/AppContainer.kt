@@ -14,6 +14,7 @@ import io.github.pennymorant.offerpilot.analytics.DestinationController
 import io.github.pennymorant.offerpilot.geo.AndroidGeocodingProvider
 import io.github.pennymorant.offerpilot.geo.DestinationResolver
 import io.github.pennymorant.offerpilot.acceptance.AutoAcceptController
+import io.github.pennymorant.offerpilot.acceptance.OfferOutcomeTracker
 import io.github.pennymorant.offerpilot.bridge.SheveryBridge
 import io.github.pennymorant.offerpilot.capture.*
 import io.github.pennymorant.offerpilot.data.database.OverudDatabase
@@ -39,17 +40,18 @@ class AppContainer(context: Context) {
     val appInForeground = kotlinx.coroutines.flow.MutableStateFlow(false)
     private val statistics = StatisticsRepository(database)
     val offerHistory = OfferHistoryRepository(database)
+    val outcomes = OfferOutcomeTracker(offerHistory, scope)
     val regions = RegionRecorder(session, RegionRepository(database))
     private val waiting = WaitingRecorder(session, regions, WaitingRepository(database), scope, mutex)
     private val deliveries = DeliveryRecorder(session, regions, DeliveryRepository(database), scope, mutex)
     val acceptance = AutoAcceptController(session, AcceptanceRepository(database.acceptance()), bridge, scope, mutex,
-        deliveries, waiting::start) { offerId ->
-        scope.launch(Dispatchers.IO) { runCatching { offerHistory.markAccepted(offerId) } }
+        deliveries, waiting::start) { platform ->
+        outcomes.onDeliveryConfirmed(platform, System.currentTimeMillis())?.channel
     }
     private val destinations = DestinationController(session,
         DestinationResolver(AndroidGeocodingProvider(context)), scope)
     private val tracker = OfferTracker(TrackerCheckpointStore(context))
-    val pipeline = CapturePipeline(session, bridge, OcrRecognizer(bridge), tracker, statistics, offerHistory, regions, acceptance, waiting, deliveries, mutex)
+    val pipeline = CapturePipeline(session, bridge, OcrRecognizer(bridge), tracker, statistics, offerHistory, regions, acceptance, outcomes, waiting, deliveries, mutex)
     init {
         scope.launch {
             bridge.status.collect {
@@ -75,7 +77,7 @@ class AppContainer(context: Context) {
     private var debugOverlayCleanup: (() -> Unit)? = null
     fun registerDebugOverlayCleanup(cleanup: () -> Unit) { debugOverlayCleanup = cleanup }
     fun startWork() { debugOverlayCleanup?.invoke(); debugOverlayCleanup = null; tracker.reset(); regions.clear(); session.startWork() }
-    fun stopWork() { deliveries.invalidate(); waiting.invalidate(); session.stopWork(); regions.clear(); tracker.reset() }
+    fun stopWork() { outcomes.onIdle(System.currentTimeMillis(), 0L); deliveries.invalidate(); waiting.invalidate(); session.stopWork(); regions.clear(); tracker.reset() }
     fun setAutomatic(enabled: Boolean) = session.setAutomatic(enabled)
     fun notification(platform: Platform, text: String) = session.notification(platform, text)
     fun launchPlatform(target: Platform) {
@@ -95,6 +97,7 @@ class AppContainer(context: Context) {
     }
     fun declineCurrentOffer() {
         val offer = session.state.value.latest ?: return
+        outcomes.onExplicitDecline(offer)
         val token = io.github.pennymorant.offerpilot.platform.fingerprint(offer.platform, offer.rawText)
         scope.launch {
             runCatching {

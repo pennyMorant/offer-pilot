@@ -15,11 +15,12 @@ class AcceptanceObserver(
 ) {
     private val unresolved = setOf("dispatching", "outcome_unknown", "accepted")
     private var activeToken: String? = null
+    private var confirmedToken: String? = null
     private var completionSince: Long? = null
     private var lastCompletionAt = 0L
     private var lastActiveAt = 0L
 
-    fun reset() { activeToken = null; completionSince = null; lastCompletionAt = 0; lastActiveAt = 0 }
+    fun reset() { activeToken = null; confirmedToken = null; completionSince = null; lastCompletionAt = 0; lastActiveAt = 0 }
 
     fun observe(platform: Platform, page: PlatformPage) {
         if (!session.state.value.working) return
@@ -42,7 +43,10 @@ class AcceptanceObserver(
                     lastActiveAt = SystemClock.elapsedRealtime()
                 }
                 completionSince = null
-                onConfirmed(record.offerId, platform)
+                if (confirmedToken != record.offerId) {
+                    confirmedToken = record.offerId
+                    onConfirmed(record.offerId, platform)
+                }
                 session.update { it.copy(pending = true, automatic = false, deliveryPhase = DeliveryPhase.ACTIVE,
                     message = "已识别进行中的配送，自动接单暂停") }
             }

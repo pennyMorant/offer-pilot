@@ -28,6 +28,8 @@ class OfferHistoryRepository(private val database: OverudDatabase) {
         val sample = QualityEvaluator.extract(offer)
         val advice = StrategyAdvisor.advise(offer, decision)
         val valuation = decision?.valuation
+        val existingOutcome = database.offerHistory().outcomeOf(offer.id)
+        val preserved = OfferOutcome.fromStored(existingOutcome, acceptedFallback = false)
         val row = OfferHistoryRecord().apply {
             offerId = offer.id
             platform = offer.platform.name
@@ -47,6 +49,8 @@ class OfferHistoryRepository(private val database: OverudDatabase) {
             valueScore = valuation?.score ?: -1
             quality = sample.quality.name
             eligible = decision?.eligible == true
+            accepted = preserved == OfferOutcome.ACCEPTED
+            outcome = preserved.name
             merchant = offer.merchant.orEmpty().trim().take(60)
             destinationArea = offer.destination.orEmpty().trim().take(60)
         }
@@ -58,6 +62,12 @@ class OfferHistoryRepository(private val database: OverudDatabase) {
     fun markAccepted(offerId: String) {
         if (offerId.isBlank()) return
         database.offerHistory().markAccepted(offerId)
+        mutableRevision.value += 1
+    }
+
+    fun markDeclined(offerId: String) {
+        if (offerId.isBlank()) return
+        database.offerHistory().markDeclined(offerId)
         mutableRevision.value += 1
     }
 
@@ -97,7 +107,8 @@ class OfferHistoryRepository(private val database: OverudDatabase) {
         valueScore = row.valueScore,
         quality = OrderQuality.entries.find { it.name == row.quality } ?: OrderQuality.UNKNOWN,
         eligible = row.eligible,
-        accepted = row.accepted,
+        accepted = row.accepted || row.outcome == OfferOutcome.ACCEPTED.name,
+        outcome = OfferOutcome.fromStored(row.outcome, row.accepted),
         merchant = row.merchant,
         destinationArea = row.destinationArea,
     )

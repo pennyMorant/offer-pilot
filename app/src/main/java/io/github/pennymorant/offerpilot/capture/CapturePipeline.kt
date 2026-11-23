@@ -8,8 +8,11 @@ import io.github.pennymorant.offerpilot.analytics.RegionRecorder
 import io.github.pennymorant.offerpilot.analytics.WaitingRecorder
 import io.github.pennymorant.offerpilot.analytics.DeliveryRecorder
 import io.github.pennymorant.offerpilot.acceptance.AutoAcceptController
+import io.github.pennymorant.offerpilot.acceptance.OfferOutcomeTracker
 import io.github.pennymorant.offerpilot.bridge.SheveryBridge
 import io.github.pennymorant.offerpilot.data.repository.StatisticsRepository
+import io.github.pennymorant.offerpilot.platform.DeliveryScreenParser
+import io.github.pennymorant.offerpilot.platform.DeliveryScreenState
 import io.github.pennymorant.offerpilot.platform.OfferParser
 import io.github.pennymorant.offerpilot.platform.QuoteObservationResolver
 import io.github.pennymorant.offerpilot.work.WorkSessionController
@@ -24,6 +27,7 @@ class CapturePipeline(
     private val history: io.github.pennymorant.offerpilot.data.repository.OfferHistoryRepository,
     private val regions: RegionRecorder,
     private val acceptance: AutoAcceptController,
+    private val outcomes: OfferOutcomeTracker,
     private val waiting: WaitingRecorder,
     private val deliveries: DeliveryRecorder,
     private val mutex: Mutex,
@@ -73,7 +77,7 @@ class CapturePipeline(
             }
             val platform = Platform.fromPackage(snapshot.getString("package").orEmpty())
                 ?: run {
-                    clearQuote(); waiting.interrupt()
+                    clearQuote(); waiting.interrupt(); outcomes.onIdle(System.currentTimeMillis())
                     session.update {
                         if (it.autoAcceptEnabled && it.automatic) it.copy(automatic = false,
                             message = "已切离平台页面，自动接单待命；切回平台后自动恢复")
@@ -133,6 +137,7 @@ class CapturePipeline(
                 val decision = session.state.value.assessOffer(offer, now)
                 val changed = statistics.record(offer, regions.usableRegion())
                 history.record(offer, decision)
+                outcomes.onOfferSeen(offer, now)
                 val aggregate = if (changed) statistics.snapshot() else session.state.value.statistics
                 val newExclusive = offer.channel == OfferChannel.EXCLUSIVE && seenExclusiveIds.add(offer.id).also {
                     if (seenExclusiveIds.size > 200) seenExclusiveIds.remove(seenExclusiveIds.first())
@@ -153,6 +158,8 @@ class CapturePipeline(
                 if (lease.valid()) acceptance.maybeAccept(offer, decision, snapshot.getString("token").orEmpty())
             } else {
                 tracker.absent(platform, now)
+                val active = DeliveryScreenParser.parse(observation.page) != DeliveryScreenState.UNKNOWN
+                outcomes.onNoOfferFrame(platform, active, now)
                 clearQuote(observation.page)
             }
         } catch (e: Exception) {

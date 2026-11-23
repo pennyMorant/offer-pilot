@@ -1,6 +1,7 @@
 package io.github.pennymorant.offerpilot.analytics
 
 import io.github.pennymorant.offerpilot.model.OfferChannel
+import io.github.pennymorant.offerpilot.model.OfferOutcome
 import io.github.pennymorant.offerpilot.model.OfferService
 import io.github.pennymorant.offerpilot.model.Platform
 import kotlin.math.roundToInt
@@ -27,6 +28,7 @@ data class LoggedOfferItem(
     val quality: OrderQuality,
     val eligible: Boolean,
     val accepted: Boolean = false,
+    val outcome: OfferOutcome = if (accepted) OfferOutcome.ACCEPTED else OfferOutcome.PENDING,
     val merchant: String,
     val destinationArea: String,
 )
@@ -44,7 +46,12 @@ data class DailyOfferSummary(
     val eligibleCount: Int = 0,
     val eligiblePercent: Int = 0,
     val acceptedCount: Int = 0,
+    val declinedCount: Int = 0,
+    val decidedCount: Int = 0,
     val acceptedPercent: Int = 0,
+    val exclusiveAcceptedCount: Int = 0,
+    val exclusiveDecidedCount: Int = 0,
+    val exclusiveArPercent: Int = 0,
     val acceptedAmountCents: Long = 0,
     val radarCount: Int = 0,
     val exclusiveCount: Int = 0,
@@ -67,7 +74,14 @@ data class DailyOfferSummary(
             val classified = good + normal + low
             fun pct(count: Int, denom: Int) = if (denom > 0) (count * 100.0 / denom).roundToInt() else 0
             val eligible = items.count { it.eligible }
-            val acceptedItems = items.filter { it.accepted }
+            val acceptedItems = items.filter { it.outcome == OfferOutcome.ACCEPTED }
+            val declinedCount = items.count { it.outcome == OfferOutcome.DECLINED }
+            val decidedCount = acceptedItems.size + declinedCount
+            val exclusiveDecided = items.filter {
+                it.channel == OfferChannel.EXCLUSIVE &&
+                    (it.outcome == OfferOutcome.ACCEPTED || it.outcome == OfferOutcome.DECLINED)
+            }
+            val exclusiveAccepted = exclusiveDecided.count { it.outcome == OfferOutcome.ACCEPTED }
             val amounts = items.map { it.amountCents }.filter { it > 0 }
             val distances = items.map { it.distanceMeters }.filter { it > 0 }
             val perMiles = items.map { it.centsPerMile }.filter { it > 0 }
@@ -87,7 +101,12 @@ data class DailyOfferSummary(
                 eligibleCount = eligible,
                 eligiblePercent = pct(eligible, items.size),
                 acceptedCount = acceptedItems.size,
-                acceptedPercent = pct(acceptedItems.size, items.size),
+                declinedCount = declinedCount,
+                decidedCount = decidedCount,
+                acceptedPercent = pct(acceptedItems.size, decidedCount),
+                exclusiveAcceptedCount = exclusiveAccepted,
+                exclusiveDecidedCount = exclusiveDecided.size,
+                exclusiveArPercent = pct(exclusiveAccepted, exclusiveDecided.size),
                 acceptedAmountCents = acceptedItems.sumOf { it.amountCents },
                 radarCount = items.count { it.channel == OfferChannel.TRIP_RADAR },
                 exclusiveCount = items.count { it.channel == OfferChannel.EXCLUSIVE },
