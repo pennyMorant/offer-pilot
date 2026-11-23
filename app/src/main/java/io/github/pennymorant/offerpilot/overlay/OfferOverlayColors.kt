@@ -12,32 +12,37 @@ internal fun TextView.stylePill(bg: Int, fg: Int) {
 }
 
 internal fun applyExpressiveColors(v: OverlayViews, colors: ColorScheme, dark: Boolean, eligible: Boolean, strokePx: Int) {
+    val cardColor = if (eligible) colors.primaryContainer.toArgb() else colors.surfaceContainerHigh.toArgb()
     val outline = colors.outlineVariant.toArgb()
-    val softStroke = Color.argb(115, Color.red(outline), Color.green(outline), Color.blue(outline))
-    v.cardBg.setColor(colors.surfaceContainerHigh.toArgb())
-    v.cardBg.setStroke(strokePx, softStroke)
+    val softStroke = Color.argb(110, Color.red(outline), Color.green(outline), Color.blue(outline))
+    v.cardBg.setColor(cardColor)
+    v.cardBg.setStroke(if (eligible) 0 else strokePx, if (eligible) Color.TRANSPARENT else softStroke)
 
-    val onSurface = colors.onSurface.toArgb()
-    val onVariant = colors.onSurfaceVariant.toArgb()
+    val onCard = if (eligible) colors.onPrimaryContainer.toArgb() else colors.onSurface.toArgb()
+    val onVariant = if (eligible) Color.argb(200, Color.red(onCard), Color.green(onCard), Color.blue(onCard))
+        else colors.onSurfaceVariant.toArgb()
     val tileBg = if (dark) colors.surfaceContainer.toArgb() else colors.surfaceContainerLowest.toArgb()
+    val onTile = colors.onSurface.toArgb()
+    val onTileLabel = colors.onSurfaceVariant.toArgb()
 
-    v.amountText.setTextColor(onSurface)
-    v.heroRouteText.setTextColor(onVariant)
-    v.tagsText.setTextColor(colors.tertiary.toArgb())
-    v.routeText.setTextColor(onVariant)
-    (v.perMileBox.background as? GradientDrawable)?.setColor(tileBg)
-    (v.hourlyBox.background as? GradientDrawable)?.setColor(tileBg)
-    v.perMileLabel.setTextColor(onVariant)
-    v.hourlyLabel.setTextColor(onVariant)
-    v.perMileTile.setTextColor(onSurface)
-    v.hourlyTile.setTextColor(onSurface)
+    v.verdictBadge.stylePill(
+        if (eligible) colors.primary.toArgb() else colors.surfaceContainerHighest.toArgb(),
+        if (eligible) colors.onPrimary.toArgb() else colors.onSurfaceVariant.toArgb(),
+    )
+    v.scoreBadge.stylePill(
+        if (eligible) tileBg else colors.surfaceContainerHighest.toArgb(),
+        if (eligible) colors.primary.toArgb() else colors.onSurfaceVariant.toArgb(),
+    )
+    v.closeBtn.stylePill(
+        if (eligible) tileBg else colors.surfaceContainerHighest.toArgb(),
+        colors.onSurfaceVariant.toArgb(),
+    )
+    v.reasonText.setTextColor(onCard)
 
-    (v.infoBox.background as? GradientDrawable)?.setColor(colors.surfaceContainer.toArgb())
-    v.verdictText.setTextColor(if (eligible) colors.primary.toArgb() else onSurface)
-    v.extraText.setTextColor(onVariant)
-
-    v.closeBtn.stylePill(colors.surfaceContainerHighest.toArgb(), onVariant)
-    v.pauseBtn.stylePill(colors.primaryContainer.toArgb(), colors.onPrimaryContainer.toArgb())
-    v.declineBtn.stylePill(colors.secondaryContainer.toArgb(), colors.onSecondaryContainer.toArgb())
-    v.switchBtn.stylePill(colors.tertiaryContainer.toArgb(), colors.onTertiaryContainer.toArgb())
+    listOf(v.amountBox, v.perMileBox, v.hourlyBox).forEach {
+        (it.background as? GradientDrawable)?.setColor(tileBg)
+    }
+    listOf(v.amountLabel, v.perMileLabel, v.hourlyLabel).forEach { it.setTextColor(onTileLabel) }
+    listOf(v.amountValue, v.perMileValue, v.hourlyValue).forEach { it.setTextColor(onTile) }
+    v.routeLine.setTextColor(onVariant)
 }
