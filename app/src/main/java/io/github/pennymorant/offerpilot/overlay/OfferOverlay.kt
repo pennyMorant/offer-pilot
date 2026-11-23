@@ -6,7 +6,6 @@ import android.provider.Settings
 import android.view.View
 import android.view.WindowManager
 import io.github.pennymorant.offerpilot.di.AppContainer
-import io.github.pennymorant.offerpilot.ui.theme.appearanceColors
 import io.github.pennymorant.offerpilot.ui.theme.isDark
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -25,8 +24,6 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
 
     fun show() {
         if (view != null || !Settings.canDrawOverlays(context)) return
-        val density = context.resources.displayMetrics.density
-        fun dp(v: Int) = (v * density).toInt()
         var layoutRef: OverlayWindowLayout? = null
         fun dismissCurrent() {
             val targetId = lastOfferId ?: return
@@ -81,10 +78,10 @@ class OfferOverlay(private val context: Context, private val runtime: AppContain
                 val systemDark = context.resources.configuration.uiMode and
                     Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
                 val dark = appearance.isDark(systemDark)
-                val colors = appearanceColors(context, appearance, dark)
+                val tier = resolveOfferTier(state.decision)
 
-                applyExpressiveColors(v, colors, dark, state.decision?.eligible == true, dp(1))
-                renderOfferContent(v, state, offer)
+                applyTierColors(v, tier, dark)
+                renderOfferContent(v, state, offer, tier)
 
                 layout.refresh()
                 v.root.visibility = View.VISIBLE

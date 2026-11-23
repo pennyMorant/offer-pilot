@@ -9,13 +9,13 @@ import io.github.pennymorant.offerpilot.work.WorkState
 import java.util.Locale
 import kotlin.math.roundToLong
 
-internal fun renderOfferContent(v: OverlayViews, state: WorkState, offer: Offer) {
+internal fun renderOfferContent(v: OverlayViews, state: WorkState, offer: Offer, tier: OfferTier) {
     val decision = state.decision
     val valuation = decision?.valuation
     val eligible = decision?.eligible == true
     val score = valuation?.score
 
-    v.verdictBadge.text = if (eligible) "✓ 建议接" else "跳过"
+    v.verdictBadge.text = tier.label
     if (score != null) {
         v.scoreBadge.visibility = View.VISIBLE
         v.scoreBadge.text = "${score}分"
